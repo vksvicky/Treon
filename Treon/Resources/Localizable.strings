@@ -1,0 +1,7 @@
+/* General */
+"general.ok" = "OK";
+"general.cancel" = "Cancel";
+
+/* Errors */
+"errors.parse_failed" = "Failed to parse JSON.";
+
