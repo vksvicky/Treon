@@ -126,7 +126,36 @@ struct JSONViewerView: View {
             return
         }
         
-        jsonText = fileInfo.content ?? ""
+        // Load file content if not already loaded
+        if let content = fileInfo.content {
+            jsonText = content
+        } else if let url = fileInfo.url {
+            Task {
+                do {
+                    let content = try await fileManager.getFileContent(url: url)
+                    await MainActor.run {
+                        jsonText = content
+                        parseJSONContent()
+                    }
+                } catch {
+                    await MainActor.run {
+                        showError("Failed to load file content: \(error.localizedDescription)")
+                    }
+                }
+            }
+            return
+        } else {
+            jsonText = ""
+        }
+        
+        parseJSONContent()
+    }
+    
+    private func parseJSONContent() {
+        guard let fileInfo = fileManager.currentFile else {
+            rootNode = nil
+            return
+        }
         
         // Parse JSON to build tree
         if fileInfo.isValidJSON {
