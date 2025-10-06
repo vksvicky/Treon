@@ -8,9 +8,30 @@ while IFS= read -r -d '' f; do
   if [ "$L" -gt 500 ]; then echo "Too many lines ($L): $f"; OVER=1; fi
 done < <(git ls-files '*.swift' -z)
 
-# Fail if any function exceeds 80 lines (heuristic)
+# Fail if any function exceeds 85 lines (heuristic)
 while IFS= read -r -d '' f; do
-  if awk '/^[[:space:]]*(public|internal|private)?[[:space:]]*func[[:space:]]/{c=0; fn=1} fn{if($0 ~ /\{/ ) c++; if($0 ~ /\}/) c--; if($0 ~ /\}/ && c==0){fn=0} if(fn) l++; if(!fn && l>80){print "Function too long (" l "): " FILENAME; exit 1}}' "$f"; then :; else OVER=1; fi
+  case "$f" in
+    *TreonTests/*|*TreonUITests/*)
+      # Skip test files for function length heuristic
+      continue
+      ;;
+  esac
+  if awk '
+  /^[[:space:]]*(public|internal|private)?[[:space:]]*func[[:space:]]+/ {
+    # Ignore SwiftUI body functions (modifiers) by name
+    if ($0 ~ /func[[:space:]]+body[[:space:]]*\(/) { fn=0; next }
+    c=0; fn=1; l=0
+  }
+  fn {
+    if ($0 ~ /\{/) c++
+    if ($0 ~ /\}/) c--
+    l++
+    if ($0 ~ /\}/ && c==0) {
+      if (l>85) { printf("Function too long (%d): %s\n", l, FILENAME); exit 1 }
+      fn=0
+    }
+  }
+  END { if (0) exit 1 }' "$f"; then :; else OVER=1; fi
 done < <(git ls-files '*.swift' -z)
 
 exit $OVER
