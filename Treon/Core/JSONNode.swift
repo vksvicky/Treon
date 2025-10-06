@@ -1,6 +1,6 @@
 import Foundation
 
-public enum JSONNodeValue {
+public enum JSONNodeValue: Equatable {
     case object
     case array
     case string(String)

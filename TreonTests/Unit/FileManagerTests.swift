@@ -60,6 +60,81 @@ class FileManagerTests: XCTestCase {
         XCTAssertEqual(fileInfo.name, "valid.json")
     }
     
+    func testOpenFile_validJSONArray_returnsValid() async throws {
+        let validJSONArray = """
+        [
+            {
+                "_id": "68e4117f5c89dd802ede80ee",
+                "index": 0,
+                "isActive": true,
+                "balance": "$1,639.30",
+                "tags": ["sunt", "dolore", "tempor"]
+            },
+            {
+                "_id": "68e4117f8bce8ebe82f3f7df",
+                "index": 1,
+                "isActive": false,
+                "balance": "$1,949.59",
+                "tags": ["adipisicing", "pariatur", "eiusmod"]
+            }
+        ]
+        """
+        let fileURL = tempDirectory.appendingPathComponent("array.json")
+        try validJSONArray.write(to: fileURL, atomically: true, encoding: .utf8)
+        
+        let fileInfo = try await fileManager.openFile(url: fileURL)
+        
+        XCTAssertTrue(fileInfo.isValidJSON)
+        XCTAssertNil(fileInfo.errorMessage)
+        XCTAssertEqual(fileInfo.name, "array.json")
+    }
+    
+    func testOpenFile_simpleJSONArray_returnsValid() async throws {
+        let simpleArray = "[1, 2, 3, \"hello\", true, null]"
+        let fileURL = tempDirectory.appendingPathComponent("simple_array.json")
+        try simpleArray.write(to: fileURL, atomically: true, encoding: .utf8)
+        
+        let fileInfo = try await fileManager.openFile(url: fileURL)
+        
+        XCTAssertTrue(fileInfo.isValidJSON)
+        XCTAssertNil(fileInfo.errorMessage)
+        XCTAssertEqual(fileInfo.name, "simple_array.json")
+    }
+    
+    func testOpenFile_emptyJSONArray_returnsValid() async throws {
+        let emptyArray = "[]"
+        let fileURL = tempDirectory.appendingPathComponent("empty_array.json")
+        try emptyArray.write(to: fileURL, atomically: true, encoding: .utf8)
+        
+        let fileInfo = try await fileManager.openFile(url: fileURL)
+        
+        XCTAssertTrue(fileInfo.isValidJSON)
+        XCTAssertNil(fileInfo.errorMessage)
+        XCTAssertEqual(fileInfo.name, "empty_array.json")
+    }
+    
+    func testOpenFile_nestedJSONArrays_returnsValid() async throws {
+        let nestedArrays = """
+        [
+            [1, 2, 3],
+            ["a", "b", "c"],
+            [true, false, null],
+            [
+                {"name": "John"},
+                {"name": "Jane"}
+            ]
+        ]
+        """
+        let fileURL = tempDirectory.appendingPathComponent("nested_arrays.json")
+        try nestedArrays.write(to: fileURL, atomically: true, encoding: .utf8)
+        
+        let fileInfo = try await fileManager.openFile(url: fileURL)
+        
+        XCTAssertTrue(fileInfo.isValidJSON)
+        XCTAssertNil(fileInfo.errorMessage)
+        XCTAssertEqual(fileInfo.name, "nested_arrays.json")
+    }
+    
     func testOpenFile_invalidJSON_setsErrorMessage() async throws {
         let invalidJSON = """
         {

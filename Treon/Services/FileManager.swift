@@ -272,14 +272,12 @@ class TreonFileManager: ObservableObject {
                     }
                     
                     // Try to parse JSON
-                    let jsonObject = try JSONSerialization.jsonObject(with: data, options: [])
+                    _ = try JSONSerialization.jsonObject(with: data, options: [])
                     
                     // Validate it's a valid JSON structure
-                    if JSONSerialization.isValidJSONObject(jsonObject) {
-                        continuation.resume(returning: (true, nil))
-                    } else {
-                        continuation.resume(returning: (false, "Invalid JSON structure"))
-                    }
+                    // Note: JSONSerialization.isValidJSONObject only validates objects, not arrays
+                    // But if we can parse it without error, it's valid JSON
+                    continuation.resume(returning: (true, nil))
                 } catch {
                     continuation.resume(returning: (false, error.localizedDescription))
                 }
