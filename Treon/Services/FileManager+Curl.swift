@@ -11,49 +11,65 @@ extension TreonFileManager {
     func executeCurlCommand(_ command: String) async throws -> FileInfo {
         let parsedCommand = try parseCurlCommand(command)
         
-        var request = URLRequest(url: parsedCommand.url)
-        request.httpMethod = parsedCommand.method
-        request.allHTTPHeaderFields = parsedCommand.headers
-        
-        if let body = parsedCommand.body {
-            request.httpBody = body.data(using: .utf8)
-        }
+        var request = buildURLRequest(from: parsedCommand)
         
         do {
             let (data, response) = try await URLSession.shared.data(for: request)
-            
-            if let httpResponse = response as? HTTPURLResponse {
-                guard 200...299 ~= httpResponse.statusCode else {
-                    throw FileManagerError.networkError("HTTP \(httpResponse.statusCode)")
-                }
-            }
-            
-            guard data.count <= maxFileSize else {
-                throw FileManagerError.fileTooLarge(Int64(data.count), maxFileSize)
-            }
-            
-            guard let content = String(data: data, encoding: .utf8) else {
-                throw FileManagerError.invalidJSON("Unable to decode response as UTF-8")
-            }
-            
-            do { _ = try JSONSerialization.jsonObject(with: data, options: []) } catch {
-                throw FileManagerError.invalidJSON("Response is not valid JSON: \(error.localizedDescription)")
-            }
-            
-            return FileInfo(
-                url: parsedCommand.url,
-                name: "cURL Response",
-                size: Int64(data.count),
-                modifiedDate: Date(),
-                isValidJSON: true,
-                errorMessage: nil,
-                content: content
-            )
+            try validateHTTPResponse(response)
+            try validateContentSize(data)
+            let content = try decodeUTF8(data)
+            try validateJSON(data)
+            return buildFileInfo(from: parsedCommand.url, data: data, content: content)
         } catch let error as FileManagerError {
             throw error
         } catch {
             throw FileManagerError.networkError(error.localizedDescription)
         }
+    }
+    
+    private func buildURLRequest(from parsed: ParsedCurlCommand) -> URLRequest {
+        var request = URLRequest(url: parsed.url)
+        request.httpMethod = parsed.method
+        request.allHTTPHeaderFields = parsed.headers
+        if let body = parsed.body { request.httpBody = body.data(using: .utf8) }
+        return request
+    }
+    
+    private func validateHTTPResponse(_ response: URLResponse) throws {
+        if let httpResponse = response as? HTTPURLResponse, !(200...299 ~= httpResponse.statusCode) {
+            throw FileManagerError.networkError("HTTP \(httpResponse.statusCode)")
+        }
+    }
+    
+    private func validateContentSize(_ data: Data) throws {
+        guard data.count <= maxFileSize else {
+            throw FileManagerError.fileTooLarge(Int64(data.count), maxFileSize)
+        }
+    }
+    
+    private func decodeUTF8(_ data: Data) throws -> String {
+        guard let content = String(data: data, encoding: .utf8) else {
+            throw FileManagerError.invalidJSON("Unable to decode response as UTF-8")
+        }
+        return content
+    }
+    
+    private func validateJSON(_ data: Data) throws {
+        do { _ = try JSONSerialization.jsonObject(with: data, options: []) } catch {
+            throw FileManagerError.invalidJSON("Response is not valid JSON: \(error.localizedDescription)")
+        }
+    }
+    
+    private func buildFileInfo(from url: URL, data: Data, content: String) -> FileInfo {
+        return FileInfo(
+            url: url,
+            name: "cURL Response",
+            size: Int64(data.count),
+            modifiedDate: Date(),
+            isValidJSON: true,
+            errorMessage: nil,
+            content: content
+        )
     }
     
     func parseCurlCommand(_ command: String) throws -> ParsedCurlCommand {

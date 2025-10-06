@@ -38,32 +38,32 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         print("AppDelegate: applicationDidFinishLaunching called")
+        if handleIfRunningUnderTests() { return }
+        if handleIfCLI() { return }
+        print("AppDelegate: Running in GUI mode")
+    }
 
-        // Skip GUI initialization when running tests
+    private func handleIfRunningUnderTests() -> Bool {
         if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil || NSClassFromString("XCTest") != nil {
             print("AppDelegate: Detected test environment - skipping GUI setup")
             NSApp.setActivationPolicy(.prohibited)
-            return
+            return true
         }
+        return false
+    }
 
-        // Check if we should run in CLI mode
+    private func handleIfCLI() -> Bool {
         let args = CommandLine.arguments
         let hasCLICommand = args.count > 1 && (args[1] == "format" || args[1] == "minify")
-
-        if hasCLICommand {
-            // Run CLI mode and exit
-            do {
-                let exitCode = try runCLI()
-                NSApp.terminate(nil)
-                exit(exitCode)
-            } catch {
-                print("CLI Error: \(error)")
-                NSApp.terminate(nil)
-                exit(1)
-            }
-        } else {
-            // GUI mode - the storyboard will handle window creation automatically
-            print("AppDelegate: Running in GUI mode")
+        guard hasCLICommand else { return false }
+        do {
+            let exitCode = try runCLI()
+            NSApp.terminate(nil)
+            exit(exitCode)
+        } catch {
+            print("CLI Error: \(error)")
+            NSApp.terminate(nil)
+            exit(1)
         }
     }
 
