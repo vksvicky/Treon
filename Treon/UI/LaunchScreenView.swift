@@ -11,17 +11,25 @@ struct LaunchScreenView: View {
     @State private var curlInput = ""
     
     var body: some View {
-        VStack(spacing: 40) {
-            header
-            actions
-            recentFiles
-            errorBanner
-            dragAndDropHint
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color(NSColor.controlBackgroundColor))
-        .onDrop(of: [.fileURL], isTargeted: nil) { providers in
-            handleFileDrop(providers: providers)
+        Group {
+            if fileManager.currentFile != nil {
+                // Show JSON viewer when a file is loaded
+                JSONViewerView()
+            } else {
+                // Show launch screen when no file is loaded
+                VStack(spacing: 40) {
+                    header
+                    actions
+                    recentFiles
+                    errorBanner
+                    dragAndDropHint
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color(NSColor.controlBackgroundColor))
+                .onDrop(of: [.fileURL], isTargeted: nil) { providers in
+                    handleFileDrop(providers: providers)
+                }
+            }
         }
     }
 
