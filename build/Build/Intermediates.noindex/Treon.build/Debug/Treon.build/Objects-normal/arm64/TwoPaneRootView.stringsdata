@@ -1,0 +1,40 @@
+{
+  "source": "/Users/vivek/Development/Treon/Treon/TwoPaneRootView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Treon - JSON Formatter",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 11
+        }
+      },
+      {
+        "comment": "",
+        "key": "Welcome to Treon!",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 15
+        }
+      },
+      {
+        "comment": "",
+        "key": "This is a simple test to see if the app loads correctly.",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 19
+        }
+      },
+      {
+        "comment": "",
+        "key": "Test Button",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 22
+        }
+      }
+    ]
+  },
+  "version": 1
+}

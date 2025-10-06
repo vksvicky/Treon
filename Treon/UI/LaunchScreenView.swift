@@ -1,0 +1,506 @@
+import SwiftUI
+import UniformTypeIdentifiers
+import AppKit
+
+// MARK: - Design System Constants (Deprecated - Use UIConstants instead)
+struct DesignConstants {
+    // Button Sizing
+    static let buttonWidth: CGFloat = UIConstants.buttonWidth
+    static let buttonHeight: CGFloat = UIConstants.buttonHeight
+    static let buttonCornerRadius: CGFloat = UIConstants.buttonCornerRadius
+    static let buttonSpacing: CGFloat = UIConstants.buttonSpacing
+    
+    // Typography
+    static let buttonFontSize: CGFloat = UIConstants.buttonFontSize
+    static let buttonFontWeight: Font.Weight = UIConstants.buttonFontWeight
+    
+    // Animation
+    static let hoverAnimationDuration: Double = UIConstants.hoverAnimationDuration
+}
+
+// MARK: - Custom Button Style
+struct StandardButtonStyle: ButtonStyle {
+    let backgroundColor: Color
+    let foregroundColor: Color
+    let isOutlined: Bool
+    
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: DesignConstants.buttonFontSize, weight: DesignConstants.buttonFontWeight))
+            .foregroundColor(foregroundColor)
+            .frame(width: DesignConstants.buttonWidth, height: DesignConstants.buttonHeight)
+            .background(
+                RoundedRectangle(cornerRadius: DesignConstants.buttonCornerRadius)
+                    .fill(isOutlined ? Color.clear : backgroundColor)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: DesignConstants.buttonCornerRadius)
+                            .stroke(backgroundColor, lineWidth: isOutlined ? 1 : 0)
+                    )
+            )
+            .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
+            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
+    }
+}
+
+struct LaunchScreenView: View {
+    @StateObject private var fileManager = TreonFileManager.shared
+    @State private var showingRecentFiles = false
+    @State private var showingURLInput = false
+    @State private var showingCurlInput = false
+    @State private var urlInput = ""
+    @State private var curlInput = ""
+    
+    var body: some View {
+        VStack(spacing: 40) {
+            // App Icon and Title
+            VStack(spacing: 16) {
+                Image(systemName: "doc.text.magnifyingglass")
+                    .font(.system(size: 80))
+                    .foregroundColor(.blue)
+                
+                Text("Treon")
+                    .font(.system(size: 48, weight: .light, design: .default))
+                    .foregroundColor(.primary)
+                
+                Text("JSON Formatter & Viewer")
+                    .font(.system(size: 18, weight: .regular))
+                    .foregroundColor(.secondary)
+            }
+            
+            // Action Buttons
+            VStack(spacing: 20) {
+                // Primary Actions Row
+                HStack(spacing: DesignConstants.buttonSpacing) {
+                    // Open File Button
+                    Button(action: openFile) {
+                        HStack {
+                            if fileManager.isLoading {
+                                ProgressView()
+                                    .scaleEffect(0.8)
+                            } else {
+                                Image(systemName: "folder")
+                            }
+                            Text("Open File")
+                        }
+                    }
+                    .buttonStyle(StandardButtonStyle(
+                        backgroundColor: .blue,
+                        foregroundColor: .white,
+                        isOutlined: false
+                    ))
+                    .disabled(fileManager.isLoading)
+                    
+                    // New File Button
+                    Button(action: newFile) {
+                        HStack {
+                            Image(systemName: "doc.badge.plus")
+                            Text("New File")
+                        }
+                    }
+                    .buttonStyle(StandardButtonStyle(
+                        backgroundColor: .blue,
+                        foregroundColor: .blue,
+                        isOutlined: true
+                    ))
+                    .disabled(fileManager.isLoading)
+                }
+                
+                // Secondary Actions Row
+                HStack(spacing: DesignConstants.buttonSpacing) {
+                    // New from Pasteboard Button
+                    Button(action: newFromPasteboard) {
+                        HStack {
+                            Image(systemName: "doc.on.clipboard")
+                            Text("From Pasteboard")
+                        }
+                    }
+                    .buttonStyle(StandardButtonStyle(
+                        backgroundColor: .green,
+                        foregroundColor: .green,
+                        isOutlined: true
+                    ))
+                    .disabled(fileManager.isLoading)
+                    
+                    // New from URL Button
+                    Button(action: { showingURLInput.toggle() }) {
+                        HStack {
+                            Image(systemName: "link")
+                            Text("From URL")
+                        }
+                    }
+                    .buttonStyle(StandardButtonStyle(
+                        backgroundColor: .orange,
+                        foregroundColor: .orange,
+                        isOutlined: true
+                    ))
+                    .disabled(fileManager.isLoading)
+                }
+                
+                // Third Actions Row
+                HStack(spacing: DesignConstants.buttonSpacing) {
+                    // New from cURL Button
+                    Button(action: { showingCurlInput.toggle() }) {
+                        HStack {
+                            Image(systemName: "terminal")
+                            Text("From cURL")
+                        }
+                    }
+                    .buttonStyle(StandardButtonStyle(
+                        backgroundColor: .purple,
+                        foregroundColor: .purple,
+                        isOutlined: true
+                    ))
+                    .disabled(fileManager.isLoading)
+                    
+                    // Spacer to maintain layout
+                    Spacer()
+                        .frame(width: DesignConstants.buttonWidth, height: DesignConstants.buttonHeight)
+                }
+                
+                // Fixed Input Section (always reserves space)
+                VStack(spacing: 8) {
+                    // URL Input Section
+                    if showingURLInput {
+                        VStack(spacing: 8) {
+                            HStack {
+                                TextField("Enter URL...", text: $urlInput)
+                                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                                    .frame(width: 300)
+                                
+                                Button("Load") {
+                                    loadFromURL()
+                                }
+                                .buttonStyle(.borderedProminent)
+                                .disabled(urlInput.isEmpty || fileManager.isLoading)
+                            }
+                            
+                            Button("Cancel") {
+                                showingURLInput = false
+                                urlInput = ""
+                            }
+                            .buttonStyle(.bordered)
+                        }
+                        .padding(.top, 10)
+                    } else {
+                        // Reserve space when URL input is hidden
+                        Spacer()
+                            .frame(height: showingCurlInput ? 0 : 60)
+                    }
+                    
+                    // cURL Input Section
+                    if showingCurlInput {
+                        VStack(spacing: 8) {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Enter cURL command:")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                
+                                TextField("curl -X GET https://api.example.com/data", text: $curlInput, axis: .vertical)
+                                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                                    .frame(width: 400, height: 60)
+                            }
+                            
+                            HStack {
+                                Button("Execute") {
+                                    executeCurlCommand()
+                                }
+                                .buttonStyle(.borderedProminent)
+                                .disabled(curlInput.isEmpty || fileManager.isLoading)
+                                
+                                Button("Cancel") {
+                                    showingCurlInput = false
+                                    curlInput = ""
+                                }
+                                .buttonStyle(.bordered)
+                            }
+                        }
+                        .padding(.top, 10)
+                    } else {
+                        // Reserve space when cURL input is hidden
+                        Spacer()
+                            .frame(height: showingURLInput ? 0 : 60)
+                    }
+                }
+                .frame(height: 120) // Fixed height to prevent layout shifts
+            }
+            
+            // Recent Files Section
+            if !fileManager.recentFiles.isEmpty {
+                VStack(spacing: 12) {
+                    Button(action: { showingRecentFiles.toggle() }) {
+                        HStack {
+                            Text("Recent Files")
+                                .font(.headline)
+                            Image(systemName: showingRecentFiles ? "chevron.up" : "chevron.down")
+                        }
+                        .foregroundColor(.blue)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    
+                    if showingRecentFiles {
+                        VStack(spacing: 8) {
+                            ForEach(fileManager.recentFiles.prefix(5)) { recentFile in
+                                RecentFileRow(recentFile: recentFile) {
+                                    openRecentFile(recentFile)
+                                }
+                            }
+                        }
+                        .padding(.horizontal)
+                    }
+                }
+                .padding(.top, 20)
+            }
+            
+            // Error Message
+            if let errorMessage = fileManager.errorMessage {
+                Text(errorMessage)
+                    .font(.caption)
+                    .foregroundColor(.red)
+                    .padding(.horizontal)
+                    .multilineTextAlignment(.center)
+            }
+            
+            // Drag and Drop Hint
+            VStack(spacing: 8) {
+                Text("or")
+                    .font(.system(size: 14))
+                    .foregroundColor(.secondary)
+                
+                HStack {
+                    Image(systemName: "arrow.down.circle")
+                        .foregroundColor(.secondary)
+                    Text("Drag and drop a JSON file here")
+                        .font(.system(size: 14))
+                        .foregroundColor(.secondary)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color(NSColor.controlBackgroundColor))
+        .onDrop(of: [.fileURL], isTargeted: nil) { providers in
+            handleFileDrop(providers: providers)
+        }
+    }
+    
+    private func openFile() {
+        Task {
+            do {
+                fileManager.isLoading = true
+                fileManager.clearError()
+                let fileInfo = try await fileManager.openFile()
+                fileManager.currentFile = fileInfo
+                print("Successfully opened file: \(fileInfo.name)")
+            } catch {
+                // Only show error if it's not a user cancellation
+                if let fileManagerError = error as? FileManagerError, 
+                   case .userCancelled = fileManagerError {
+                    print("User cancelled file selection")
+                } else {
+                    fileManager.setError(error)
+                    print("Error opening file: \(error.localizedDescription)")
+                }
+            }
+            fileManager.isLoading = false
+        }
+    }
+    
+    private func newFile() {
+        let fileInfo = fileManager.createNewFile()
+        fileManager.currentFile = fileInfo
+        print("Created new file: \(fileInfo.name)")
+    }
+    
+    private func openRecentFile(_ recentFile: RecentFile) {
+        Task {
+            do {
+                fileManager.isLoading = true
+                fileManager.clearError()
+                let fileInfo = try await fileManager.openFile(url: recentFile.url)
+                fileManager.currentFile = fileInfo
+                print("Successfully opened recent file: \(fileInfo.name)")
+            } catch {
+                // Only show error if it's not a user cancellation
+                if let fileManagerError = error as? FileManagerError, 
+                   case .userCancelled = fileManagerError {
+                    print("User cancelled file selection")
+                } else {
+                    fileManager.setError(error)
+                    print("Error opening recent file: \(error.localizedDescription)")
+                }
+            }
+            fileManager.isLoading = false
+        }
+    }
+    
+    private func newFromPasteboard() {
+        Task {
+            do {
+                fileManager.isLoading = true
+                fileManager.clearError()
+                
+                // Get content from pasteboard
+                let pasteboard = NSPasteboard.general
+                guard let content = pasteboard.string(forType: .string), !content.isEmpty else {
+                    fileManager.setError(FileManagerError.invalidJSON("No content found in pasteboard"))
+                    fileManager.isLoading = false
+                    return
+                }
+                
+                // Create file from pasteboard content (even if not valid JSON)
+                let fileInfo = try await fileManager.createFileFromContent(content, name: "Pasteboard Content")
+                fileManager.currentFile = fileInfo
+                
+                if fileInfo.isValidJSON {
+                    print("Successfully created JSON file from pasteboard: \(fileInfo.name)")
+                } else {
+                    print("Created file from pasteboard (not valid JSON): \(fileInfo.name)")
+                    // Don't show error for non-JSON content, just log it
+                }
+            } catch {
+                fileManager.setError(error)
+                print("Error creating file from pasteboard: \(error.localizedDescription)")
+            }
+            fileManager.isLoading = false
+        }
+    }
+    
+    private func loadFromURL() {
+        Task {
+            do {
+                fileManager.isLoading = true
+                fileManager.clearError()
+                
+                guard let url = URL(string: urlInput) else {
+                    fileManager.setError(FileManagerError.invalidJSON("Invalid URL format"))
+                    fileManager.isLoading = false
+                    return
+                }
+                
+                // Load content from URL
+                let fileInfo = try await fileManager.loadFromURL(url)
+                fileManager.currentFile = fileInfo
+                print("Successfully loaded from URL: \(fileInfo.name)")
+                
+                // Clear the input and hide the section
+                urlInput = ""
+                showingURLInput = false
+            } catch {
+                fileManager.setError(error)
+                print("Error loading from URL: \(error.localizedDescription)")
+            }
+            fileManager.isLoading = false
+        }
+    }
+    
+    private func executeCurlCommand() {
+        Task {
+            do {
+                fileManager.isLoading = true
+                fileManager.clearError()
+                
+                // Parse and execute cURL command
+                let fileInfo = try await fileManager.executeCurlCommand(curlInput)
+                fileManager.currentFile = fileInfo
+                print("Successfully executed cURL command: \(fileInfo.name)")
+                
+                // Clear the input and hide the section
+                curlInput = ""
+                showingCurlInput = false
+            } catch {
+                fileManager.setError(error)
+                print("Error executing cURL command: \(error.localizedDescription)")
+            }
+            fileManager.isLoading = false
+        }
+    }
+    
+    private func handleFileDrop(providers: [NSItemProvider]) -> Bool {
+        for provider in providers {
+            if provider.hasItemConformingToTypeIdentifier("public.file-url") {
+                provider.loadItem(forTypeIdentifier: "public.file-url", options: nil) { (item, error) in
+                    if let data = item as? Data,
+                       let url = URL(dataRepresentation: data, relativeTo: nil) {
+                        DispatchQueue.main.async {
+                            Task {
+                                do {
+                                    fileManager.isLoading = true
+                                    fileManager.clearError()
+                                    let fileInfo = try await fileManager.openFile(url: url)
+                                    fileManager.currentFile = fileInfo
+                                    print("Successfully opened dropped file: \(fileInfo.name)")
+                                } catch {
+                                    fileManager.setError(error)
+                                    print("Error opening dropped file: \(error.localizedDescription)")
+                                }
+                                fileManager.isLoading = false
+                            }
+                        }
+                    }
+                }
+                return true
+            }
+        }
+        return false
+    }
+}
+
+// MARK: - Recent File Row Component
+struct RecentFileRow: View {
+    let recentFile: RecentFile
+    let onTap: () -> Void
+    @State private var isHovering = false
+    
+    var body: some View {
+        Button(action: onTap) {
+            HStack {
+                Image(systemName: recentFile.isValidJSON ? "doc.text" : "doc.text.badge.exclamationmark")
+                    .foregroundColor(recentFile.isValidJSON ? .blue : .orange)
+                    .frame(width: 20)
+                
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(recentFile.name)
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.primary)
+                        .lineLimit(1)
+                    
+                    HStack {
+                        Text(recentFile.formattedSize)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        
+                        Text("•")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        
+                        Text(recentFile.lastOpened, style: .relative)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+                
+                Spacer()
+                
+                if !recentFile.isValidJSON {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundColor(.orange)
+                        .font(.caption)
+                }
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(isHovering ? Color.blue.opacity(0.1) : Color.clear)
+            .cornerRadius(6)
+        }
+        .buttonStyle(PlainButtonStyle())
+        .onHover { hovering in
+            withAnimation(.easeInOut(duration: 0.2)) {
+                isHovering = hovering
+            }
+        }
+    }
+}
+
+#Preview {
+    LaunchScreenView()
+        .frame(width: 600, height: 400)
+}
