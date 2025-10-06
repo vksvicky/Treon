@@ -22,7 +22,7 @@ class ErrorScenarioTests: XCTestCase {
     
     // MARK: - Test Malformed JSON
     
-    func testMalformedJSONScenarios() async throws {
+    func testOpenFile_malformedJSON_variousCases_flaggedInvalid() async throws {
         let malformedCases = [
             ("Missing closing brace", "{\"test\": \"value\""),
             ("Missing opening brace", "\"test\": \"value\"}"),
@@ -48,7 +48,7 @@ class ErrorScenarioTests: XCTestCase {
     
     // MARK: - Test File System Errors
     
-    func testFileSystemErrors() async throws {
+    func testOpenFile_fileSystemErrors_directoryAndMissing() async throws {
         // Test non-existent file
         let nonExistentURL = tempDirectory.appendingPathComponent("nonexistent.json")
         
@@ -75,7 +75,7 @@ class ErrorScenarioTests: XCTestCase {
     
     // MARK: - Test Permission Errors
     
-    func testPermissionErrors() async throws {
+    func testOpenFile_permissionReadOnly_stillReadable() async throws {
         let content = "{\"test\": \"value\"}"
         let fileURL = tempDirectory.appendingPathComponent("permission_test.json")
         try content.write(to: fileURL, atomically: true, encoding: .utf8)
@@ -93,7 +93,7 @@ class ErrorScenarioTests: XCTestCase {
     
     // MARK: - Test Network and URL Errors
     
-    func testInvalidURLs() async throws {
+    func testOpenFile_invalidURLs_throwErrors() async throws {
         let invalidURLs = [
             URL(string: "http://invalid-url-that-does-not-exist.com/file.json")!,
             URL(string: "ftp://invalid-ftp.com/file.json")!,
@@ -112,21 +112,26 @@ class ErrorScenarioTests: XCTestCase {
     
     // MARK: - Test Memory and Resource Errors
     
-    func testResourceExhaustion() async throws {
-        // Create a file that's just under the limit but with complex structure
-        let nearLimitSize = 99 * 1024 * 1024 // 99MB
-        let content = generateComplexJSON(targetSize: nearLimitSize)
+    func testOpenFile_nearLimitResourceConsumption_validUnderLimit() async throws {
+        // Create a file that's just under the configured limit with complex structure
+        // Use runtime constants to avoid exceeding validation thresholds
+        let maxBytes = FileConstants.maxFileSize
+        let slackBytes = FileConstants.sizeSlackBytes
+        // Stay well under (max + slack) to account for structure/metadata differences
+        let safetyMargin: Int64 = 8 * 1024 // 8KB
+        let targetBytes = max(0, maxBytes + slackBytes - safetyMargin)
+        let content = generateComplexJSON(targetSize: Int(targetBytes))
         let fileURL = tempDirectory.appendingPathComponent("near_limit.json")
         try content.write(to: fileURL, atomically: true, encoding: .utf8)
         
         let fileInfo = try await fileManager.openFile(url: fileURL)
         XCTAssertTrue(fileInfo.isValidJSON)
-        XCTAssertLessThan(fileInfo.size, 100 * 1024 * 1024)
+        XCTAssertLessThanOrEqual(fileInfo.size, maxBytes + slackBytes)
     }
     
     // MARK: - Test Concurrent Error Handling
     
-    func testConcurrentErrorHandling() async throws {
+    func testOpenFiles_concurrent_validAndInvalid() async throws {
         let validContent = "{\"test\": \"valid\"}"
         let invalidContent = "{\"test\": \"invalid"
         
@@ -164,7 +169,7 @@ class ErrorScenarioTests: XCTestCase {
     
     // MARK: - Test Edge Cases
     
-    func testEdgeCases() async throws {
+    func testOpenFile_edgeCases_emptyWhitespaceComments_invalid() async throws {
         // Test empty file
         let emptyURL = tempDirectory.appendingPathComponent("empty.json")
         try "".write(to: emptyURL, atomically: true, encoding: .utf8)
@@ -189,7 +194,7 @@ class ErrorScenarioTests: XCTestCase {
     
     // MARK: - Test Unicode and Encoding Errors
     
-    func testUnicodeAndEncoding() async throws {
+    func testOpenFile_unicodeAndInvalidEncoding() async throws {
         // Test valid Unicode
         let unicodeContent = "{\"emoji\": \"🚀\", \"unicode\": \"测试\", \"special\": \"café\"}"
         let unicodeURL = tempDirectory.appendingPathComponent("unicode.json")
@@ -213,7 +218,7 @@ class ErrorScenarioTests: XCTestCase {
     
     // MARK: - Test File Corruption
     
-    func testFileCorruption() async throws {
+    func testOpenFile_corruptedFile_detectsInvalid() async throws {
         let originalContent = "{\"test\": \"value\", \"number\": 42}"
         let corruptedURL = tempDirectory.appendingPathComponent("corrupted.json")
         try originalContent.write(to: corruptedURL, atomically: true, encoding: .utf8)
@@ -238,7 +243,9 @@ class ErrorScenarioTests: XCTestCase {
         
         while currentSize < targetSize {
             let key = "key_\(currentSize)"
-            let value = String(repeating: "x", count: min(1000, targetSize - currentSize - 100))
+            let remaining = targetSize - currentSize - 100
+            let repeatCount = max(0, min(1000, remaining))
+            let value = String(repeating: "x", count: repeatCount)
             
             content += "  \"\(key)\": \"\(value)\""
             currentSize += key.count + value.count + 8

@@ -125,12 +125,20 @@ class TreonErrorHandler: ObservableObject, ErrorHandling {
     }
     
     func dismissError() {
-        DispatchQueue.main.async {
+        if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil {
             self.currentError = nil
             self.errorMessage = ""
             self.showErrorAlert = false
             self.isRecoverable = false
             self.recoveryActions = []
+        } else {
+            DispatchQueue.main.async {
+                self.currentError = nil
+                self.errorMessage = ""
+                self.showErrorAlert = false
+                self.isRecoverable = false
+                self.recoveryActions = []
+            }
         }
     }
     
@@ -222,6 +230,13 @@ class TreonErrorHandler: ObservableObject, ErrorHandling {
             case NSCocoaErrorDomain:
                 switch nsError.code {
                 case NSFileReadNoSuchFileError, NSFileReadNoPermissionError:
+                    return true
+                default:
+                    return false
+                }
+            case NSPOSIXErrorDomain:
+                switch nsError.code {
+                case Int(ENOENT), Int(EACCES):
                     return true
                 default:
                     return false

@@ -18,7 +18,7 @@ final class TreonUITestsLaunchTests: XCTestCase {
     }
 
     @MainActor
-    func testLaunch() throws {
+    func testAppLaunch_takesScreenshot() throws {
         let app = XCUIApplication()
         app.launch()
 

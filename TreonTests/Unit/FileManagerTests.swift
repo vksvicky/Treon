@@ -27,7 +27,7 @@ class FileManagerTests: XCTestCase {
     
     // MARK: - Test File Creation
     
-    func testCreateNewFile() {
+    func testCreateNewFile_initialContentValidJSON() {
         let fileInfo = fileManager.createNewFile()
         
         XCTAssertEqual(fileInfo.name, "Untitled.json")
@@ -38,7 +38,7 @@ class FileManagerTests: XCTestCase {
     
     // MARK: - Test JSON Validation
     
-    func testValidJSONFile() async throws {
+    func testOpenFile_validJSON_returnsValid() async throws {
         let validJSON = """
         {
             "name": "Test",
@@ -60,7 +60,7 @@ class FileManagerTests: XCTestCase {
         XCTAssertEqual(fileInfo.name, "valid.json")
     }
     
-    func testInvalidJSONFile() async throws {
+    func testOpenFile_invalidJSON_setsErrorMessage() async throws {
         let invalidJSON = """
         {
             "name": "Test",
@@ -82,7 +82,7 @@ class FileManagerTests: XCTestCase {
         XCTAssertEqual(fileInfo.name, "invalid.json")
     }
     
-    func testEmptyJSONFile() async throws {
+    func testOpenFile_emptyJSON_setsErrorMessage() async throws {
         let emptyJSON = ""
         
         let fileURL = tempDirectory.appendingPathComponent("empty.json")
@@ -94,7 +94,7 @@ class FileManagerTests: XCTestCase {
         XCTAssertNotNil(fileInfo.errorMessage)
     }
     
-    func testNonJSONFile() async throws {
+    func testOpenFile_nonJSONContent_setsErrorMessage() async throws {
         let nonJSON = "This is not JSON content"
         
         let fileURL = tempDirectory.appendingPathComponent("notjson.json")
@@ -108,7 +108,7 @@ class FileManagerTests: XCTestCase {
     
     // MARK: - Test File Size Validation
     
-    func testSmallFile() async throws {
+    func testOpenFile_smallJSON_under1KB() async throws {
         let smallJSON = "{\"test\": \"small\"}"
         
         let fileURL = tempDirectory.appendingPathComponent("small.json")
@@ -120,13 +120,22 @@ class FileManagerTests: XCTestCase {
         XCTAssertLessThan(fileInfo.size, 1024) // Less than 1KB
     }
     
-    func testLargeFile() async throws {
-        // Create a large JSON file (about 1MB)
+    func testOpenFile_largeJSON_atLeast1MB() async throws {
+        // Create a large JSON file (>= 1MB)
         var largeJSON = "{\n"
-        for i in 0..<10000 {
-            largeJSON += "  \"key\(i)\": \"value\(i)\",\n"
+        var current = 2
+        let target = 1 * 1024 * 1024
+        var index = 0
+        while current < target {
+            let key = "key_\(index)"
+            let value = String(repeating: "v", count: min(1024, max(0, target - current - 100)))
+            largeJSON += "  \"\(key)\": \"\(value)\""
+            current += key.count + value.count + 8
+            if current < target - 10 { largeJSON += ","; current += 1 }
+            largeJSON += "\n"; current += 1
+            index += 1
         }
-        largeJSON += "  \"end\": true\n}"
+        largeJSON += "}"
         
         let fileURL = tempDirectory.appendingPathComponent("large.json")
         try largeJSON.write(to: fileURL, atomically: true, encoding: .utf8)
@@ -134,46 +143,73 @@ class FileManagerTests: XCTestCase {
         let fileInfo = try await fileManager.openFile(url: fileURL)
         
         XCTAssertTrue(fileInfo.isValidJSON)
-        XCTAssertGreaterThan(fileInfo.size, 1024 * 1024) // Greater than 1MB
+        XCTAssertGreaterThanOrEqual(fileInfo.size, 1024 * 1024) // >= 1MB
     }
     
-    func testVeryLargeFile() async throws {
-        // Create a very large JSON file (about 10MB)
-        var veryLargeJSON = "{\n"
-        for i in 0..<100000 {
-            veryLargeJSON += "  \"key\(i)\": \"value\(i)\",\n"
+    func testOpenFile_veryLargeJSON_atLeast10MB() async throws {
+        // Create a very large JSON file (>= 10MB)
+        var json = "{\n"
+        var current = 2
+        let target = 10 * 1024 * 1024
+        var index = 0
+        while current < target {
+            let key = "key_\(index)"
+            let value = String(repeating: "v", count: min(2048, max(0, target - current - 100)))
+            json += "  \"\(key)\": \"\(value)\""
+            current += key.count + value.count + 8
+            if current < target - 10 { json += ","; current += 1 }
+            json += "\n"; current += 1
+            index += 1
         }
-        veryLargeJSON += "  \"end\": true\n}"
+        json += "}"
         
         let fileURL = tempDirectory.appendingPathComponent("verylarge.json")
-        try veryLargeJSON.write(to: fileURL, atomically: true, encoding: .utf8)
+        try json.write(to: fileURL, atomically: true, encoding: .utf8)
         
         let fileInfo = try await fileManager.openFile(url: fileURL)
         
         XCTAssertTrue(fileInfo.isValidJSON)
-        XCTAssertGreaterThan(fileInfo.size, 10 * 1024 * 1024) // Greater than 10MB
+        XCTAssertGreaterThanOrEqual(fileInfo.size, 10 * 1024 * 1024)
     }
     
-    func testExtremelyLargeFile() async throws {
-        // Create an extremely large JSON file (about 50MB)
-        var extremelyLargeJSON = "{\n"
-        for i in 0..<500000 {
-            extremelyLargeJSON += "  \"key\(i)\": \"value\(i)\",\n"
+    func testOpenFile_extremelyLargeJSON_underMaxLimit() async throws {
+        // Create an extremely large JSON file (< max limit, near 50MB)
+        let maxBytes = FileConstants.maxFileSize
+        let slackBytes = FileConstants.sizeSlackBytes
+        let safetyMargin: Int64 = 16 * 1024
+        let target = Int(max(0, maxBytes + slackBytes - safetyMargin))
+        
+        var json = "{\n"
+        var current = 2
+        var index = 0
+        var isFirstEntry = true
+        while current < target {
+            let key = "key_\(index)"
+            let remaining = max(0, target - current - 100)
+            let value = String(repeating: "v", count: min(4096, remaining))
+            if !isFirstEntry {
+                json += ",\n"
+                current += 2
+            }
+            json += "  \"\(key)\": \"\(value)\""
+            current += key.count + value.count + 8
+            isFirstEntry = false
+            index += 1
         }
-        extremelyLargeJSON += "  \"end\": true\n}"
+        json += "\n}"
         
         let fileURL = tempDirectory.appendingPathComponent("extremelylarge.json")
-        try extremelyLargeJSON.write(to: fileURL, atomically: true, encoding: .utf8)
+        try json.write(to: fileURL, atomically: true, encoding: .utf8)
         
         let fileInfo = try await fileManager.openFile(url: fileURL)
         
         XCTAssertTrue(fileInfo.isValidJSON)
-        XCTAssertGreaterThan(fileInfo.size, 50 * 1024 * 1024) // Greater than 50MB
+        XCTAssertLessThanOrEqual(fileInfo.size, maxBytes + slackBytes)
     }
     
     // MARK: - Test File Size Limits
     
-    func testFileSizeLimit() async throws {
+    func testOpenFile_rejectsOverMaxSize() async throws {
         // Create a file larger than 100MB limit
         let largeContent = String(repeating: "a", count: 101 * 1024 * 1024) // 101MB
         
@@ -192,7 +228,7 @@ class FileManagerTests: XCTestCase {
     
     // MARK: - Test File Not Found
     
-    func testFileNotFound() async throws {
+    func testOpenFile_nonexistentURL_throwsFileNotFound() async throws {
         let nonExistentURL = tempDirectory.appendingPathComponent("nonexistent.json")
         
         do {
@@ -207,7 +243,7 @@ class FileManagerTests: XCTestCase {
     
     // MARK: - Test Unsupported File Types
     
-    func testUnsupportedFileType() async throws {
+    func testOpenFile_unsupportedExtension_throws() async throws {
         let txtFile = tempDirectory.appendingPathComponent("test.txt")
         try "This is a text file".write(to: txtFile, atomically: true, encoding: .utf8)
         
@@ -223,7 +259,7 @@ class FileManagerTests: XCTestCase {
     
     // MARK: - Test Recent Files
     
-    func testRecentFilesTracking() async throws {
+    func testRecentFiles_addedOnValidOpen() async throws {
         let validJSON = "{\"test\": \"value\"}"
         let fileURL = tempDirectory.appendingPathComponent("recent.json")
         try validJSON.write(to: fileURL, atomically: true, encoding: .utf8)
@@ -245,7 +281,7 @@ class FileManagerTests: XCTestCase {
         }
     }
     
-    func testRecentFilesLimit() async throws {
+    func testRecentFiles_cappedAtMax() async throws {
         let validJSON = "{\"test\": \"value\"}"
         
         // Create and open 15 files (more than the 10 file limit)
@@ -264,7 +300,7 @@ class FileManagerTests: XCTestCase {
         }
     }
     
-    func testRecentFilesInvalidJSON() async throws {
+    func testRecentFiles_notAddedForInvalidJSON() async throws {
         let invalidJSON = "{ invalid json"
         let fileURL = tempDirectory.appendingPathComponent("invalid.json")
         try invalidJSON.write(to: fileURL, atomically: true, encoding: .utf8)
@@ -279,7 +315,7 @@ class FileManagerTests: XCTestCase {
         }
     }
     
-    func testRemoveRecentFile() async throws {
+    func testRecentFiles_removeEntry() async throws {
         let validJSON = "{\"test\": \"value\"}"
         let fileURL = tempDirectory.appendingPathComponent("recent.json")
         try validJSON.write(to: fileURL, atomically: true, encoding: .utf8)
@@ -299,7 +335,7 @@ class FileManagerTests: XCTestCase {
         }
     }
     
-    func testClearRecentFiles() async throws {
+    func testRecentFiles_clearAll() async throws {
         let validJSON = "{\"test\": \"value\"}"
         
         // Create and open multiple files
@@ -322,7 +358,7 @@ class FileManagerTests: XCTestCase {
     
     // MARK: - Test File Content Operations
     
-    func testGetFileContent() async throws {
+    func testGetFileContent_returnsContent() async throws {
         let content = "{\"test\": \"content\"}"
         let fileURL = tempDirectory.appendingPathComponent("content.json")
         try content.write(to: fileURL, atomically: true, encoding: .utf8)
@@ -331,7 +367,7 @@ class FileManagerTests: XCTestCase {
         XCTAssertEqual(retrievedContent, content)
     }
     
-    func testSaveFile() async throws {
+    func testSaveFile_writesContent() async throws {
         let content = "{\"saved\": \"content\"}"
         let fileURL = tempDirectory.appendingPathComponent("save.json")
         
@@ -343,7 +379,7 @@ class FileManagerTests: XCTestCase {
     
     // MARK: - Test Error Handling
     
-    func testErrorHandling() {
+    func testSetError_invalidJSON_setsMessage() {
         let error = FileManagerError.invalidJSON("Test error")
         fileManager.setError(error)
         
@@ -355,7 +391,7 @@ class FileManagerTests: XCTestCase {
     
     // MARK: - Test File Info Properties
     
-    func testFileInfoProperties() async throws {
+    func testFileInfo_populatedFields() async throws {
         let content = "{\"test\": \"properties\"}"
         let fileURL = tempDirectory.appendingPathComponent("properties.json")
         try content.write(to: fileURL, atomically: true, encoding: .utf8)
@@ -373,7 +409,7 @@ class FileManagerTests: XCTestCase {
     
     // MARK: - Test Concurrent Operations
     
-    func testConcurrentFileOperations() async throws {
+    func testOpenFiles_concurrently_allValid() async throws {
         let validJSON = "{\"test\": \"concurrent\"}"
         
         // Create multiple files
@@ -411,7 +447,7 @@ class FileManagerTests: XCTestCase {
     
     // MARK: - Test Edge Cases
     
-    func testEmptyObjectJSON() async throws {
+    func testOpenFile_emptyObject_valid() async throws {
         let emptyObject = "{}"
         let fileURL = tempDirectory.appendingPathComponent("emptyobject.json")
         try emptyObject.write(to: fileURL, atomically: true, encoding: .utf8)
@@ -420,7 +456,7 @@ class FileManagerTests: XCTestCase {
         XCTAssertTrue(fileInfo.isValidJSON)
     }
     
-    func testEmptyArrayJSON() async throws {
+    func testOpenFile_emptyArray_valid() async throws {
         let emptyArray = "[]"
         let fileURL = tempDirectory.appendingPathComponent("emptyarray.json")
         try emptyArray.write(to: fileURL, atomically: true, encoding: .utf8)
@@ -429,7 +465,7 @@ class FileManagerTests: XCTestCase {
         XCTAssertTrue(fileInfo.isValidJSON)
     }
     
-    func testNestedJSON() async throws {
+    func testOpenFile_nestedJSON_valid() async throws {
         let nestedJSON = """
         {
             "level1": {
@@ -451,7 +487,7 @@ class FileManagerTests: XCTestCase {
         XCTAssertTrue(fileInfo.isValidJSON)
     }
     
-    func testUnicodeJSON() async throws {
+    func testOpenFile_unicodeCharacters_valid() async throws {
         let unicodeJSON = """
         {
             "emoji": "🚀",

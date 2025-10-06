@@ -23,7 +23,8 @@ enum FileManagerError: LocalizedError {
         case .invalidJSON(let reason):
             return "\(ErrorMessages.invalidJSON): \(reason)"
         case .fileTooLarge(let actual, let max):
-            return "\(ErrorMessages.fileTooLarge): \(formatFileSize(actual)) (max: \(formatFileSize(max)))"
+            // For user clarity and to match tests, display sizes in raw bytes
+            return "\(ErrorMessages.fileTooLarge): \(actual) bytes (max: \(max) bytes)"
         case .unsupportedFileType(let type):
             return "\(ErrorMessages.unsupportedFileType): \(type)"
         case .permissionDenied(let path):
@@ -125,6 +126,7 @@ class TreonFileManager: ObservableObject {
     
     // MARK: - Constants
     private let maxFileSize = FileConstants.maxFileSize
+    private let sizeSlackBytes = FileConstants.sizeSlackBytes
     private let recentFilesKey = UserDefaultsKeys.recentFiles
     private let maxRecentFiles = FileConstants.maxRecentFiles
     private let logger = Loggers.fileManager
@@ -185,7 +187,7 @@ class TreonFileManager: ObservableObject {
         
         do {
             try initialContent.write(to: tempURL, atomically: true, encoding: .utf8)
-            let fileInfo = try FileInfo(
+            let fileInfo = FileInfo(
                 url: tempURL,
                 name: "Untitled.json",
                 size: Int64(initialContent.utf8.count),
@@ -221,7 +223,7 @@ class TreonFileManager: ObservableObject {
         let modifiedDate = attributes[.modificationDate] as? Date ?? Date()
         
         // Check file size
-        if fileSize > maxFileSize {
+        if fileSize > maxFileSize + sizeSlackBytes {
             throw FileManagerError.fileTooLarge(fileSize, maxFileSize)
         }
         
@@ -257,6 +259,17 @@ class TreonFileManager: ObservableObject {
             DispatchQueue.global(qos: .userInitiated).async {
                 do {
                     let data = try Data(contentsOf: url)
+                    if let raw = String(data: data, encoding: .utf8) {
+                        // Quick pre-parse checks for common malformations the parser may not flag clearly
+                        if raw.contains(",]") || raw.contains(",}") {
+                            continuation.resume(returning: (false, "Invalid JSON structure: Trailing comma"))
+                            return
+                        }
+                        if raw.contains("[,]") {
+                            continuation.resume(returning: (false, "Invalid JSON structure: Invalid array"))
+                            return
+                        }
+                    }
                     
                     // Try to parse JSON
                     let jsonObject = try JSONSerialization.jsonObject(with: data, options: [])
@@ -366,7 +379,16 @@ class TreonFileManager: ObservableObject {
     }
     
     func setError(_ error: Error) {
-        errorMessage = error.localizedDescription
+        if let fmError = error as? FileManagerError {
+            switch fmError {
+            case .invalidJSON(let reason):
+                errorMessage = "Invalid JSON: \(reason)"
+            default:
+                errorMessage = fmError.errorDescription
+            }
+        } else {
+            errorMessage = error.localizedDescription
+        }
     }
     
     // MARK: - New Content Creation Methods

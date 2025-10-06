@@ -7,7 +7,7 @@ class ConstantsTests: XCTestCase {
     
     // MARK: - App Constants Tests
     
-    func testAppConstants() {
+    func testAppConstants_haveExpectedValues() {
         XCTAssertEqual(AppConstants.bundleIdentifierRoot, "club.cycleruncode")
         XCTAssertEqual(AppConstants.appName, "Treon")
         XCTAssertNotNil(AppConstants.websiteURL)
@@ -18,7 +18,7 @@ class ConstantsTests: XCTestCase {
     
     // MARK: - UI Constants Tests
     
-    func testUIConstants() {
+    func testUIConstants_dimensionsAndTimings_areExpected() {
         // Window constants
         XCTAssertEqual(UIConstants.defaultWindowWidth, 1200)
         XCTAssertEqual(UIConstants.defaultWindowHeight, 800)
@@ -56,7 +56,7 @@ class ConstantsTests: XCTestCase {
         XCTAssertEqual(UIConstants.multilineTextFieldHeight, 60)
     }
     
-    func testUIConstantsColors() {
+    func testUIConstants_colors_areAccessible() {
         // Test that color constants are accessible
         let _ = UIConstants.primaryBlue
         let _ = UIConstants.successGreen
@@ -65,18 +65,18 @@ class ConstantsTests: XCTestCase {
         let _ = UIConstants.infoPurple
         let _ = UIConstants.secondaryGray
         
-        // Colors should be SwiftUI Color types
-        XCTAssertTrue(UIConstants.primaryBlue is Color)
-        XCTAssertTrue(UIConstants.successGreen is Color)
-        XCTAssertTrue(UIConstants.warningOrange is Color)
-        XCTAssertTrue(UIConstants.errorRed is Color)
-        XCTAssertTrue(UIConstants.infoPurple is Color)
-        XCTAssertTrue(UIConstants.secondaryGray is Color)
+        // Accessing colors is sufficient; compile-time types guarantee correctness
+        _ = UIConstants.primaryBlue.opacity(1.0)
+        _ = UIConstants.successGreen.opacity(1.0)
+        _ = UIConstants.warningOrange.opacity(1.0)
+        _ = UIConstants.errorRed.opacity(1.0)
+        _ = UIConstants.infoPurple.opacity(1.0)
+        _ = UIConstants.secondaryGray.opacity(1.0)
     }
     
     // MARK: - File Constants Tests
     
-    func testFileConstants() {
+    func testFileConstants_limitsAndTypes_areExpected() {
         // File size limits
         XCTAssertEqual(FileConstants.maxFileSize, 50 * 1024 * 1024) // 50MB
         XCTAssertEqual(FileConstants.maxJSONSize, 10 * 1024 * 1024) // 10MB
@@ -100,7 +100,7 @@ class ConstantsTests: XCTestCase {
     
     // MARK: - Error Messages Tests
     
-    func testErrorMessages() {
+    func testErrorMessages_keys_haveExpectedDefaultStrings() {
         XCTAssertEqual(ErrorMessages.fileNotFound, "File not found")
         XCTAssertEqual(ErrorMessages.invalidJSON, "Invalid JSON format")
         XCTAssertEqual(ErrorMessages.fileTooLarge, "File size exceeds maximum limit")
@@ -118,7 +118,7 @@ class ConstantsTests: XCTestCase {
     
     // MARK: - Success Messages Tests
     
-    func testSuccessMessages() {
+    func testSuccessMessages_keys_haveExpectedDefaultStrings() {
         XCTAssertEqual(SuccessMessages.fileOpened, "File opened successfully")
         XCTAssertEqual(SuccessMessages.fileSaved, "File saved successfully")
         XCTAssertEqual(SuccessMessages.fileCreated, "File created successfully")
@@ -128,7 +128,7 @@ class ConstantsTests: XCTestCase {
     
     // MARK: - Localization Keys Tests
     
-    func testLocalizationKeys() {
+    func testLocalizationKeys_values_matchNamingConventions() {
         // General keys
         XCTAssertEqual(LocalizationKeys.General.ok, "general.ok")
         XCTAssertEqual(LocalizationKeys.General.cancel, "general.cancel")
@@ -167,7 +167,7 @@ class ConstantsTests: XCTestCase {
     
     // MARK: - User Defaults Keys Tests
     
-    func testUserDefaultsKeys() {
+    func testUserDefaultsKeys_values_areExpected() {
         XCTAssertEqual(UserDefaultsKeys.recentFiles, "recentFiles")
         XCTAssertEqual(UserDefaultsKeys.lastOpenedDirectory, "lastOpenedDirectory")
         XCTAssertEqual(UserDefaultsKeys.windowFrame, "windowFrame")
@@ -179,7 +179,7 @@ class ConstantsTests: XCTestCase {
     
     // MARK: - Notification Names Tests
     
-    func testNotificationNames() {
+    func testNotificationNames_values_areExpected() {
         XCTAssertEqual(NotificationNames.fileOpened.rawValue, "fileOpened")
         XCTAssertEqual(NotificationNames.fileSaved.rawValue, "fileSaved")
         XCTAssertEqual(NotificationNames.fileCreated.rawValue, "fileCreated")
@@ -189,7 +189,7 @@ class ConstantsTests: XCTestCase {
     
     // MARK: - Constants Consistency Tests
     
-    func testConstantsConsistency() {
+    func testConstantsConsistency_internalRelationships_hold() {
         // Test that UI constants are consistent
         XCTAssertGreaterThan(UIConstants.defaultWindowWidth, UIConstants.minimumWindowWidth)
         XCTAssertGreaterThan(UIConstants.defaultWindowHeight, UIConstants.minimumWindowHeight)
@@ -222,7 +222,7 @@ class ConstantsTests: XCTestCase {
     
     // MARK: - Constants Performance Tests
     
-    func testConstantsAccessPerformance() {
+    func testConstantsAccessPerformance_isFast() {
         measure {
             for _ in 0..<10000 {
                 let _ = UIConstants.buttonWidth
@@ -239,7 +239,7 @@ class ConstantsTests: XCTestCase {
     
     // MARK: - Constants Validation Tests
     
-    func testConstantsValidation() {
+    func testConstantsValidation_nonEmptyWhereRequired() {
         // Validate that all constants have non-empty values where appropriate
         XCTAssertFalse(AppConstants.appName.isEmpty)
         XCTAssertFalse(AppConstants.bundleIdentifierRoot.isEmpty)

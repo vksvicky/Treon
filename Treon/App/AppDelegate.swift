@@ -39,6 +39,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         print("AppDelegate: applicationDidFinishLaunching called")
 
+        // Skip GUI initialization when running tests
+        if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil || NSClassFromString("XCTest") != nil {
+            print("AppDelegate: Detected test environment - skipping GUI setup")
+            NSApp.setActivationPolicy(.prohibited)
+            return
+        }
+
         // Check if we should run in CLI mode
         let args = CommandLine.arguments
         let hasCLICommand = args.count > 1 && (args[1] == "format" || args[1] == "minify")

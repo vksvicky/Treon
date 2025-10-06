@@ -18,28 +18,20 @@ class ErrorHandlerTests: XCTestCase {
     
     // MARK: - Error Handling Tests
     
-    func testHandleFileManagerError() {
+    func testHandleError_fileManagerError_setsExpectedState() {
         let error = FileManagerError.fileNotFound("/path/to/nonexistent/file.json")
         let context = "Test file operation"
         
-        let expectation = XCTestExpectation(description: "Error handled")
-        
         errorHandler.handleError(error, context: context)
         
-        // Wait for async dispatch
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            XCTAssertNotNil(self.errorHandler.currentError)
-            XCTAssertEqual(self.errorHandler.errorMessage, "\(ErrorMessages.fileNotFound): /path/to/nonexistent/file.json")
-            XCTAssertTrue(self.errorHandler.showErrorAlert)
-            XCTAssertTrue(self.errorHandler.isRecoverable)
-            XCTAssertTrue(self.errorHandler.recoveryActions.contains(.retry))
-            expectation.fulfill()
-        }
-        
-        wait(for: [expectation], timeout: 1.0)
+        XCTAssertNotNil(errorHandler.currentError)
+        XCTAssertEqual(errorHandler.errorMessage, "\(ErrorMessages.fileNotFound): /path/to/nonexistent/file.json")
+        XCTAssertTrue(errorHandler.showErrorAlert)
+        XCTAssertTrue(errorHandler.isRecoverable)
+        XCTAssertTrue(errorHandler.recoveryActions.contains(.retry))
     }
     
-    func testHandleUserCancelledError() {
+    func testHandleError_userCancelled_setsExpectedState() {
         let error = FileManagerError.userCancelled
         let context = "File selection"
         
@@ -52,7 +44,7 @@ class ErrorHandlerTests: XCTestCase {
         XCTAssertFalse(errorHandler.recoveryActions.contains(.retry))
     }
     
-    func testHandleNetworkError() {
+    func testHandleError_network_setsExpectedState() {
         let error = FileManagerError.networkError("Connection timeout")
         let context = "URL loading"
         
@@ -66,7 +58,7 @@ class ErrorHandlerTests: XCTestCase {
         XCTAssertTrue(errorHandler.recoveryActions.contains(.contactSupport))
     }
     
-    func testHandlePermissionDeniedError() {
+    func testHandleError_permissionDenied_setsExpectedState() {
         let error = FileManagerError.permissionDenied("/protected/file.json")
         let context = "File access"
         
@@ -80,7 +72,7 @@ class ErrorHandlerTests: XCTestCase {
         XCTAssertTrue(errorHandler.recoveryActions.contains(.openSettings))
     }
     
-    func testHandleFileTooLargeError() {
+    func testHandleError_fileTooLarge_setsExpectedState() {
         let error = FileManagerError.fileTooLarge(100_000_000, 50_000_000)
         let context = "File validation"
         
@@ -93,7 +85,7 @@ class ErrorHandlerTests: XCTestCase {
         XCTAssertFalse(errorHandler.recoveryActions.contains(.retry))
     }
     
-    func testHandleInvalidJSONError() {
+    func testHandleError_invalidJSON_setsExpectedState() {
         let error = FileManagerError.invalidJSON("Unexpected character at line 5")
         let context = "JSON parsing"
         
@@ -106,7 +98,7 @@ class ErrorHandlerTests: XCTestCase {
         XCTAssertFalse(errorHandler.recoveryActions.contains(.retry))
     }
     
-    func testHandleUnknownError() {
+    func testHandleError_unknown_setsExpectedState() {
         let error = FileManagerError.unknownError("Something went wrong")
         let context = "Unknown operation"
         
@@ -122,7 +114,7 @@ class ErrorHandlerTests: XCTestCase {
     
     // MARK: - System Error Tests
     
-    func testHandleCocoaError() {
+    func testHandleError_cocoa_setsExpectedState() {
         let error = NSError(domain: NSCocoaErrorDomain, code: NSFileReadNoSuchFileError, userInfo: [
             NSLocalizedDescriptionKey: "The file doesn't exist."
         ])
@@ -136,7 +128,7 @@ class ErrorHandlerTests: XCTestCase {
         XCTAssertTrue(errorHandler.isRecoverable)
     }
     
-    func testHandleURLError() {
+    func testHandleError_url_setsExpectedState() {
         let error = NSError(domain: NSURLErrorDomain, code: NSURLErrorNotConnectedToInternet, userInfo: [
             NSLocalizedDescriptionKey: "The Internet connection appears to be offline."
         ])
@@ -150,7 +142,7 @@ class ErrorHandlerTests: XCTestCase {
         XCTAssertTrue(errorHandler.isRecoverable)
     }
     
-    func testHandlePOSIXError() {
+    func testHandleError_posix_setsExpectedState() {
         let error = NSError(domain: NSPOSIXErrorDomain, code: Int(ENOENT), userInfo: [
             NSLocalizedDescriptionKey: "No such file or directory"
         ])
@@ -166,7 +158,7 @@ class ErrorHandlerTests: XCTestCase {
     
     // MARK: - Error Recovery Tests
     
-    func testDismissError() {
+    func testDismissError_clearsState() {
         let error = FileManagerError.fileNotFound("/test/file.json")
         errorHandler.handleError(error, context: "Test")
         
@@ -182,7 +174,7 @@ class ErrorHandlerTests: XCTestCase {
         XCTAssertTrue(errorHandler.recoveryActions.isEmpty)
     }
     
-    func testRecoveryActionsForDifferentErrors() {
+    func testRecoveryActions_varyByErrorType() {
         // Test retry action for recoverable errors
         let recoverableError = FileManagerError.networkError("Timeout")
         errorHandler.handleError(recoverableError, context: "Test")
@@ -206,7 +198,7 @@ class ErrorHandlerTests: XCTestCase {
     
     // MARK: - Error Message Tests
     
-    func testUserFriendlyErrorMessage() {
+    func testErrorMessage_userFriendly_forVariousErrors() {
         let testCases: [(Error, String)] = [
             (FileManagerError.fileNotFound("/test"), "\(ErrorMessages.fileNotFound): /test"),
             (FileManagerError.invalidJSON("Parse error"), "\(ErrorMessages.invalidJSON): Parse error"),
@@ -228,7 +220,7 @@ class ErrorHandlerTests: XCTestCase {
     
     // MARK: - Error Context Tests
     
-    func testErrorContextLogging() {
+    func testErrorContext_loggingSupported() {
         let error = FileManagerError.fileNotFound("/test/file.json")
         let context = "Test operation"
         
@@ -242,7 +234,7 @@ class ErrorHandlerTests: XCTestCase {
     
     // MARK: - Notification Tests
     
-    func testErrorNotification() {
+    func testErrorNotification_isPosted() {
         let expectation = XCTestExpectation(description: "Error notification posted")
         
         let observer = NotificationCenter.default.addObserver(
@@ -264,7 +256,7 @@ class ErrorHandlerTests: XCTestCase {
     
     // MARK: - Error Handler Integration Tests
     
-    func testErrorHandlerWithMultipleErrors() {
+    func testErrorHandler_handlesMultipleErrorsSequentially() {
         let errors: [Error] = [
             FileManagerError.fileNotFound("/test1.json"),
             FileManagerError.networkError("Timeout"),
@@ -290,7 +282,7 @@ class ErrorHandlerTests: XCTestCase {
     
     // MARK: - Performance Tests
     
-    func testErrorHandlingPerformance() {
+    func testErrorHandling_performanceIsAcceptable() {
         measure {
             for i in 0..<1000 {
                 let error = FileManagerError.unknownError("Test error \(i)")

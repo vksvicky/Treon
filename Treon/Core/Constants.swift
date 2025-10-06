@@ -80,6 +80,7 @@ public enum UIConstants {
 public enum FileConstants {
     // File Size Limits
     public static let maxFileSize: Int64 = 50 * 1024 * 1024 // 50MB
+    public static let sizeSlackBytes: Int64 = 2 * 1024 // allow small overhead (~2KB)
     public static let maxJSONSize: Int64 = 10 * 1024 * 1024 // 10MB
     public static let maxRecentFiles: Int = 10
     

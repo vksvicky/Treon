@@ -27,7 +27,7 @@ class LargeFileTests: XCTestCase {
     
     // MARK: - Test Different File Sizes
     
-    func test1KBFile() async throws {
+    func testOpensValidJSON_approximately1KB() async throws {
         let content = generateJSONContent(targetSize: 1024) // 1KB
         let fileURL = tempDirectory.appendingPathComponent("1kb.json")
         try content.write(to: fileURL, atomically: true, encoding: .utf8)
@@ -43,7 +43,7 @@ class LargeFileTests: XCTestCase {
         print("1KB file processed in \(timeElapsed)s")
     }
     
-    func test10KBFile() async throws {
+    func testOpensValidJSON_approximately10KB() async throws {
         let content = generateJSONContent(targetSize: 10 * 1024) // 10KB
         let fileURL = tempDirectory.appendingPathComponent("10kb.json")
         try content.write(to: fileURL, atomically: true, encoding: .utf8)
@@ -59,7 +59,7 @@ class LargeFileTests: XCTestCase {
         print("10KB file processed in \(timeElapsed)s")
     }
     
-    func test100KBFile() async throws {
+    func testOpensValidJSON_approximately100KB() async throws {
         let content = generateJSONContent(targetSize: 100 * 1024) // 100KB
         let fileURL = tempDirectory.appendingPathComponent("100kb.json")
         try content.write(to: fileURL, atomically: true, encoding: .utf8)
@@ -75,7 +75,7 @@ class LargeFileTests: XCTestCase {
         print("100KB file processed in \(timeElapsed)s")
     }
     
-    func test1MBFile() async throws {
+    func testOpensValidJSON_approximately1MB() async throws {
         let content = generateJSONContent(targetSize: 1024 * 1024) // 1MB
         let fileURL = tempDirectory.appendingPathComponent("1mb.json")
         try content.write(to: fileURL, atomically: true, encoding: .utf8)
@@ -91,7 +91,7 @@ class LargeFileTests: XCTestCase {
         print("1MB file processed in \(timeElapsed)s")
     }
     
-    func test10MBFile() async throws {
+    func testOpensValidJSON_approximately10MB() async throws {
         let content = generateJSONContent(targetSize: 10 * 1024 * 1024) // 10MB
         let fileURL = tempDirectory.appendingPathComponent("10mb.json")
         try content.write(to: fileURL, atomically: true, encoding: .utf8)
@@ -107,7 +107,7 @@ class LargeFileTests: XCTestCase {
         print("10MB file processed in \(timeElapsed)s")
     }
     
-    func test50MBFile() async throws {
+    func testOpensValidJSON_approximately50MB_underLimit() async throws {
         let content = generateJSONContent(targetSize: 50 * 1024 * 1024) // 50MB
         let fileURL = tempDirectory.appendingPathComponent("50mb.json")
         try content.write(to: fileURL, atomically: true, encoding: .utf8)
@@ -123,25 +123,25 @@ class LargeFileTests: XCTestCase {
         print("50MB file processed in \(timeElapsed)s")
     }
     
-    func test100MBFile() async throws {
-        let content = generateJSONContent(targetSize: 100 * 1024 * 1024) // 100MB
+    func testRejectsFileSize_over50MBLimit_with100MB() async throws {
+        // With app limit at 50MB (+slack), 100MB should be rejected
+        let content = generateJSONContent(targetSize: 100 * 1024 * 1024)
         let fileURL = tempDirectory.appendingPathComponent("100mb.json")
         try content.write(to: fileURL, atomically: true, encoding: .utf8)
         
-        let startTime = CFAbsoluteTimeGetCurrent()
-        let fileInfo = try await fileManager.openFile(url: fileURL)
-        let timeElapsed = CFAbsoluteTimeGetCurrent() - startTime
-        
-        XCTAssertTrue(fileInfo.isValidJSON)
-        XCTAssertEqual(fileInfo.name, "100mb.json")
-        XCTAssertLessThan(fileInfo.size, 200 * 1024 * 1024) // Should be around 100MB
-        XCTAssertLessThan(timeElapsed, 60.0) // Should be reasonably fast
-        print("100MB file processed in \(timeElapsed)s")
+        do {
+            _ = try await fileManager.openFile(url: fileURL)
+            XCTFail("Should have thrown file too large error for 100MB file")
+        } catch FileManagerError.fileTooLarge {
+            // Expected
+        } catch {
+            XCTFail("Unexpected error: \(error)")
+        }
     }
     
     // MARK: - Test File Size Limit
     
-    func test51MBFileExceedsLimit() async throws {
+    func testRejectsFileSize_overLimit_51MB() async throws {
         let content = generateJSONContent(targetSize: 51 * 1024 * 1024) // 51MB (exceeds 50MB limit)
         let fileURL = tempDirectory.appendingPathComponent("51mb.json")
         try content.write(to: fileURL, atomically: true, encoding: .utf8)
@@ -159,7 +159,7 @@ class LargeFileTests: XCTestCase {
     
     // MARK: - Test Memory Usage
     
-    func testMemoryUsageWithLargeFiles() async throws {
+    func testMemoryUsage_remainsReasonable_acrossSizes() async throws {
         let sizes = [1024, 1024 * 1024, 10 * 1024 * 1024, 50 * 1024 * 1024] // 1KB, 1MB, 10MB, 50MB
         
         for size in sizes {
@@ -181,7 +181,7 @@ class LargeFileTests: XCTestCase {
     
     // MARK: - Test Concurrent Large File Operations
     
-    func testConcurrentLargeFileOperations() async throws {
+    func testConcurrentOpen_validAcrossSizes() async throws {
         let sizes = [1024, 10 * 1024, 100 * 1024, 1024 * 1024] // 1KB, 10KB, 100KB, 1MB
         
         // Create files concurrently
@@ -221,7 +221,7 @@ class LargeFileTests: XCTestCase {
     
     // MARK: - Test Different JSON Structures
     
-    func testLargeArrayJSON() async throws {
+    func testParsesLargeArrayJSON_quickly() async throws {
         let arraySize = 100000 // 100k elements
         var jsonContent = "[\n"
         
@@ -252,7 +252,7 @@ class LargeFileTests: XCTestCase {
         print("Large array JSON processed in \(timeElapsed)s")
     }
     
-    func testLargeObjectJSON() async throws {
+    func testParsesLargeObjectJSON_quickly() async throws {
         let objectCount = 10000 // 10k objects
         var jsonContent = "{\n"
         
@@ -294,28 +294,30 @@ class LargeFileTests: XCTestCase {
         var currentSize = 2 // Start with "{\n"
         
         let keyTemplate = "key_"
-        let valueTemplate = "This is a sample value with some additional text to make it longer and more realistic for testing purposes. "
+        let baseValue = "This is a sample value with some additional text to make it longer and more realistic for testing purposes. "
         
         var keyIndex = 0
+        var isFirstEntry = true
         
         while currentSize < targetSize {
             let key = "\(keyTemplate)\(keyIndex)"
-            let value = "\(valueTemplate)\(keyIndex)"
+            // Estimate remaining space and size a value that fits without forcing a trailing comma
+            let remaining = max(0, targetSize - currentSize - 100)
+            let repeatCount = max(1, min(8, remaining / max(1, baseValue.count)))
+            let value = String(repeating: baseValue, count: repeatCount) + "\(keyIndex)"
             
-            content += "  \"\(key)\": \"\(value)\""
-            currentSize += key.count + value.count + 8 // Account for quotes, colon, spaces
-            
-            if currentSize < targetSize - 10 { // Leave room for closing brace
-                content += ","
-                currentSize += 1
+            if !isFirstEntry {
+                content += ",\n"
+                currentSize += 2
             }
-            content += "\n"
-            currentSize += 1
+            content += "  \"\(key)\": \"\(value)\""
+            currentSize += key.count + value.count + 8
             
+            isFirstEntry = false
             keyIndex += 1
         }
         
-        content += "}"
+        content += "\n}"
         return content
     }
 }
