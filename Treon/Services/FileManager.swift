@@ -49,22 +49,22 @@ enum FileManagerError: LocalizedError {
 
 // MARK: - File Info
 struct FileInfo {
-    let url: URL?
-    let name: String
-    let size: Int64
-    let modifiedDate: Date
-    let isValidJSON: Bool
-    let errorMessage: String?
-    let content: String?
+    nonisolated let url: URL?
+    nonisolated let name: String
+    nonisolated let size: Int64
+    nonisolated let modifiedDate: Date
+    nonisolated let isValidJSON: Bool
+    nonisolated let errorMessage: String?
+    nonisolated let content: String?
     
-    var formattedSize: String {
+    nonisolated var formattedSize: String {
         let formatter = ByteCountFormatter()
         formatter.allowedUnits = [.useBytes, .useKB, .useMB, .useGB]
         formatter.countStyle = .file
         return formatter.string(fromByteCount: size)
     }
     
-    var formattedModifiedDate: String {
+    nonisolated var formattedModifiedDate: String {
         let formatter = DateFormatter()
         formatter.dateStyle = .medium
         formatter.timeStyle = .short
@@ -74,14 +74,14 @@ struct FileInfo {
 
 // MARK: - Recent File
 struct RecentFile: Codable, Identifiable {
-    let id = UUID()
-    let url: URL
-    let name: String
-    let lastOpened: Date
-    let size: Int64
-    let isValidJSON: Bool
+    nonisolated let id = UUID()
+    nonisolated let url: URL
+    nonisolated let name: String
+    nonisolated let lastOpened: Date
+    nonisolated let size: Int64
+    nonisolated let isValidJSON: Bool
     
-    var formattedSize: String {
+    nonisolated var formattedSize: String {
         let formatter = ByteCountFormatter()
         formatter.allowedUnits = [.useBytes, .useKB, .useMB, .useGB]
         formatter.countStyle = .file

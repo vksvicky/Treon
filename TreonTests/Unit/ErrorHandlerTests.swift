@@ -22,13 +22,21 @@ class ErrorHandlerTests: XCTestCase {
         let error = FileManagerError.fileNotFound("/path/to/nonexistent/file.json")
         let context = "Test file operation"
         
+        let expectation = XCTestExpectation(description: "Error handled")
+        
         errorHandler.handleError(error, context: context)
         
-        XCTAssertNotNil(errorHandler.currentError)
-        XCTAssertEqual(errorHandler.errorMessage, "\(ErrorMessages.fileNotFound): /path/to/nonexistent/file.json")
-        XCTAssertTrue(errorHandler.showErrorAlert)
-        XCTAssertTrue(errorHandler.isRecoverable)
-        XCTAssertTrue(errorHandler.recoveryActions.contains(.retry))
+        // Wait for async dispatch
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            XCTAssertNotNil(self.errorHandler.currentError)
+            XCTAssertEqual(self.errorHandler.errorMessage, "\(ErrorMessages.fileNotFound): /path/to/nonexistent/file.json")
+            XCTAssertTrue(self.errorHandler.showErrorAlert)
+            XCTAssertTrue(self.errorHandler.isRecoverable)
+            XCTAssertTrue(self.errorHandler.recoveryActions.contains(.retry))
+            expectation.fulfill()
+        }
+        
+        wait(for: [expectation], timeout: 1.0)
     }
     
     func testHandleUserCancelledError() {

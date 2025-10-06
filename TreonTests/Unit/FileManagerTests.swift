@@ -229,16 +229,20 @@ class FileManagerTests: XCTestCase {
         try validJSON.write(to: fileURL, atomically: true, encoding: .utf8)
         
         // Initially no recent files
-        XCTAssertTrue(fileManager.recentFiles.isEmpty)
+        await MainActor.run {
+            XCTAssertTrue(fileManager.recentFiles.isEmpty)
+        }
         
         // Open file
         let fileInfo = try await fileManager.openFile(url: fileURL)
         XCTAssertTrue(fileInfo.isValidJSON)
         
         // Should be added to recent files
-        XCTAssertEqual(fileManager.recentFiles.count, 1)
-        XCTAssertEqual(fileManager.recentFiles.first?.name, "recent.json")
-        XCTAssertTrue(fileManager.recentFiles.first?.isValidJSON ?? false)
+        await MainActor.run {
+            XCTAssertEqual(fileManager.recentFiles.count, 1)
+            XCTAssertEqual(fileManager.recentFiles.first?.name, "recent.json")
+            XCTAssertTrue(fileManager.recentFiles.first?.isValidJSON ?? false)
+        }
     }
     
     func testRecentFilesLimit() async throws {
@@ -252,10 +256,12 @@ class FileManagerTests: XCTestCase {
         }
         
         // Should only keep 10 recent files
-        XCTAssertEqual(fileManager.recentFiles.count, 10)
-        
-        // Most recent should be file14.json
-        XCTAssertEqual(fileManager.recentFiles.first?.name, "file14.json")
+        await MainActor.run {
+            XCTAssertEqual(fileManager.recentFiles.count, 10)
+            
+            // Most recent should be file14.json
+            XCTAssertEqual(fileManager.recentFiles.first?.name, "file14.json")
+        }
     }
     
     func testRecentFilesInvalidJSON() async throws {
@@ -268,7 +274,9 @@ class FileManagerTests: XCTestCase {
         XCTAssertFalse(fileInfo.isValidJSON)
         
         // Should not be added to recent files
-        XCTAssertTrue(fileManager.recentFiles.isEmpty)
+        await MainActor.run {
+            XCTAssertTrue(fileManager.recentFiles.isEmpty)
+        }
     }
     
     func testRemoveRecentFile() async throws {
@@ -278,12 +286,16 @@ class FileManagerTests: XCTestCase {
         
         // Open file
         _ = try await fileManager.openFile(url: fileURL)
-        XCTAssertEqual(fileManager.recentFiles.count, 1)
+        await MainActor.run {
+            XCTAssertEqual(fileManager.recentFiles.count, 1)
+        }
         
         // Remove from recent files
-        if let recentFile = fileManager.recentFiles.first {
-            fileManager.removeRecentFile(recentFile)
-            XCTAssertTrue(fileManager.recentFiles.isEmpty)
+        await MainActor.run {
+            if let recentFile = fileManager.recentFiles.first {
+                fileManager.removeRecentFile(recentFile)
+                XCTAssertTrue(fileManager.recentFiles.isEmpty)
+            }
         }
     }
     
@@ -297,11 +309,15 @@ class FileManagerTests: XCTestCase {
             _ = try await fileManager.openFile(url: fileURL)
         }
         
-        XCTAssertEqual(fileManager.recentFiles.count, 5)
+        await MainActor.run {
+            XCTAssertEqual(fileManager.recentFiles.count, 5)
+        }
         
         // Clear all recent files
-        fileManager.clearRecentFiles()
-        XCTAssertTrue(fileManager.recentFiles.isEmpty)
+        await MainActor.run {
+            fileManager.clearRecentFiles()
+            XCTAssertTrue(fileManager.recentFiles.isEmpty)
+        }
     }
     
     // MARK: - Test File Content Operations
