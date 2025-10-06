@@ -303,34 +303,32 @@ struct LaunchScreenView: View {
     }
     
     private func handleFileDrop(providers: [NSItemProvider]) -> Bool {
-        for provider in providers where provider.hasItemConformingToTypeIdentifier("public.file-url") {
-            loadDroppedItem(from: provider)
-            return true
+        for provider in providers {
+            if provider.hasItemConformingToTypeIdentifier("public.file-url") {
+                provider.loadItem(forTypeIdentifier: "public.file-url", options: nil) { (item, error) in
+                    if let data = item as? Data,
+                       let url = URL(dataRepresentation: data, relativeTo: nil) {
+                        DispatchQueue.main.async {
+                            Task {
+                                do {
+                                    fileManager.isLoading = true
+                                    fileManager.clearError()
+                                    let fileInfo = try await fileManager.openFile(url: url)
+                                    fileManager.currentFile = fileInfo
+                                    print("Successfully opened dropped file: \(fileInfo.name)")
+                                } catch {
+                                    fileManager.setError(error)
+                                    print("Error opening dropped file: \(error.localizedDescription)")
+                                }
+                                fileManager.isLoading = false
+                            }
+                        }
+                    }
+                }
+                return true
+            }
         }
         return false
-    }
-
-    private func loadDroppedItem(from provider: NSItemProvider) {
-        provider.loadItem(forTypeIdentifier: "public.file-url", options: nil) { (item, _) in
-            guard let data = item as? Data, let url = URL(dataRepresentation: data, relativeTo: nil) else { return }
-            DispatchQueue.main.async { self.openDroppedURL(url) }
-        }
-    }
-
-    private func openDroppedURL(_ url: URL) {
-        Task {
-            do {
-                fileManager.isLoading = true
-                fileManager.clearError()
-                let fileInfo = try await fileManager.openFile(url: url)
-                fileManager.currentFile = fileInfo
-                print("Successfully opened dropped file: \(fileInfo.name)")
-            } catch {
-                fileManager.setError(error)
-                print("Error opening dropped file: \(error.localizedDescription)")
-            }
-            fileManager.isLoading = false
-        }
     }
 }
 

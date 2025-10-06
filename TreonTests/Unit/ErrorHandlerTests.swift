@@ -256,7 +256,7 @@ class ErrorHandlerTests: XCTestCase {
     
     // MARK: - Error Handler Integration Tests
     
-    func testErrorHandler_handlesMultipleErrorsSequentially_part1() {
+    func testErrorHandler_handlesMultipleErrorsSequentially() {
         let errors: [Error] = [
             FileManagerError.fileNotFound("/test1.json"),
             FileManagerError.networkError("Timeout"),
@@ -276,19 +276,6 @@ class ErrorHandlerTests: XCTestCase {
                 XCTAssertEqual(fileManagerError, currentError)
             }
             
-            errorHandler.dismissError()
-        }
-    }
-
-    func testErrorHandler_handlesMultipleErrorsSequentially_part2() {
-        let errors: [Error] = [
-            FileManagerError.permissionDenied("/path"),
-            FileManagerError.unknownError("Unknown"),
-        ]
-        for (index, error) in errors.enumerated() {
-            errorHandler.handleError(error, context: "Test2 \(index)")
-            XCTAssertNotNil(errorHandler.currentError)
-            XCTAssertTrue(errorHandler.showErrorAlert)
             errorHandler.dismissError()
         }
     }

@@ -48,24 +48,39 @@ class TreonErrorHandler: ObservableObject, ErrorHandling {
     
     func handleError(_ error: Error, context: String? = nil) {
         logError(error, context: context)
-        if isRunningTests() {
-            applyErrorSync(error, context: context)
+        
+        // Use synchronous dispatch for testing, async for production
+        if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil {
+            // Running in tests - use synchronous dispatch
+            currentError = error
+            errorMessage = getUserFriendlyMessage(for: error)
+            isRecoverable = isErrorRecoverable(error)
+            recoveryActions = getRecoveryActions(for: error)
+            showErrorAlert = true
+            
+            // Post notification for other parts of the app
+            NotificationCenter.default.post(
+                name: NotificationNames.errorOccurred,
+                object: error,
+                userInfo: ["context": context ?? "Unknown"]
+            )
         } else {
-            DispatchQueue.main.async { self.applyErrorSync(error, context: context) }
+            // Production - use async dispatch
+            DispatchQueue.main.async {
+                self.currentError = error
+                self.errorMessage = self.getUserFriendlyMessage(for: error)
+                self.isRecoverable = self.isErrorRecoverable(error)
+                self.recoveryActions = self.getRecoveryActions(for: error)
+                self.showErrorAlert = true
+                
+                // Post notification for other parts of the app
+                NotificationCenter.default.post(
+                    name: NotificationNames.errorOccurred,
+                    object: error,
+                    userInfo: ["context": context ?? "Unknown"]
+                )
+            }
         }
-    }
-
-    private func isRunningTests() -> Bool {
-        ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
-    }
-
-    private func applyErrorSync(_ error: Error, context: String?) {
-        currentError = error
-        errorMessage = getUserFriendlyMessage(for: error)
-        isRecoverable = isErrorRecoverable(error)
-        recoveryActions = getRecoveryActions(for: error)
-        showErrorAlert = true
-        NotificationCenter.default.post(name: NotificationNames.errorOccurred, object: error, userInfo: ["context": context ?? "Unknown"])
     }
     
     func showErrorAlert(_ error: Error, context: String? = nil) {
@@ -197,56 +212,62 @@ class TreonErrorHandler: ObservableObject, ErrorHandling {
     }
     
     private func isErrorRecoverable(_ error: Error) -> Bool {
-        if let fm = error as? FileManagerError { return isRecoverable(fileManagerError: fm) }
-        if let ns = error as NSError? { return isRecoverable(nsError: ns) }
+        if let fileManagerError = error as? FileManagerError {
+            switch fileManagerError {
+            case .fileNotFound, .permissionDenied, .networkError:
+                return true
+            case .userCancelled, .invalidJSON, .fileTooLarge, .unsupportedFileType, .corruptedFile:
+                return false
+            case .unknownError:
+                return true
+            }
+        }
+        
+        if let nsError = error as NSError? {
+            switch nsError.domain {
+            case NSURLErrorDomain:
+                return true // Network errors are usually recoverable
+            case NSCocoaErrorDomain:
+                switch nsError.code {
+                case NSFileReadNoSuchFileError, NSFileReadNoPermissionError:
+                    return true
+                default:
+                    return false
+                }
+            case NSPOSIXErrorDomain:
+                switch nsError.code {
+                case Int(ENOENT), Int(EACCES):
+                    return true
+                default:
+                    return false
+                }
+            default:
+                return false
+            }
+        }
+        
         return false
     }
     
-    private func isRecoverable(fileManagerError: FileManagerError) -> Bool {
-        switch fileManagerError {
-        case .fileNotFound, .permissionDenied, .networkError, .unknownError:
-            return true
-        case .userCancelled, .invalidJSON, .fileTooLarge, .unsupportedFileType, .corruptedFile:
-            return false
-        }
-    }
-    
-    private func isRecoverable(nsError: NSError) -> Bool {
-        switch nsError.domain {
-        case NSURLErrorDomain:
-            return true
-        case NSCocoaErrorDomain:
-            switch nsError.code { case NSFileReadNoSuchFileError, NSFileReadNoPermissionError: return true; default: return false }
-        case NSPOSIXErrorDomain:
-            switch nsError.code { case Int(ENOENT), Int(EACCES): return true; default: return false }
-        default:
-            return false
-        }
-    }
-    
     private func getRecoveryActions(for error: Error) -> [ErrorRecoveryAction] {
-        var actions = baseActions(for: error)
-        if let fm = error as? FileManagerError { actions = augment(actions, for: fm) }
-        return actions
-    }
-    
-    private func baseActions(for error: Error) -> [ErrorRecoveryAction] {
         var actions: [ErrorRecoveryAction] = [.cancel]
-        if isErrorRecoverable(error) { actions.insert(.retry, at: 0) }
-        return actions
-    }
-    
-    private func augment(_ actions: [ErrorRecoveryAction], for fmError: FileManagerError) -> [ErrorRecoveryAction] {
-        var out = actions
-        switch fmError {
-        case .permissionDenied:
-            out.append(.openSettings)
-        case .networkError, .unknownError:
-            out.append(.contactSupport)
-        default:
-            break
+        
+        if isErrorRecoverable(error) {
+            actions.insert(.retry, at: 0)
         }
-        return out
+        
+        if let fileManagerError = error as? FileManagerError {
+            switch fileManagerError {
+            case .permissionDenied:
+                actions.append(.openSettings)
+            case .networkError, .unknownError:
+                actions.append(.contactSupport)
+            default:
+                break
+            }
+        }
+        
+        return actions
     }
     
     private func retryLastOperation() {
