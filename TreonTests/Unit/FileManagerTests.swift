@@ -174,8 +174,8 @@ class FileManagerTests: XCTestCase {
     
     func testOpenFile_extremelyLargeJSON_underMaxLimit() async throws {
         // Create an extremely large JSON file (< max limit, near 50MB)
-        let maxBytes = FileConstants.maxFileSize
-        let slackBytes = FileConstants.sizeSlackBytes
+        let maxBytes = TreonFileManager.shared.maxFileSize
+        let slackBytes = TreonFileManager.shared.sizeSlackBytes
         let safetyMargin: Int64 = 16 * 1024
         let target = Int(max(0, maxBytes + slackBytes - safetyMargin))
         

@@ -43,7 +43,7 @@ final class SmokeTests: XCTestCase {
     
     func testOpenFile_rejectsTooLargeFile() async throws {
         // Create a file that exceeds configured limit by at least 1 byte
-        let overLimitBytes = Int(FileConstants.maxFileSize + FileConstants.sizeSlackBytes + 1)
+        let overLimitBytes = Int(TreonFileManager.shared.maxFileSize + TreonFileManager.shared.sizeSlackBytes + 1)
         let largeContent = String(repeating: "a", count: overLimitBytes)
         let url = tempDirectory.appendingPathComponent("toolarge.json")
         try largeContent.write(to: url, atomically: true, encoding: .utf8)
