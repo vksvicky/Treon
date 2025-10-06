@@ -197,62 +197,56 @@ class TreonErrorHandler: ObservableObject, ErrorHandling {
     }
     
     private func isErrorRecoverable(_ error: Error) -> Bool {
-        if let fileManagerError = error as? FileManagerError {
-            switch fileManagerError {
-            case .fileNotFound, .permissionDenied, .networkError:
-                return true
-            case .userCancelled, .invalidJSON, .fileTooLarge, .unsupportedFileType, .corruptedFile:
-                return false
-            case .unknownError:
-                return true
-            }
-        }
-        
-        if let nsError = error as NSError? {
-            switch nsError.domain {
-            case NSURLErrorDomain:
-                return true // Network errors are usually recoverable
-            case NSCocoaErrorDomain:
-                switch nsError.code {
-                case NSFileReadNoSuchFileError, NSFileReadNoPermissionError:
-                    return true
-                default:
-                    return false
-                }
-            case NSPOSIXErrorDomain:
-                switch nsError.code {
-                case Int(ENOENT), Int(EACCES):
-                    return true
-                default:
-                    return false
-                }
-            default:
-                return false
-            }
-        }
-        
+        if let fm = error as? FileManagerError { return isRecoverable(fileManagerError: fm) }
+        if let ns = error as NSError? { return isRecoverable(nsError: ns) }
         return false
     }
     
+    private func isRecoverable(fileManagerError: FileManagerError) -> Bool {
+        switch fileManagerError {
+        case .fileNotFound, .permissionDenied, .networkError, .unknownError:
+            return true
+        case .userCancelled, .invalidJSON, .fileTooLarge, .unsupportedFileType, .corruptedFile:
+            return false
+        }
+    }
+    
+    private func isRecoverable(nsError: NSError) -> Bool {
+        switch nsError.domain {
+        case NSURLErrorDomain:
+            return true
+        case NSCocoaErrorDomain:
+            switch nsError.code { case NSFileReadNoSuchFileError, NSFileReadNoPermissionError: return true; default: return false }
+        case NSPOSIXErrorDomain:
+            switch nsError.code { case Int(ENOENT), Int(EACCES): return true; default: return false }
+        default:
+            return false
+        }
+    }
+    
     private func getRecoveryActions(for error: Error) -> [ErrorRecoveryAction] {
-        var actions: [ErrorRecoveryAction] = [.cancel]
-        
-        if isErrorRecoverable(error) {
-            actions.insert(.retry, at: 0)
-        }
-        
-        if let fileManagerError = error as? FileManagerError {
-            switch fileManagerError {
-            case .permissionDenied:
-                actions.append(.openSettings)
-            case .networkError, .unknownError:
-                actions.append(.contactSupport)
-            default:
-                break
-            }
-        }
-        
+        var actions = baseActions(for: error)
+        if let fm = error as? FileManagerError { actions = augment(actions, for: fm) }
         return actions
+    }
+    
+    private func baseActions(for error: Error) -> [ErrorRecoveryAction] {
+        var actions: [ErrorRecoveryAction] = [.cancel]
+        if isErrorRecoverable(error) { actions.insert(.retry, at: 0) }
+        return actions
+    }
+    
+    private func augment(_ actions: [ErrorRecoveryAction], for fmError: FileManagerError) -> [ErrorRecoveryAction] {
+        var out = actions
+        switch fmError {
+        case .permissionDenied:
+            out.append(.openSettings)
+        case .networkError, .unknownError:
+            out.append(.contactSupport)
+        default:
+            break
+        }
+        return out
     }
     
     private func retryLastOperation() {
