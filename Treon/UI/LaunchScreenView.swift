@@ -12,206 +12,144 @@ struct LaunchScreenView: View {
     
     var body: some View {
         VStack(spacing: 40) {
-            // App Icon and Title
-            VStack(spacing: 16) {
-                Image(systemName: "doc.text.magnifyingglass")
-                    .font(.system(size: 80))
-                    .foregroundColor(.blue)
-                
-                Text("Treon")
-                    .font(.system(size: 48, weight: .light, design: .default))
-                    .foregroundColor(.primary)
-                
-                Text("JSON Formatter & Viewer")
-                    .font(.system(size: 18, weight: .regular))
+            header
+            actions
+            recentFiles
+            errorBanner
+            dragAndDropHint
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color(NSColor.controlBackgroundColor))
+        .onDrop(of: [.fileURL], isTargeted: nil) { providers in
+            handleFileDrop(providers: providers)
+        }
+    }
+
+    private var header: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "doc.text.magnifyingglass")
+                .font(.system(size: 80))
+                .foregroundColor(.blue)
+            Text("Treon")
+                .font(.system(size: 48, weight: .light, design: .default))
+                .foregroundColor(.primary)
+            Text("JSON Formatter & Viewer")
+                .font(.system(size: 18, weight: .regular))
+                .foregroundColor(.secondary)
+        }
+    }
+
+    private var actions: some View {
+        VStack(spacing: 20) {
+            primaryActions
+            secondaryActions
+            tertiaryActions
+            inputsSection
+        }
+    }
+
+    private var primaryActions: some View {
+        HStack(spacing: DesignConstants.buttonSpacing) {
+            Button(action: openFile) {
+                HStack {
+                    if fileManager.isLoading { ProgressView().scaleEffect(0.8) } else { Image(systemName: "folder") }
+                    Text("Open File")
+                }
+            }
+            .buttonStyle(StandardButtonStyle(backgroundColor: .blue, foregroundColor: .white, isOutlined: false))
+            .disabled(fileManager.isLoading)
+            Button(action: newFile) {
+                HStack { Image(systemName: "doc.badge.plus"); Text("New File") }
+            }
+            .buttonStyle(StandardButtonStyle(backgroundColor: .blue, foregroundColor: .blue, isOutlined: true))
+            .disabled(fileManager.isLoading)
+        }
+    }
+
+    private var secondaryActions: some View {
+        HStack(spacing: DesignConstants.buttonSpacing) {
+            Button(action: newFromPasteboard) { HStack { Image(systemName: "doc.on.clipboard"); Text("From Pasteboard") } }
+                .buttonStyle(StandardButtonStyle(backgroundColor: .green, foregroundColor: .green, isOutlined: true))
+                .disabled(fileManager.isLoading)
+            Button(action: { showingURLInput.toggle() }) { HStack { Image(systemName: "link"); Text("From URL") } }
+                .buttonStyle(StandardButtonStyle(backgroundColor: .orange, foregroundColor: .orange, isOutlined: true))
+                .disabled(fileManager.isLoading)
+        }
+    }
+
+    private var tertiaryActions: some View {
+        HStack(spacing: DesignConstants.buttonSpacing) {
+            Button(action: { showingCurlInput.toggle() }) { HStack { Image(systemName: "terminal"); Text("From cURL") } }
+                .buttonStyle(StandardButtonStyle(backgroundColor: .purple, foregroundColor: .purple, isOutlined: true))
+                .disabled(fileManager.isLoading)
+            Spacer().frame(width: DesignConstants.buttonWidth, height: DesignConstants.buttonHeight)
+        }
+    }
+
+    private var inputsSection: some View {
+        VStack(spacing: 8) {
+            if showingURLInput { urlInputView.padding(.top, 10) } else { Spacer().frame(height: showingCurlInput ? 0 : 60) }
+            if showingCurlInput { curlInputView.padding(.top, 10) } else { Spacer().frame(height: showingURLInput ? 0 : 60) }
+        }.frame(height: 120)
+    }
+
+    private var urlInputView: some View {
+        VStack(spacing: 8) {
+            HStack {
+                TextField("Enter URL...", text: $urlInput)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .frame(width: 300)
+                Button("Load") { loadFromURL() }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(urlInput.isEmpty || fileManager.isLoading)
+            }
+            Button("Cancel") { showingURLInput = false; urlInput = "" }
+                .buttonStyle(.bordered)
+        }
+    }
+
+    private var curlInputView: some View {
+        VStack(spacing: 8) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Enter cURL command:")
+                    .font(.caption)
                     .foregroundColor(.secondary)
+                TextField("curl -X GET https://api.example.com/data", text: $curlInput, axis: .vertical)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .frame(width: 400, height: 60)
             }
-            
-            // Action Buttons
-            VStack(spacing: 20) {
-                // Primary Actions Row
-                HStack(spacing: DesignConstants.buttonSpacing) {
-                    // Open File Button
-                    Button(action: openFile) {
-                        HStack {
-                            if fileManager.isLoading {
-                                ProgressView()
-                                    .scaleEffect(0.8)
-                            } else {
-                                Image(systemName: "folder")
-                            }
-                            Text("Open File")
-                        }
-                    }
-                    .buttonStyle(StandardButtonStyle(
-                        backgroundColor: .blue,
-                        foregroundColor: .white,
-                        isOutlined: false
-                    ))
-                    .disabled(fileManager.isLoading)
-                    
-                    // New File Button
-                    Button(action: newFile) {
-                        HStack {
-                            Image(systemName: "doc.badge.plus")
-                            Text("New File")
-                        }
-                    }
-                    .buttonStyle(StandardButtonStyle(
-                        backgroundColor: .blue,
-                        foregroundColor: .blue,
-                        isOutlined: true
-                    ))
-                    .disabled(fileManager.isLoading)
-                }
-                
-                // Secondary Actions Row
-                HStack(spacing: DesignConstants.buttonSpacing) {
-                    // New from Pasteboard Button
-                    Button(action: newFromPasteboard) {
-                        HStack {
-                            Image(systemName: "doc.on.clipboard")
-                            Text("From Pasteboard")
-                        }
-                    }
-                    .buttonStyle(StandardButtonStyle(
-                        backgroundColor: .green,
-                        foregroundColor: .green,
-                        isOutlined: true
-                    ))
-                    .disabled(fileManager.isLoading)
-                    
-                    // New from URL Button
-                    Button(action: { showingURLInput.toggle() }) {
-                        HStack {
-                            Image(systemName: "link")
-                            Text("From URL")
-                        }
-                    }
-                    .buttonStyle(StandardButtonStyle(
-                        backgroundColor: .orange,
-                        foregroundColor: .orange,
-                        isOutlined: true
-                    ))
-                    .disabled(fileManager.isLoading)
-                }
-                
-                // Third Actions Row
-                HStack(spacing: DesignConstants.buttonSpacing) {
-                    // New from cURL Button
-                    Button(action: { showingCurlInput.toggle() }) {
-                        HStack {
-                            Image(systemName: "terminal")
-                            Text("From cURL")
-                        }
-                    }
-                    .buttonStyle(StandardButtonStyle(
-                        backgroundColor: .purple,
-                        foregroundColor: .purple,
-                        isOutlined: true
-                    ))
-                    .disabled(fileManager.isLoading)
-                    
-                    // Spacer to maintain layout
-                    Spacer()
-                        .frame(width: DesignConstants.buttonWidth, height: DesignConstants.buttonHeight)
-                }
-                
-                // Fixed Input Section (always reserves space)
-                VStack(spacing: 8) {
-                    // URL Input Section
-                    if showingURLInput {
-                        VStack(spacing: 8) {
-                            HStack {
-                                TextField("Enter URL...", text: $urlInput)
-                                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                                    .frame(width: 300)
-                                
-                                Button("Load") {
-                                    loadFromURL()
-                                }
-                                .buttonStyle(.borderedProminent)
-                                .disabled(urlInput.isEmpty || fileManager.isLoading)
-                            }
-                            
-                            Button("Cancel") {
-                                showingURLInput = false
-                                urlInput = ""
-                            }
-                            .buttonStyle(.bordered)
-                        }
-                        .padding(.top, 10)
-                    } else {
-                        // Reserve space when URL input is hidden
-                        Spacer()
-                            .frame(height: showingCurlInput ? 0 : 60)
-                    }
-                    
-                    // cURL Input Section
-                    if showingCurlInput {
-                        VStack(spacing: 8) {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("Enter cURL command:")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                                
-                                TextField("curl -X GET https://api.example.com/data", text: $curlInput, axis: .vertical)
-                                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                                    .frame(width: 400, height: 60)
-                            }
-                            
-                            HStack {
-                                Button("Execute") {
-                                    executeCurlCommand()
-                                }
-                                .buttonStyle(.borderedProminent)
-                                .disabled(curlInput.isEmpty || fileManager.isLoading)
-                                
-                                Button("Cancel") {
-                                    showingCurlInput = false
-                                    curlInput = ""
-                                }
-                                .buttonStyle(.bordered)
-                            }
-                        }
-                        .padding(.top, 10)
-                    } else {
-                        // Reserve space when cURL input is hidden
-                        Spacer()
-                            .frame(height: showingURLInput ? 0 : 60)
-                    }
-                }
-                .frame(height: 120) // Fixed height to prevent layout shifts
+            HStack {
+                Button("Execute") { executeCurlCommand() }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(curlInput.isEmpty || fileManager.isLoading)
+                Button("Cancel") { showingCurlInput = false; curlInput = "" }
+                    .buttonStyle(.bordered)
             }
-            
-            // Recent Files Section
+        }
+    }
+
+    private var recentFiles: some View {
+        Group {
             if !fileManager.recentFiles.isEmpty {
                 VStack(spacing: 12) {
                     Button(action: { showingRecentFiles.toggle() }) {
-                        HStack {
-                            Text("Recent Files")
-                                .font(.headline)
-                            Image(systemName: showingRecentFiles ? "chevron.up" : "chevron.down")
-                        }
-                        .foregroundColor(.blue)
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                    
+                        HStack { Text("Recent Files").font(.headline); Image(systemName: showingRecentFiles ? "chevron.up" : "chevron.down") }
+                            .foregroundColor(.blue)
+                    }.buttonStyle(PlainButtonStyle())
                     if showingRecentFiles {
                         VStack(spacing: 8) {
                             ForEach(fileManager.recentFiles.prefix(5)) { recentFile in
-                                RecentFileRow(recentFile: recentFile) {
-                                    openRecentFile(recentFile)
-                                }
+                                RecentFileRow(recentFile: recentFile) { openRecentFile(recentFile) }
                             }
-                        }
-                        .padding(.horizontal)
+                        }.padding(.horizontal)
                     }
-                }
-                .padding(.top, 20)
+                }.padding(.top, 20)
             }
-            
-            // Error Message
+        }
+    }
+
+    private var errorBanner: some View {
+        Group {
             if let errorMessage = fileManager.errorMessage {
                 Text(errorMessage)
                     .font(.caption)
@@ -219,26 +157,16 @@ struct LaunchScreenView: View {
                     .padding(.horizontal)
                     .multilineTextAlignment(.center)
             }
-            
-            // Drag and Drop Hint
-            VStack(spacing: 8) {
-                Text("or")
-                    .font(.system(size: 14))
-                    .foregroundColor(.secondary)
-                
-                HStack {
-                    Image(systemName: "arrow.down.circle")
-                        .foregroundColor(.secondary)
-                    Text("Drag and drop a JSON file here")
-                        .font(.system(size: 14))
-                        .foregroundColor(.secondary)
-                }
-            }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color(NSColor.controlBackgroundColor))
-        .onDrop(of: [.fileURL], isTargeted: nil) { providers in
-            handleFileDrop(providers: providers)
+    }
+
+    private var dragAndDropHint: some View {
+        VStack(spacing: 8) {
+            Text("or").font(.system(size: 14)).foregroundColor(.secondary)
+            HStack {
+                Image(systemName: "arrow.down.circle").foregroundColor(.secondary)
+                Text("Drag and drop a JSON file here").font(.system(size: 14)).foregroundColor(.secondary)
+            }
         }
     }
     

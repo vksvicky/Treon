@@ -73,56 +73,65 @@ extension TreonFileManager {
     }
     
     func parseCurlCommand(_ command: String) throws -> ParsedCurlCommand {
-        let components = command.components(separatedBy: .whitespacesAndNewlines)
-            .filter { !$0.isEmpty }
-        
+        let components = tokenize(command)
         guard components.first?.lowercased() == "curl" else {
             throw FileManagerError.invalidJSON("Command must start with 'curl'")
         }
-        
-        var url: URL?
         var method = "GET"
         var headers: [String: String] = [:]
         var body: String?
-        
-        var i = 1
-        while i < components.count {
-            let component = components[i]
-            
-            switch component {
-            case "-X", "--request":
-                if i + 1 < components.count {
-                    method = components[i + 1].uppercased()
-                    i += 1
-                }
-            case "-H", "--header":
-                if i + 1 < components.count {
-                    let header = components[i + 1]
-                    if let colonIndex = header.firstIndex(of: ":") {
-                        let key = String(header[..<colonIndex]).trimmingCharacters(in: .whitespaces)
-                        let value = String(header[header.index(after: colonIndex)...]).trimmingCharacters(in: .whitespaces)
-                        headers[key] = value
-                    }
-                    i += 1
-                }
-            case "-d", "--data", "--data-raw":
-                if i + 1 < components.count {
-                    body = components[i + 1]
-                    i += 1
-                }
-            default:
-                if component.hasPrefix("http://") || component.hasPrefix("https://") {
-                    url = URL(string: component)
-                }
-            }
-            i += 1
+        var url: URL?
+        var index = 1
+        while index < components.count {
+            (method, headers, body, url, index) = try processComponent(
+                components: components,
+                index: index,
+                method: method,
+                headers: headers,
+                body: body,
+                url: url
+            )
         }
-        
         guard let finalURL = url else {
             throw FileManagerError.invalidJSON("No valid URL found in cURL command")
         }
-        
         return ParsedCurlCommand(url: finalURL, method: method, headers: headers, body: body)
+    }
+    
+    private func tokenize(_ command: String) -> [String] {
+        command.components(separatedBy: .whitespacesAndNewlines).filter { !$0.isEmpty }
+    }
+    
+    private func processComponent(components: [String], index: Int, method: String, headers: [String: String], body: String?, url: URL?) throws -> (String, [String: String], String?, URL?, Int) {
+        var i = index
+        var m = method
+        var h = headers
+        var b = body
+        var u = url
+        let component = components[i]
+        switch component {
+        case "-X", "--request":
+            if i + 1 < components.count { m = components[i + 1].uppercased(); i += 1 }
+        case "-H", "--header":
+            if i + 1 < components.count { h = setHeader(h, header: components[i + 1]); i += 1 }
+        case "-d", "--data", "--data-raw":
+            if i + 1 < components.count { b = components[i + 1]; i += 1 }
+        default:
+            if component.hasPrefix("http://") || component.hasPrefix("https://") {
+                u = URL(string: component)
+            }
+        }
+        return (m, h, b, u, i + 1)
+    }
+    
+    private func setHeader(_ headers: [String: String], header: String) -> [String: String] {
+        var out = headers
+        if let colonIndex = header.firstIndex(of: ":") {
+            let key = String(header[..<colonIndex]).trimmingCharacters(in: .whitespaces)
+            let value = String(header[header.index(after: colonIndex)...]).trimmingCharacters(in: .whitespaces)
+            out[key] = value
+        }
+        return out
     }
 }
 
