@@ -51,7 +51,7 @@ class FileManagerSizeTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(fileInfo.size, 1024 * 1024)
     }
     
-    func testOpenFile_veryLargeJSON_atLeast10MB() async throws {
+    func testOpenFile_veryLargeJSON_atLeast10MB_part1() async throws {
         var json = "{\n"
         var current = 2
         let target = 10 * 1024 * 1024
@@ -73,7 +73,7 @@ class FileManagerSizeTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(fileInfo.size, 10 * 1024 * 1024)
     }
     
-    func testOpenFile_extremelyLargeJSON_underMaxLimit() async throws {
+    func testOpenFile_extremelyLargeJSON_underMaxLimit_part1() async throws {
         let maxBytes = TreonFileManager.shared.maxFileSize
         let slackBytes = TreonFileManager.shared.sizeSlackBytes
         let safetyMargin: Int64 = 16 * 1024

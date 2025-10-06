@@ -18,7 +18,7 @@ class ConstantsTests: XCTestCase {
     
     // MARK: - UI Constants Tests
     
-    func testUIConstants_dimensionsAndTimings_areExpected() {
+    func testUIConstants_dimensions_areExpected() {
         // Window constants
         XCTAssertEqual(UIConstants.defaultWindowWidth, 1200)
         XCTAssertEqual(UIConstants.defaultWindowHeight, 800)
@@ -38,7 +38,9 @@ class ConstantsTests: XCTestCase {
         XCTAssertEqual(UIConstants.bodyFontSize, 14)
         XCTAssertEqual(UIConstants.captionFontSize, 12)
         
-        // Animation constants
+    }
+
+    func testUIConstants_animationTimings_areExpected() {
         XCTAssertEqual(UIConstants.hoverAnimationDuration, 0.2)
         XCTAssertEqual(UIConstants.buttonPressAnimationDuration, 0.1)
         XCTAssertEqual(UIConstants.fadeAnimationDuration, 0.3)

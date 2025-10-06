@@ -212,46 +212,46 @@ class TreonFileManager: ObservableObject {
     
     // MARK: - File Validation
     private func validateAndLoadFile(url: URL) async throws -> FileInfo {
-        // Check if file exists
-        guard FileManager.default.fileExists(atPath: url.path) else {
-            throw FileManagerError.fileNotFound(url.path)
-        }
-        
-        // Get file attributes
-        let attributes = try FileManager.default.attributesOfItem(atPath: url.path)
-        let fileSize = attributes[.size] as? Int64 ?? 0
-        let modifiedDate = attributes[.modificationDate] as? Date ?? Date()
-        
-        // Check file size
-        if fileSize > maxFileSize + sizeSlackBytes {
-            throw FileManagerError.fileTooLarge(fileSize, maxFileSize)
-        }
-        
-        // Check file type
-        let fileExtension = url.pathExtension.lowercased()
-        guard fileExtension == "json" else {
-            throw FileManagerError.unsupportedFileType(fileExtension)
-        }
-        
-        // Validate JSON content
+        try ensureFileExists(at: url)
+        let (fileSize, modifiedDate) = try readAttributes(for: url)
+        try ensureWithinSizeLimit(fileSize)
+        try ensureSupportedType(for: url)
         let (isValidJSON, errorMessage) = await validateJSONContent(url: url)
-        
-        let fileInfo = FileInfo(
+        let info = buildFileInfo(url: url, size: fileSize, modified: modifiedDate, isValid: isValidJSON, errorMessage: errorMessage)
+        if isValidJSON { addToRecentFiles(fileInfo: info) }
+        return info
+    }
+
+    private func ensureFileExists(at url: URL) throws {
+        guard FileManager.default.fileExists(atPath: url.path) else { throw FileManagerError.fileNotFound(url.path) }
+    }
+
+    private func readAttributes(for url: URL) throws -> (Int64, Date) {
+        let attributes = try FileManager.default.attributesOfItem(atPath: url.path)
+        let size = attributes[.size] as? Int64 ?? 0
+        let modified = attributes[.modificationDate] as? Date ?? Date()
+        return (size, modified)
+    }
+
+    private func ensureWithinSizeLimit(_ size: Int64) throws {
+        if size > maxFileSize + sizeSlackBytes { throw FileManagerError.fileTooLarge(size, maxFileSize) }
+    }
+
+    private func ensureSupportedType(for url: URL) throws {
+        let ext = url.pathExtension.lowercased()
+        guard ext == "json" else { throw FileManagerError.unsupportedFileType(ext) }
+    }
+
+    private func buildFileInfo(url: URL, size: Int64, modified: Date, isValid: Bool, errorMessage: String?) -> FileInfo {
+        return FileInfo(
             url: url,
             name: url.lastPathComponent,
-            size: fileSize,
-            modifiedDate: modifiedDate,
-            isValidJSON: isValidJSON,
+            size: size,
+            modifiedDate: modified,
+            isValidJSON: isValid,
             errorMessage: errorMessage,
             content: nil
         )
-        
-        // Add to recent files if valid
-        if isValidJSON {
-            addToRecentFiles(fileInfo: fileInfo)
-        }
-        
-        return fileInfo
     }
     
     private func validateJSONContent(url: URL) async -> (Bool, String?) {

@@ -22,7 +22,7 @@ class ErrorScenarioTests: XCTestCase {
     
     // MARK: - Test Malformed JSON
     
-    func testOpenFile_malformedJSON_variousCases_flaggedInvalid() async throws {
+    func testOpenFile_malformedJSON_flaggedInvalid_set1() async throws {
         let malformedCases = [
             ("Missing closing brace", "{\"test\": \"value\""),
             ("Missing opening brace", "\"test\": \"value\"}"),
@@ -40,6 +40,23 @@ class ErrorScenarioTests: XCTestCase {
             let fileURL = tempDirectory.appendingPathComponent("malformed_\(description.replacingOccurrences(of: " ", with: "_")).json")
             try malformedJSON.write(to: fileURL, atomically: true, encoding: .utf8)
             
+            let fileInfo = try await fileManager.openFile(url: fileURL)
+            XCTAssertFalse(fileInfo.isValidJSON, "Should detect malformed JSON: \(description)")
+            XCTAssertNotNil(fileInfo.errorMessage, "Should have error message for: \(description)")
+        }
+    }
+
+    func testOpenFile_malformedJSON_flaggedInvalid_set2() async throws {
+        let malformedCases = [
+            ("Invalid boolean", "{\"test\": tru}"),
+            ("Invalid null", "{\"test\": nul}"),
+            ("Unclosed string", "{\"test\": \"value}"),
+            ("Invalid array", "{\"test\": [1, 2, 3,]}"),
+            ("Nested error", "{\"test\": {\"nested\": \"value\"}")
+        ]
+        for (description, malformedJSON) in malformedCases {
+            let fileURL = tempDirectory.appendingPathComponent("malformed2_\(description.replacingOccurrences(of: " ", with: "_")).json")
+            try malformedJSON.write(to: fileURL, atomically: true, encoding: .utf8)
             let fileInfo = try await fileManager.openFile(url: fileURL)
             XCTAssertFalse(fileInfo.isValidJSON, "Should detect malformed JSON: \(description)")
             XCTAssertNotNil(fileInfo.errorMessage, "Should have error message for: \(description)")

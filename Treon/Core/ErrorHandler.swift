@@ -48,39 +48,24 @@ class TreonErrorHandler: ObservableObject, ErrorHandling {
     
     func handleError(_ error: Error, context: String? = nil) {
         logError(error, context: context)
-        
-        // Use synchronous dispatch for testing, async for production
-        if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil {
-            // Running in tests - use synchronous dispatch
-            currentError = error
-            errorMessage = getUserFriendlyMessage(for: error)
-            isRecoverable = isErrorRecoverable(error)
-            recoveryActions = getRecoveryActions(for: error)
-            showErrorAlert = true
-            
-            // Post notification for other parts of the app
-            NotificationCenter.default.post(
-                name: NotificationNames.errorOccurred,
-                object: error,
-                userInfo: ["context": context ?? "Unknown"]
-            )
+        if isRunningTests() {
+            applyErrorSync(error, context: context)
         } else {
-            // Production - use async dispatch
-            DispatchQueue.main.async {
-                self.currentError = error
-                self.errorMessage = self.getUserFriendlyMessage(for: error)
-                self.isRecoverable = self.isErrorRecoverable(error)
-                self.recoveryActions = self.getRecoveryActions(for: error)
-                self.showErrorAlert = true
-                
-                // Post notification for other parts of the app
-                NotificationCenter.default.post(
-                    name: NotificationNames.errorOccurred,
-                    object: error,
-                    userInfo: ["context": context ?? "Unknown"]
-                )
-            }
+            DispatchQueue.main.async { self.applyErrorSync(error, context: context) }
         }
+    }
+
+    private func isRunningTests() -> Bool {
+        ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
+    }
+
+    private func applyErrorSync(_ error: Error, context: String?) {
+        currentError = error
+        errorMessage = getUserFriendlyMessage(for: error)
+        isRecoverable = isErrorRecoverable(error)
+        recoveryActions = getRecoveryActions(for: error)
+        showErrorAlert = true
+        NotificationCenter.default.post(name: NotificationNames.errorOccurred, object: error, userInfo: ["context": context ?? "Unknown"])
     }
     
     func showErrorAlert(_ error: Error, context: String? = nil) {
