@@ -9,12 +9,12 @@ public enum JSONNodeValue {
     case null
 }
 
-public final class JSONNode {
+public struct JSONNode {
     public let key: String?
     public let value: JSONNodeValue
-    public private(set) var children: [JSONNode]
+    public let children: [JSONNode]
     public let path: String
-
+    
     public init(key: String?, value: JSONNodeValue, children: [JSONNode] = [], path: String) {
         self.key = key
         self.value = value
