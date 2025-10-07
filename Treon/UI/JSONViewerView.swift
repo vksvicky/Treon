@@ -7,6 +7,7 @@ struct JSONViewerView: View {
     @State private var rootNode: JSONNode? = nil
     @State private var showingError = false
     @State private var errorMessage = ""
+    @StateObject private var expansion = TreeExpansionState()
     
     var body: some View {
         HSplitView {
@@ -21,7 +22,7 @@ struct JSONViewerView: View {
         .onAppear {
             loadCurrentFile()
         }
-        .onChange(of: fileManager.currentFile?.url) { _ in
+        .onChange(of: fileManager.currentFile?.url) {
             loadCurrentFile()
         }
         .alert("Error", isPresented: $showingError) {
@@ -39,11 +40,19 @@ struct JSONViewerView: View {
                     .font(.headline)
                     .foregroundColor(.primary)
                 Spacer()
-                Button("Expand All") {
-                    // TODO: Implement expand all
+                HStack(spacing: 8) {
+                    Button("Expand All") {
+                        if let rootNode { expansion.expandAll(root: rootNode) }
+                    }
+                    .buttonStyle(.borderless)
+                    .font(.caption)
+
+                    Button("Collapse All") {
+                        expansion.resetAll()
+                    }
+                    .buttonStyle(.borderless)
+                    .font(.caption)
                 }
-                .buttonStyle(.borderless)
-                .font(.caption)
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
@@ -53,7 +62,7 @@ struct JSONViewerView: View {
             
             // Tree view
             if let rootNode = rootNode {
-                ListTreeView(root: rootNode)
+                ListTreeView(root: rootNode, expansion: expansion)
             } else {
                 VStack {
                     Spacer()

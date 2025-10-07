@@ -115,8 +115,8 @@ class ErrorScenarioTests: XCTestCase {
     func testOpenFile_nearLimitResourceConsumption_validUnderLimit() async throws {
         // Create a file that's just under the configured limit with complex structure
         // Use runtime constants to avoid exceeding validation thresholds
-        let maxBytes = TreonFileManager.shared.maxFileSize
-        let slackBytes = TreonFileManager.shared.sizeSlackBytes
+        let maxBytes = await TreonFileManager.shared.maxFileSize
+        let slackBytes = await TreonFileManager.shared.sizeSlackBytes
         // Stay well under (max + slack) to account for structure/metadata differences
         let safetyMargin: Int64 = 8 * 1024 // 8KB
         let targetBytes = max(0, maxBytes + slackBytes - safetyMargin)

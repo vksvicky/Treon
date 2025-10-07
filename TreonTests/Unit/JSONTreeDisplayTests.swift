@@ -2,6 +2,7 @@ import XCTest
 import SwiftUI
 @testable import Treon
 
+@MainActor
 final class JSONTreeDisplayTests: XCTestCase {
     
     // MARK: - Node Display Tests
@@ -11,9 +12,8 @@ final class JSONTreeDisplayTests: XCTestCase {
         let root = try JSONTreeBuilder.build(from: data)
         
         // Root node should display as "Root" or similar, not "$"
-        let nodeRow = NodeRow(node: root)
-        XCTAssertNotEqual(nodeRow.title, "$", "Root node should not display as '$'")
-        XCTAssertTrue(nodeRow.title.contains("Root") || nodeRow.title.contains("Object"), "Root node should indicate it's the root or an object")
+        XCTAssertNotEqual(root.displayTitle, "$", "Root node should not display as '$'")
+        XCTAssertTrue(root.displayTitle.contains("Root") || root.displayTitle.contains("Object"), "Root node should indicate it's the root or an object")
     }
     
     func testNodeRowTitleForObjectKeys() throws {
@@ -27,11 +27,8 @@ final class JSONTreeDisplayTests: XCTestCase {
         XCTAssertNotNil(nameNode)
         XCTAssertNotNil(ageNode)
         
-        let nameRow = NodeRow(node: nameNode!)
-        let ageRow = NodeRow(node: ageNode!)
-        
-        XCTAssertEqual(nameRow.title, "name", "Object key should be displayed correctly")
-        XCTAssertEqual(ageRow.title, "age", "Object key should be displayed correctly")
+        XCTAssertEqual(nameNode!.displayTitle, "name", "Object key should be displayed correctly")
+        XCTAssertEqual(ageNode!.displayTitle, "age", "Object key should be displayed correctly")
     }
     
     func testNodeRowTitleForArrayIndices() throws {
@@ -42,8 +39,7 @@ final class JSONTreeDisplayTests: XCTestCase {
         XCTAssertEqual(root.children.count, 3)
         
         for (index, child) in root.children.enumerated() {
-            let nodeRow = NodeRow(node: child)
-            XCTAssertEqual(nodeRow.title, "[\(index)]", "Array index should be displayed as [index]")
+            XCTAssertEqual(child.displayTitle, "[\(index)]", "Array index should be displayed as [index]")
         }
     }
     
@@ -55,13 +51,11 @@ final class JSONTreeDisplayTests: XCTestCase {
         XCTAssertEqual(root.children.count, 2)
         
         for (index, child) in root.children.enumerated() {
-            let nodeRow = NodeRow(node: child)
-            XCTAssertEqual(nodeRow.title, "[\(index)]", "Nested array index should be displayed as [index]")
+            XCTAssertEqual(child.displayTitle, "[\(index)]", "Nested array index should be displayed as [index]")
             
             // Check nested children
             for (nestedIndex, nestedChild) in child.children.enumerated() {
-                let nestedRow = NodeRow(node: nestedChild)
-                XCTAssertEqual(nestedRow.title, "[\(nestedIndex)]", "Nested array child should be displayed as [index]")
+                XCTAssertEqual(nestedChild.displayTitle, "[\(nestedIndex)]", "Nested array child should be displayed as [index]")
             }
         }
     }
@@ -92,14 +86,14 @@ final class JSONTreeDisplayTests: XCTestCase {
         XCTAssertNotNil(metadataNode)
         
         // Test object keys
-        XCTAssertEqual(NodeRow(node: nameNode!).title, "name")
-        XCTAssertEqual(NodeRow(node: scoresNode!).title, "scores")
-        XCTAssertEqual(NodeRow(node: activeNode!).title, "active")
-        XCTAssertEqual(NodeRow(node: metadataNode!).title, "metadata")
+        XCTAssertEqual(nameNode!.displayTitle, "name")
+        XCTAssertEqual(scoresNode!.displayTitle, "scores")
+        XCTAssertEqual(activeNode!.displayTitle, "active")
+        XCTAssertEqual(metadataNode!.displayTitle, "metadata")
         
         // Test array indices within scores
         for (index, child) in scoresNode!.children.enumerated() {
-            XCTAssertEqual(NodeRow(node: child).title, "[\(index)]")
+            XCTAssertEqual(child.displayTitle, "[\(index)]")
         }
         
         // Test nested object keys
@@ -108,8 +102,8 @@ final class JSONTreeDisplayTests: XCTestCase {
         
         XCTAssertNotNil(createdNode)
         XCTAssertNotNil(tagsNode)
-        XCTAssertEqual(NodeRow(node: createdNode!).title, "created")
-        XCTAssertEqual(NodeRow(node: tagsNode!).title, "tags")
+        XCTAssertEqual(createdNode!.displayTitle, "created")
+        XCTAssertEqual(tagsNode!.displayTitle, "tags")
     }
     
     // MARK: - Tree Structure Tests

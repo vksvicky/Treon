@@ -1,4 +1,5 @@
 import Foundation
+import Combine
 
 public enum JSONNodeValue: Equatable {
     case object
@@ -7,6 +8,61 @@ public enum JSONNodeValue: Equatable {
     case number(Double)
     case bool(Bool)
     case null
+}
+
+@MainActor
+public final class TreeExpansionState: ObservableObject {
+    @Published public private(set) var expandedIds: Set<String> = []
+
+    public init() {}
+
+    // Avoid actor-teardown interaction during XCTest memory checking
+    nonisolated(unsafe) deinit {}
+
+    @inlinable public func isExpanded(_ node: JSONNode) -> Bool { expandedIds.contains(node.id) }
+
+    public func expandAll(root: JSONNode) {
+        var ids: Set<String> = []
+        collectIds(node: root, into: &ids)
+        expandedIds = ids
+    }
+
+    public func resetAll() { expandedIds.removeAll() }
+
+    public func expand(node: JSONNode, includeDescendants: Bool) {
+        expandedIds.insert(node.id)
+        if includeDescendants { addDescendantIds(of: node) }
+    }
+
+    public func collapse(node: JSONNode, includeDescendants: Bool) {
+        expandedIds.remove(node.id)
+        if includeDescendants { removeDescendantIds(of: node) }
+    }
+
+    public func setExpanded(_ expanded: Bool, for node: JSONNode) {
+        if expanded { expandedIds.insert(node.id) } else { expandedIds.remove(node.id) }
+    }
+
+    private func collectIds(node: JSONNode, into set: inout Set<String>) {
+        set.insert(node.id)
+        for child in node.children { collectIds(node: child, into: &set) }
+    }
+
+    private func addDescendantIds(of node: JSONNode) {
+        var stack: [JSONNode] = node.children
+        while let n = stack.popLast() {
+            expandedIds.insert(n.id)
+            stack.append(contentsOf: n.children)
+        }
+    }
+
+    private func removeDescendantIds(of node: JSONNode) {
+        var stack: [JSONNode] = node.children
+        while let n = stack.popLast() {
+            expandedIds.remove(n.id)
+            stack.append(contentsOf: n.children)
+        }
+    }
 }
 
 public struct JSONNode: Identifiable {
@@ -22,6 +78,24 @@ public struct JSONNode: Identifiable {
         self.value = value
         self.children = children
         self.path = path
+    }
+}
+
+public extension JSONNode {
+    var displayTitle: String {
+        // Root node (no key)
+        guard let key = key else {
+            switch value {
+            case .object: return "Root Object"
+            case .array: return "Root Array"
+            default: return "Root"
+            }
+        }
+        // Array indices use bracketed form
+        let isNumericKey = !key.isEmpty && key.unicodeScalars.allSatisfy { CharacterSet.decimalDigits.contains($0) }
+        if isNumericKey { return "[\(key)]" }
+        // Object key as-is
+        return key
     }
 }
 

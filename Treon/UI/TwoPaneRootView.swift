@@ -51,11 +51,12 @@ public struct TwoPaneRootView: View {
 
 struct ListTreeView: View {
     let root: JSONNode?
+    @ObservedObject var expansion: TreeExpansionState
 
     var body: some View {
         List {
             if let root {
-                NodeRow(node: root)
+                NodeRow(node: root, expansion: expansion)
             }
         }
         .listStyle(.inset)
@@ -64,36 +65,38 @@ struct ListTreeView: View {
 
 struct NodeRow: View {
     let node: JSONNode
+    @ObservedObject var expansion: TreeExpansionState
 
-    var title: String {
-        // Handle root node (no key)
-        guard let key = node.key else {
-            switch node.value {
-            case .object:
-                return "Root Object"
-            case .array:
-                return "Root Array"
-            default:
-                return "Root"
-            }
-        }
-        
-        // Handle array indices - they should be displayed with brackets
-        if let index = Int(key) {
-            return "[\(index)]"
-        }
-        
-        // Handle object keys - display as is
-        return key
+    init(node: JSONNode, expansion: TreeExpansionState) {
+        self.node = node
+        self._expansion = ObservedObject(wrappedValue: expansion)
     }
 
+    var title: String { node.displayTitle }
+
     var body: some View {
+        content
+            .contextMenu {
+                Button("Expand") { expansion.expand(node: node, includeDescendants: false) }
+                Button("Expand with Children") { expansion.expand(node: node, includeDescendants: true) }
+                Button("Collapse") { expansion.collapse(node: node, includeDescendants: false) }
+                Button("Collapse with Children") { expansion.collapse(node: node, includeDescendants: true) }
+            }
+    }
+
+    @ViewBuilder
+    private var content: some View {
         switch node.value {
         case .object, .array:
-            DisclosureGroup(title) {
+            DisclosureGroup(isExpanded: Binding(
+                get: { expansion.isExpanded(node) },
+                set: { expansion.setExpanded($0, for: node) }
+            )) {
                 ForEach(node.children) { child in
-                    NodeRow(node: child)
+                    NodeRow(node: child, expansion: expansion)
                 }
+            } label: {
+                Text(title)
             }
         case .string(let s):
             HStack {
