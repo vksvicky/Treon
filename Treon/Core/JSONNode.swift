@@ -9,13 +9,15 @@ public enum JSONNodeValue: Equatable {
     case null
 }
 
-public struct JSONNode {
+public struct JSONNode: Identifiable {
+    public let id: String
     public let key: String?
     public let value: JSONNodeValue
     public let children: [JSONNode]
     public let path: String
     
     public init(key: String?, value: JSONNodeValue, children: [JSONNode] = [], path: String) {
+        self.id = path
         self.key = key
         self.value = value
         self.children = children

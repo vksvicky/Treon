@@ -66,14 +66,62 @@ struct NodeRow: View {
     let node: JSONNode
 
     var title: String {
-        if let k = node.key { return k }
-        return "$"
+        // Handle root node (no key)
+        guard let key = node.key else {
+            switch node.value {
+            case .object:
+                return "Root Object"
+            case .array:
+                return "Root Array"
+            default:
+                return "Root"
+            }
+        }
+        
+        // Handle array indices - they should be displayed with brackets
+        if let index = Int(key) {
+            return "[\(index)]"
+        }
+        
+        // Handle object keys - display as is
+        return key
     }
 
     var body: some View {
-        DisclosureGroup(title) {
-            ForEach(Array(node.children.enumerated()), id: \.offset) { _, child in
-                NodeRow(node: child)
+        switch node.value {
+        case .object, .array:
+            DisclosureGroup(title) {
+                ForEach(node.children) { child in
+                    NodeRow(node: child)
+                }
+            }
+        case .string(let s):
+            HStack {
+                Text(title)
+                Spacer()
+                Text("\"\(s)\"")
+                    .foregroundColor(.secondary)
+            }
+        case .number(let n):
+            HStack {
+                Text(title)
+                Spacer()
+                Text(String(n))
+                    .foregroundColor(.secondary)
+            }
+        case .bool(let b):
+            HStack {
+                Text(title)
+                Spacer()
+                Text(b ? "true" : "false")
+                    .foregroundColor(.secondary)
+            }
+        case .null:
+            HStack {
+                Text(title)
+                Spacer()
+                Text("null")
+                    .foregroundColor(.secondary)
             }
         }
     }
