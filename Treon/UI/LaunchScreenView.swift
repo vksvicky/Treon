@@ -6,7 +6,7 @@ import os.log
 struct LaunchScreenView: View {
     @StateObject private var fileManager = TreonFileManager.shared
     @StateObject private var permissionManager = PermissionManager.shared
-    @State private var showingRecentFiles = false
+    @StateObject private var notificationManager = NotificationManager.shared
     @State private var showingURLInput = false
     @State private var showingCurlInput = false
     @State private var urlInput = ""
@@ -15,44 +15,90 @@ struct LaunchScreenView: View {
     private let logger = Logger(subsystem: "club.cycleruncode.Treon", category: "LaunchScreenView")
 
     var body: some View {
-        Group {
-            if fileManager.currentFile != nil {
-                // Show JSON viewer when a file is loaded
-                JSONViewerView()
-            } else {
-                // Show launch screen when no file is loaded
-                VStack(spacing: 40) {
-                    header
-                    actions
-                    recentFiles
-                    errorBanner
-                    dragAndDropHint
+        ZStack {
+            Group {
+                if fileManager.currentFile != nil {
+                    // Show JSON viewer when a file is loaded
+                    JSONViewerView()
+                } else {
+                    // Show lightweight launch screen when no file is loaded
+                    VStack(spacing: 60) {
+                        header
+                        
+                        // Two-column layout: Actions on left, Recent Files on right
+                        HStack(alignment: .top, spacing: 60) {
+                            // Left column - Action buttons
+                            actions
+                                .frame(maxWidth: .infinity, alignment: .center)
+                            
+                            // Right column - Recent files dropdown
+                            RecentFilesView { recentFile in
+                                openRecentFile(recentFile)
+                            }
+                            .frame(maxWidth: 300, alignment: .leading)
+                        }
+                        .frame(maxWidth: 800) // Limit the overall width to bring columns closer
+                        
+                        // Drag and drop hint below both columns
+                        dragAndDropHint
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color(NSColor.controlBackgroundColor))
+                    .onDrop(of: [.fileURL], isTargeted: nil) { providers in
+                        handleFileDrop(providers: providers)
+                    }
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Color(NSColor.controlBackgroundColor))
-                .onDrop(of: [.fileURL], isTargeted: nil) { providers in
-                    handleFileDrop(providers: providers)
+            }
+            
+            // Custom notification overlay
+            if notificationManager.isShowingNotification,
+               let notification = notificationManager.currentNotification {
+                ZStack {
+                    // Semi-transparent background overlay
+                    Color.black.opacity(0.3)
+                        .ignoresSafeArea()
+                        .onTapGesture {
+                            notificationManager.dismissNotification()
+                        }
+                    
+                    // Centered notification popup
+                    CustomNotificationView(
+                        notification: notification,
+                        onDismiss: {
+                            notificationManager.dismissNotification()
+                        }
+                    )
+                    .transition(.scale.combined(with: .opacity))
+                    .animation(.easeInOut(duration: 0.3), value: notificationManager.isShowingNotification)
+                }
+            }
+        }
+        .onChange(of: fileManager.errorMessage) { _, errorMessage in
+            if let errorMessage = errorMessage {
+                // Check if this is a permission error
+                if errorMessage.contains("permission") || errorMessage.contains("Permission") {
+                    showPermissionNotification()
                 }
             }
         }
     }
 
     private var header: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 12) {
             Image(systemName: "doc.text.magnifyingglass")
-                .font(.system(size: 80))
+                .font(.system(size: 60))
                 .foregroundColor(.blue)
             Text("Treon")
-                .font(.system(size: 48, weight: .light, design: .default))
+                .font(.system(size: 36, weight: .light, design: .default))
                 .foregroundColor(.primary)
             Text("JSON Formatter & Viewer")
-                .font(.system(size: 18, weight: .regular))
+                .font(.system(size: 16, weight: .regular))
                 .foregroundColor(.secondary)
         }
     }
 
     private var actions: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: 16) {
             primaryActions
             secondaryActions
             tertiaryActions
@@ -146,101 +192,62 @@ struct LaunchScreenView: View {
         }
     }
 
-    private var recentFiles: some View {
-        Group {
-            if !fileManager.recentFiles.isEmpty {
-                VStack(spacing: 12) {
-                    Button(action: { showingRecentFiles.toggle() }) {
-                        HStack { Text("Recent Files").font(.headline); Image(systemName: showingRecentFiles ? "chevron.up" : "chevron.down") }
-                            .foregroundColor(.blue)
-                    }.buttonStyle(PlainButtonStyle())
-                    if showingRecentFiles {
-                        VStack(spacing: 8) {
-                            ForEach(fileManager.recentFiles.prefix(5)) { recentFile in
-                                RecentFileRow(recentFile: recentFile) { openRecentFile(recentFile) }
-                            }
-                        }.padding(.horizontal)
-                    }
-                }.padding(.top, 20)
-            }
-        }
-    }
 
-    private var errorBanner: some View {
-        Group {
-            if let errorMessage = fileManager.errorMessage {
-                // Check if this is a permission error
-                if errorMessage.contains("permission") || errorMessage.contains("Permission") {
-                    permissionRequestBanner
-                } else {
-                    // Show regular error message for non-permission errors
-                    Text(errorMessage)
-                        .font(.caption)
-                        .foregroundColor(.red)
-                        .padding(.horizontal)
-                        .multilineTextAlignment(.center)
-                }
-            }
-        }
-    }
-    
-    private var permissionRequestBanner: some View {
-        VStack(spacing: 12) {
-            HStack {
-                Image(systemName: "exclamationmark.triangle.fill")
-                    .foregroundColor(.orange)
-                
-                Text("File Access Permission Required")
-                    .font(.caption)
-                    .fontWeight(.medium)
-                    .foregroundColor(.primary)
-            }
-            
-            Text("Treon needs permission to access files on your system. This is required to open files from Recent Files.")
-                .font(.caption2)
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal)
-            
-            HStack(spacing: 12) {
-                Button("Grant Permission") {
+    private func showPermissionNotification() {
+        let notification = AppNotification(
+            type: .permission,
+            title: "File Access Permission Required",
+            message: "Treon needs permission to access files on your system. This is required to open files from Recent Files.",
+            primaryAction: NotificationAction(
+                title: "Grant Permission",
+                action: {
                     Task {
                         let granted = await permissionManager.requestFileAccessPermission()
                         if granted {
-                            logger.info("Permission granted from error banner")
-                            // Clear the error and try to open the file again
+                            logger.info("Permission granted from notification")
                             fileManager.clearError()
-                            // The file should now be accessible
                         } else {
-                            logger.info("Permission denied from error banner")
+                            logger.info("Permission denied from notification")
                         }
                     }
-                }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.small)
-                
-                Button("Reject") {
-                    logger.info("Permission request rejected from error banner")
+                },
+                style: .primary
+            ),
+            secondaryAction: NotificationAction(
+                title: "Reject",
+                action: {
+                    logger.info("Permission request rejected from notification")
                     fileManager.clearError()
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
-            }
-        }
-        .padding()
-        .background(Color(NSColor.controlBackgroundColor))
-        .cornerRadius(8)
-        .padding(.horizontal)
+                },
+                style: .secondary
+            )
+        )
+        
+        notificationManager.showNotification(notification)
     }
 
     private var dragAndDropHint: some View {
-        VStack(spacing: 8) {
-            Text("or").font(.system(size: 14)).foregroundColor(.secondary)
-            HStack {
-                Image(systemName: "arrow.down.circle").foregroundColor(.secondary)
-                Text("Drag and drop a JSON file here").font(.system(size: 14)).foregroundColor(.secondary)
+        VStack(spacing: 12) {
+            HStack(spacing: 8) {
+                Image(systemName: "arrow.down.circle")
+                    .font(.system(size: 16))
+                    .foregroundColor(.secondary)
+                Text("Drag and drop a JSON file here")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(.secondary)
             }
         }
+        .frame(maxWidth: 400, minHeight: 80)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(style: StrokeStyle(lineWidth: 2, dash: [8, 4]))
+                .foregroundColor(.secondary.opacity(0.6))
+        )
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.secondary.opacity(0.05))
+        )
+        .contentShape(Rectangle())
     }
 
     private func openFile() {
@@ -423,61 +430,6 @@ struct LaunchScreenView: View {
 }
 
 
-// MARK: - Recent File Row Component
-struct RecentFileRow: View {
-    let recentFile: RecentFile
-    let onTap: () -> Void
-    @State private var isHovering = false
-
-    var body: some View {
-        Button(action: onTap) {
-            HStack {
-                Image(systemName: recentFile.isValidJSON ? "doc.text" : "doc.text.badge.exclamationmark")
-                    .foregroundColor(recentFile.isValidJSON ? .blue : .orange)
-                    .frame(width: 20)
-
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(recentFile.name)
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.primary)
-                        .lineLimit(1)
-
-                    HStack {
-                        Text(recentFile.formattedSize)
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-
-                        Text("•")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-
-                        Text(recentFile.lastOpened, style: .relative)
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-                }
-
-                Spacer()
-
-                if !recentFile.isValidJSON {
-                    Image(systemName: "exclamationmark.triangle.fill")
-                        .foregroundColor(.orange)
-                        .font(.caption)
-                }
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .background(isHovering ? Color.blue.opacity(0.1) : Color.clear)
-            .cornerRadius(6)
-        }
-        .buttonStyle(PlainButtonStyle())
-        .onHover { hovering in
-            withAnimation(.easeInOut(duration: 0.2)) {
-                isHovering = hovering
-            }
-        }
-    }
-}
 
 #Preview {
     LaunchScreenView()
