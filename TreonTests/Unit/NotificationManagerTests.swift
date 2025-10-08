@@ -14,6 +14,9 @@ final class NotificationManagerTests: XCTestCase {
         cancellables = Set<AnyCancellable>()
         // Reset notification state before each test
         notificationManager.dismissNotification()
+        // Force state reset by directly setting properties
+        notificationManager.currentNotification = nil
+        notificationManager.isShowingNotification = false
     }
     
     override func tearDown() {
@@ -29,8 +32,8 @@ final class NotificationManagerTests: XCTestCase {
         
         // When: Checking initial state
         // Then: No notification should be showing
-        XCTAssertFalse(notificationManager.isShowingNotification)
-        XCTAssertNil(notificationManager.currentNotification)
+        XCTAssertFalse(notificationManager.isShowingNotification, "Expected no notification to be showing")
+        XCTAssertNil(notificationManager.currentNotification, "Expected current notification to be nil")
     }
     
     func testNotificationManager_showNotification_setsCorrectState() {
