@@ -494,7 +494,6 @@ class TreonFileManager: ObservableObject {
             errorMessage: errorMessage,
             content: content
         )
-        
         logger.info("Successfully created file from content: \(name)")
         return fileInfo
     }
