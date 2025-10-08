@@ -349,10 +349,23 @@ class TreonFileManager: ObservableObject {
         return try await withCheckedThrowingContinuation { continuation in
             DispatchQueue.global(qos: .userInitiated).async {
                 do {
+                    // Check if file exists first
+                    guard FileManager.default.fileExists(atPath: url.path) else {
+                        continuation.resume(throwing: FileManagerError.fileNotFound(url.path))
+                        return
+                    }
+                    
                     let content = try String(contentsOf: url, encoding: .utf8)
                     continuation.resume(returning: content)
+                } catch let error as FileManagerError {
+                    continuation.resume(throwing: error)
                 } catch {
-                    continuation.resume(throwing: FileManagerError.corruptedFile(url.path))
+                    // Check if it's a file not found error
+                    if (error as NSError).code == NSFileReadNoSuchFileError {
+                        continuation.resume(throwing: FileManagerError.fileNotFound(url.path))
+                    } else {
+                        continuation.resume(throwing: FileManagerError.corruptedFile(url.path))
+                    }
                 }
             }
         }
@@ -387,6 +400,11 @@ class TreonFileManager: ObservableObject {
         } else {
             errorMessage = error.localizedDescription
         }
+    }
+    
+    func clearCurrentFile() {
+        currentFile = nil
+        clearError()
     }
     
     // MARK: - New Content Creation Methods
