@@ -8,34 +8,37 @@ struct RecentFilesView: View {
     let onFileSelected: (RecentFile) -> Void
     
     var body: some View {
-        Group {
-            if !fileManager.recentFiles.isEmpty {
-                VStack(alignment: .leading, spacing: 12) {
-                    Button(action: { showingRecentFiles.toggle() }) {
-                        HStack {
-                            Text("Recent Files")
-                                .font(.headline)
-                                .foregroundColor(.blue)
-                            Image(systemName: showingRecentFiles ? "chevron.up" : "chevron.down")
-                                .font(.system(size: 12, weight: .medium))
-                                .foregroundColor(.blue)
+        VStack(alignment: .leading, spacing: 12) {
+            Button(action: { showingRecentFiles.toggle() }) {
+                HStack {
+                    Text("Recent Files")
+                        .font(.headline)
+                        .foregroundColor(.blue)
+                    Image(systemName: showingRecentFiles ? "chevron.up" : "chevron.down")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(.blue)
+                }
+            }
+            .buttonStyle(.borderless)
+            
+            if showingRecentFiles {
+                VStack(alignment: .leading, spacing: 6) {
+                    if fileManager.recentFiles.isEmpty {
+                        Text("No recent files")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .padding(.top, 8)
+                    } else {
+                        // Show last 5 files in descending order (most recent first)
+                        ForEach(Array(fileManager.recentFiles.prefix(5).enumerated()), id: \.element.url) { index, recentFile in
+                            RecentFileRow(
+                                recentFile: recentFile,
+                                onTap: { onFileSelected(recentFile) }
+                            )
                         }
-                    }
-                    .buttonStyle(.borderless)
-                    
-                    if showingRecentFiles {
-                        VStack(alignment: .leading, spacing: 6) {
-                            // Show last 5 files in descending order (most recent first)
-                            ForEach(Array(fileManager.recentFiles.prefix(5).enumerated()), id: \.element.url) { index, recentFile in
-                                RecentFileRow(
-                                    recentFile: recentFile,
-                                    onTap: { onFileSelected(recentFile) }
-                                )
-                            }
-                        }
-                        .padding(.top, 8)
                     }
                 }
+                .padding(.top, 8)
             }
         }
     }
