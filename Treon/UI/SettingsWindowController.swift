@@ -1,8 +1,10 @@
 import Cocoa
 import SwiftUI
+import OSLog
 
 class SettingsWindowController: NSWindowController {
     static let shared = SettingsWindowController()
+    private let logger = Logger(subsystem: "club.cycleruncode.Treon", category: "SettingsWindowController")
     
     private init() {
         let settingsView = SettingsView()
@@ -28,7 +30,18 @@ class SettingsWindowController: NSWindowController {
     }
     
     func showWindow() {
-        window?.makeKeyAndOrderFront(nil)
+        logger.info("SettingsWindowController: showWindow called")
+        logger.info("SettingsWindowController: window = \(String(describing: self.window))")
+        
+        guard let window = window else {
+            logger.error("SettingsWindowController: window is nil")
+            return
+        }
+        
+        // Show and bring to front
+        window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
+        
+        logger.info("SettingsWindowController: window should now be visible")
     }
 }

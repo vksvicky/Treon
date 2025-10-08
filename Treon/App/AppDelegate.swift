@@ -7,6 +7,7 @@
 
 import Cocoa
 import SwiftUI
+import OSLog
 
 enum CLIError: Error { case usage }
 
@@ -34,33 +35,72 @@ func runCLI() throws -> Int32 {
 
 @main
 class AppDelegate: NSObject, NSApplicationDelegate {
+    private let logger = Logger(subsystem: "club.cycleruncode.Treon", category: "AppDelegate")
     var window: NSWindow?
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
-        print("AppDelegate: applicationDidFinishLaunching called")
+        logger.info("AppDelegate: applicationDidFinishLaunching called")
         if handleIfRunningUnderTests() { return }
         if handleIfCLI() { return }
-        print("AppDelegate: Running in GUI mode")
+        logger.info("AppDelegate: Running in GUI mode")
         setupMenuActions()
     }
     
     private func setupMenuActions() {
-        // Connect the Preferences menu item to show settings
-        if let mainMenu = NSApp.mainMenu,
-           let appMenu = mainMenu.item(at: 0)?.submenu,
-           let preferencesItem = appMenu.item(withTitle: "Preferences…") {
-            preferencesItem.target = self
-            preferencesItem.action = #selector(showPreferences)
+        // Use a delayed approach to ensure the menu is fully loaded
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            self.connectPreferencesMenuItem()
         }
     }
     
-    @objc private func showPreferences() {
+    private func connectPreferencesMenuItem() {
+        // Connect the Preferences menu item to show settings
+        guard let mainMenu = NSApp.mainMenu else {
+            logger.error("AppDelegate: Could not find main menu")
+            return
+        }
+        
+        guard let appMenu = mainMenu.item(at: 0)?.submenu else {
+            logger.error("AppDelegate: Could not find app menu")
+            return
+        }
+        
+        // Find the Preferences menu item by iterating through all items
+        var preferencesItem: NSMenuItem?
+        for i in 0..<appMenu.numberOfItems {
+            if let item = appMenu.item(at: i) {
+                logger.info("AppDelegate: Menu item \(i): '\(item.title)'")
+                if item.title == "Settings…" {
+                    preferencesItem = item
+                    break
+                }
+            }
+        }
+        
+        if let preferencesItem = preferencesItem {
+            preferencesItem.target = self
+            preferencesItem.action = #selector(showPreferences)
+            logger.info("AppDelegate: Successfully connected Settings menu item")
+        } else {
+            logger.error("AppDelegate: Could not find Settings menu item")
+        }
+    }
+    
+    @IBAction func showPreferences(_ sender: Any?) {
+        logger.info("AppDelegate: showPreferences called")
+        SettingsWindowController.shared.showWindow()
+        logger.info("AppDelegate: showWindow called")
+    }
+    
+    // Alternative method to show preferences via keyboard shortcut
+    @objc func showPreferencesViaShortcut() {
+        logger.info("AppDelegate: showPreferencesViaShortcut called")
         SettingsWindowController.shared.showWindow()
     }
 
     private func handleIfRunningUnderTests() -> Bool {
         if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil || NSClassFromString("XCTest") != nil {
-            print("AppDelegate: Detected test environment - skipping GUI setup")
+            logger.info("AppDelegate: Detected test environment - skipping GUI setup")
             NSApp.setActivationPolicy(.prohibited)
             return true
         }
