@@ -233,8 +233,8 @@ class TreonFileManager: ObservableObject {
             throw FileManagerError.unsupportedFileType(fileExtension)
         }
         
-        // Validate JSON content
-        let (isValidJSON, errorMessage) = await validateJSONContent(url: url)
+        // Validate JSON content and load it
+        let (isValidJSON, errorMessage, content) = await validateAndLoadJSONContent(url: url)
         
         let fileInfo = FileInfo(
             url: url,
@@ -243,7 +243,7 @@ class TreonFileManager: ObservableObject {
             modifiedDate: modifiedDate,
             isValidJSON: isValidJSON,
             errorMessage: errorMessage,
-            content: nil
+            content: content
         )
         
         // Add to recent files if valid
@@ -254,21 +254,24 @@ class TreonFileManager: ObservableObject {
         return fileInfo
     }
     
-    private func validateJSONContent(url: URL) async -> (Bool, String?) {
+    private func validateAndLoadJSONContent(url: URL) async -> (Bool, String?, String?) {
         return await withCheckedContinuation { continuation in
             DispatchQueue.global(qos: .userInitiated).async {
                 do {
                     let data = try Data(contentsOf: url)
-                    if let raw = String(data: data, encoding: .utf8) {
-                        // Quick pre-parse checks for common malformations the parser may not flag clearly
-                        if raw.contains(",]") || raw.contains(",}") {
-                            continuation.resume(returning: (false, "Invalid JSON structure: Trailing comma"))
-                            return
-                        }
-                        if raw.contains("[,]") {
-                            continuation.resume(returning: (false, "Invalid JSON structure: Invalid array"))
-                            return
-                        }
+                    guard let content = String(data: data, encoding: .utf8) else {
+                        continuation.resume(returning: (false, "Unable to decode file as UTF-8", nil))
+                        return
+                    }
+                    
+                    // Quick pre-parse checks for common malformations the parser may not flag clearly
+                    if content.contains(",]") || content.contains(",}") {
+                        continuation.resume(returning: (false, "Invalid JSON structure: Trailing comma", content))
+                        return
+                    }
+                    if content.contains("[,]") {
+                        continuation.resume(returning: (false, "Invalid JSON structure: Invalid array", content))
+                        return
                     }
                     
                     // Try to parse JSON
@@ -277,9 +280,11 @@ class TreonFileManager: ObservableObject {
                     // Validate it's a valid JSON structure
                     // Note: JSONSerialization.isValidJSONObject only validates objects, not arrays
                     // But if we can parse it without error, it's valid JSON
-                    continuation.resume(returning: (true, nil))
+                    continuation.resume(returning: (true, nil, content))
                 } catch {
-                    continuation.resume(returning: (false, error.localizedDescription))
+                    // Even if JSON is invalid, we still want to return the content for editing
+                    let content = (try? String(contentsOf: url, encoding: .utf8)) ?? ""
+                    continuation.resume(returning: (false, error.localizedDescription, content))
                 }
             }
         }
@@ -349,23 +354,10 @@ class TreonFileManager: ObservableObject {
         return try await withCheckedThrowingContinuation { continuation in
             DispatchQueue.global(qos: .userInitiated).async {
                 do {
-                    // Check if file exists first
-                    guard FileManager.default.fileExists(atPath: url.path) else {
-                        continuation.resume(throwing: FileManagerError.fileNotFound(url.path))
-                        return
-                    }
-                    
                     let content = try String(contentsOf: url, encoding: .utf8)
                     continuation.resume(returning: content)
-                } catch let error as FileManagerError {
-                    continuation.resume(throwing: error)
                 } catch {
-                    // Check if it's a file not found error
-                    if (error as NSError).code == NSFileReadNoSuchFileError {
-                        continuation.resume(throwing: FileManagerError.fileNotFound(url.path))
-                    } else {
-                        continuation.resume(throwing: FileManagerError.corruptedFile(url.path))
-                    }
+                    continuation.resume(throwing: FileManagerError.corruptedFile(url.path))
                 }
             }
         }
@@ -400,11 +392,6 @@ class TreonFileManager: ObservableObject {
         } else {
             errorMessage = error.localizedDescription
         }
-    }
-    
-    func clearCurrentFile() {
-        currentFile = nil
-        clearError()
     }
     
     // MARK: - New Content Creation Methods
