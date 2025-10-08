@@ -31,17 +31,26 @@ class SettingsWindowController: NSWindowController {
     
     func showWindow() {
         logger.info("SettingsWindowController: showWindow called")
-        logger.info("SettingsWindowController: window = \(String(describing: self.window))")
         
-        guard let window = window else {
-            logger.error("SettingsWindowController: window is nil")
-            return
-        }
+        // Create a new window each time to ensure it's visible
+        let settingsView = SettingsView()
+        let hostingController = NSHostingController(rootView: settingsView)
         
-        // Show and bring to front
-        window.makeKeyAndOrderFront(nil)
+        let newWindow = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 500, height: 400),
+            styleMask: [.titled, .closable, .miniaturizable],
+            backing: .buffered,
+            defer: false
+        )
+        
+        newWindow.title = "Settings"
+        newWindow.contentViewController = hostingController
+        newWindow.center()
+        
+        // Show the window
+        newWindow.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
         
-        logger.info("SettingsWindowController: window should now be visible")
+        logger.info("SettingsWindowController: new window created and should be visible")
     }
 }
