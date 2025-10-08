@@ -193,9 +193,6 @@ struct LaunchScreenView: View {
                 fileManager.currentFile = fileInfo
                 print("Successfully opened file: \(fileInfo.name)")
             } catch {
-                // Reset currentFile to nil on any error to ensure we return to landing screen
-                fileManager.currentFile = nil
-                
                 // Only show error if it's not a user cancellation
                 if let fileManagerError = error as? FileManagerError, 
                    case .userCancelled = fileManagerError {
@@ -220,29 +217,18 @@ struct LaunchScreenView: View {
             do {
                 fileManager.isLoading = true
                 fileManager.clearError()
-                let fileInfo = try await fileManager.openFile(url: recentFile.url)
+                let fileInfo = try await fileManager.openFileWithPermission(url: recentFile.url)
                 fileManager.currentFile = fileInfo
                 print("Successfully opened recent file: \(fileInfo.name)")
             } catch {
-                // Reset currentFile to nil on any error to ensure we return to landing screen
-                fileManager.currentFile = nil
-                
-                // Handle specific error types
-                if let fileManagerError = error as? FileManagerError {
-                    switch fileManagerError {
-                    case .fileNotFound:
-                        // Remove the file from recent files if it no longer exists
-                        fileManager.removeRecentFile(recentFile)
-                        fileManager.setError(FileManagerError.fileNotFound("File has been moved or deleted: \(recentFile.name)"))
-                    case .userCancelled:
-                        print("User cancelled file selection")
-                    default:
-                        fileManager.setError(error)
-                    }
+                // Only show error if it's not a user cancellation
+                if let fileManagerError = error as? FileManagerError, 
+                   case .userCancelled = fileManagerError {
+                    print("User cancelled file selection")
                 } else {
                     fileManager.setError(error)
+                    print("Error opening recent file: \(error.localizedDescription)")
                 }
-                print("Error opening recent file: \(error.localizedDescription)")
             }
             fileManager.isLoading = false
         }
@@ -257,7 +243,6 @@ struct LaunchScreenView: View {
                 // Get content from pasteboard
                 let pasteboard = NSPasteboard.general
                 guard let content = pasteboard.string(forType: .string), !content.isEmpty else {
-                    fileManager.currentFile = nil
                     fileManager.setError(FileManagerError.invalidJSON("No content found in pasteboard"))
                     fileManager.isLoading = false
                     return
@@ -274,7 +259,6 @@ struct LaunchScreenView: View {
                     // Don't show error for non-JSON content, just log it
                 }
             } catch {
-                fileManager.currentFile = nil
                 fileManager.setError(error)
                 print("Error creating file from pasteboard: \(error.localizedDescription)")
             }
@@ -289,7 +273,6 @@ struct LaunchScreenView: View {
                 fileManager.clearError()
                 
                 guard let url = URL(string: urlInput) else {
-                    fileManager.currentFile = nil
                     fileManager.setError(FileManagerError.invalidJSON("Invalid URL format"))
                     fileManager.isLoading = false
                     return
@@ -304,7 +287,6 @@ struct LaunchScreenView: View {
                 urlInput = ""
                 showingURLInput = false
             } catch {
-                fileManager.currentFile = nil
                 fileManager.setError(error)
                 print("Error loading from URL: \(error.localizedDescription)")
             }
@@ -327,7 +309,6 @@ struct LaunchScreenView: View {
                 curlInput = ""
                 showingCurlInput = false
             } catch {
-                fileManager.currentFile = nil
                 fileManager.setError(error)
                 print("Error executing cURL command: \(error.localizedDescription)")
             }
@@ -350,7 +331,6 @@ struct LaunchScreenView: View {
                                     fileManager.currentFile = fileInfo
                                     print("Successfully opened dropped file: \(fileInfo.name)")
                                 } catch {
-                                    fileManager.currentFile = nil
                                     fileManager.setError(error)
                                     print("Error opening dropped file: \(error.localizedDescription)")
                                 }

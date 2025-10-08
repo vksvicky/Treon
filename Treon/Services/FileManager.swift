@@ -179,6 +179,43 @@ class TreonFileManager: ObservableObject {
         return try await validateAndLoadFile(url: url)
     }
     
+    func openFileWithPermission(url: URL) async throws -> FileInfo {
+        logger.info("Opening file with permission: \(url.path)")
+        return try await withCheckedThrowingContinuation { continuation in
+            DispatchQueue.main.async {
+                let panel = NSOpenPanel()
+                panel.allowsMultipleSelection = false
+                panel.canChooseDirectories = false
+                panel.allowedContentTypes = [.json]
+                panel.title = "Open JSON File"
+                panel.message = "Select a JSON file to open"
+                
+                // Pre-select the file if it exists
+                if FileManager.default.fileExists(atPath: url.path) {
+                    panel.directoryURL = url.deletingLastPathComponent()
+                    panel.nameFieldStringValue = url.lastPathComponent
+                }
+                
+                if panel.runModal() == .OK, let selectedUrl = panel.url {
+                    self.logger.info("User selected file: \(selectedUrl.path)")
+                    Task {
+                        do {
+                            let fileInfo = try await self.validateAndLoadFile(url: selectedUrl)
+                            self.logger.info("Successfully loaded file: \(fileInfo.name)")
+                            continuation.resume(returning: fileInfo)
+                        } catch {
+                            self.logger.error("Failed to load file: \(error.localizedDescription)")
+                            continuation.resume(throwing: error)
+                        }
+                    }
+                } else {
+                    self.logger.info("User cancelled file selection")
+                    continuation.resume(throwing: FileManagerError.userCancelled)
+                }
+            }
+        }
+    }
+    
     func createNewFile() -> FileInfo {
         let tempURL = FileManager.default.temporaryDirectory
             .appendingPathComponent("Untitled.json")
