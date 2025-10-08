@@ -91,12 +91,12 @@ struct JSONViewerView: View {
                     Button(action: { 
                         isNavigatorPinned.toggle()
                     }) {
-                        Image(systemName: isNavigatorPinned ? "pin.fill" : "pin")
+                        Image(systemName: isNavigatorPinned ? "lock.fill" : "lock.open.fill")
                             .font(.system(size: 12, weight: .medium))
                             .foregroundColor(isNavigatorPinned ? .blue : .secondary)
                     }
                     .buttonStyle(.borderless)
-                    .help(isNavigatorPinned ? "Unpin Navigator" : "Pin Navigator")
+                    .help(isNavigatorPinned ? "Unlock Navigator" : "Lock Navigator")
                     
                     Button("Expand All") {
                         if let rootNode { expansion.expandAll(root: rootNode) }

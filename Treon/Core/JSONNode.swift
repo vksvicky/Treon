@@ -17,7 +17,7 @@ public final class TreeExpansionState: ObservableObject {
     public init() {}
 
     // Avoid actor-teardown interaction during XCTest memory checking
-    nonisolated deinit {}
+    deinit {}
 
     @inlinable public func isExpanded(_ node: JSONNode) -> Bool { expandedIds.contains(node.id) }
 
