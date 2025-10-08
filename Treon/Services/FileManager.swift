@@ -236,11 +236,6 @@ class TreonFileManager: ObservableObject {
         // Validate JSON content
         let (isValidJSON, errorMessage) = await validateJSONContent(url: url)
         
-        // If the error message indicates file not found, throw the proper error
-        if let errorMessage = errorMessage, errorMessage.contains("File not found") {
-            throw FileManagerError.fileNotFound(url.path)
-        }
-        
         let fileInfo = FileInfo(
             url: url,
             name: url.lastPathComponent,
@@ -263,12 +258,6 @@ class TreonFileManager: ObservableObject {
         return await withCheckedContinuation { continuation in
             DispatchQueue.global(qos: .userInitiated).async {
                 do {
-                    // Check if file exists first
-                    guard FileManager.default.fileExists(atPath: url.path) else {
-                        continuation.resume(returning: (false, "File not found: \(url.lastPathComponent)"))
-                        return
-                    }
-                    
                     let data = try Data(contentsOf: url)
                     if let raw = String(data: data, encoding: .utf8) {
                         // Quick pre-parse checks for common malformations the parser may not flag clearly
@@ -290,12 +279,7 @@ class TreonFileManager: ObservableObject {
                     // But if we can parse it without error, it's valid JSON
                     continuation.resume(returning: (true, nil))
                 } catch {
-                    // Check if it's a file not found error
-                    if (error as NSError).code == NSFileReadNoSuchFileError {
-                        continuation.resume(returning: (false, "File not found: \(url.lastPathComponent)"))
-                    } else {
-                        continuation.resume(returning: (false, error.localizedDescription))
-                    }
+                    continuation.resume(returning: (false, error.localizedDescription))
                 }
             }
         }
