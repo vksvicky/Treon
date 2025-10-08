@@ -60,7 +60,13 @@ struct LaunchScreenView: View {
         HStack(spacing: DesignConstants.buttonSpacing) {
             Button(action: openFile) {
                 HStack {
-                    if fileManager.isLoading { ProgressView().scaleEffect(0.8) } else { Image(systemName: "folder") }
+                    if fileManager.isLoading {
+                        Image(systemName: "arrow.clockwise")
+                            .rotationEffect(.degrees(fileManager.isLoading ? 360 : 0))
+                            .animation(.linear(duration: 1).repeatForever(autoreverses: false), value: fileManager.isLoading)
+                    } else {
+                        Image(systemName: "folder")
+                    }
                     Text("Open File")
                 }
             }
@@ -339,6 +345,7 @@ struct LaunchScreenView: View {
         return false
     }
 }
+
 
 // MARK: - Recent File Row Component
 struct RecentFileRow: View {

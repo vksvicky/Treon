@@ -17,7 +17,7 @@ public final class TreeExpansionState: ObservableObject {
     public init() {}
 
     // Avoid actor-teardown interaction during XCTest memory checking
-    nonisolated(unsafe) deinit {}
+    nonisolated deinit {}
 
     @inlinable public func isExpanded(_ node: JSONNode) -> Bool { expandedIds.contains(node.id) }
 
@@ -81,23 +81,67 @@ public struct JSONNode: Identifiable {
     }
 }
 
-public extension JSONNode {
-    var displayTitle: String {
-        // Root node (no key)
-        guard let key = key else {
+    public extension JSONNode {
+        var displayTitle: String {
+            // Root node (no key)
+            guard let key = key else {
+                switch value {
+                case .object: return "Root Object"
+                case .array: return "Root Array"
+                default: return "Root"
+                }
+            }
+            // Array indices use bracketed form
+            let isNumericKey = !key.isEmpty && key.unicodeScalars.allSatisfy { CharacterSet.decimalDigits.contains($0) }
+            if isNumericKey { return "[\(key)]" }
+            // Object key as-is
+            return key
+        }
+        
+        var dataType: String {
             switch value {
-            case .object: return "Root Object"
-            case .array: return "Root Array"
-            default: return "Root"
+            case .string: return "String"
+            case .number: return "Number"
+            case .bool: return "Boolean"
+            case .object: return "Object"
+            case .array: return "Array"
+            case .null: return "null"
             }
         }
-        // Array indices use bracketed form
-        let isNumericKey = !key.isEmpty && key.unicodeScalars.allSatisfy { CharacterSet.decimalDigits.contains($0) }
-        if isNumericKey { return "[\(key)]" }
-        // Object key as-is
-        return key
+        
+        var typeIcon: String {
+            switch value {
+            case .string: return "\"\""
+            case .number: return "#"
+            case .bool: return "✓"
+            case .object: return "{}"
+            case .array: return "[]"
+            case .null: return "∅"
+            }
+        }
+        
+        var typeIconName: String {
+            switch value {
+            case .string: return "string-data-type"
+            case .number: return "number-data-type"
+            case .bool: return "boolean-data-type"
+            case .object: return "object-data-type"
+            case .array: return "array-data-type"
+            case .null: return "null-data-type"
+            }
+        }
+        
+        var enhancedDataType: String {
+            switch value {
+            case .string: return "String"
+            case .number: return "Number"
+            case .bool: return "Boolean"
+            case .object: return "Object{\(children.count)}"
+            case .array: return "Array[\(children.count)]"
+            case .null: return "null"
+            }
+        }
     }
-}
 
 public enum JSONTreeBuilder {
     public static func build(from data: Data) throws -> JSONNode {

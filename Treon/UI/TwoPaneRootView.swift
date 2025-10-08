@@ -73,6 +73,29 @@ struct NodeRow: View {
     }
 
     var title: String { node.displayTitle }
+    
+    // Xcode-style icons and colors
+    private func iconSystemName(for value: JSONNodeValue) -> String {
+        switch value {
+        case .string: return "textformat.abc"
+        case .number: return "number"
+        case .bool: return "checkmark.circle.fill"
+        case .object: return "curlybraces"
+        case .array: return "list.bullet.rectangle"
+        case .null: return "circle.slash"
+        }
+    }
+    
+    private func iconColor(for value: JSONNodeValue) -> Color {
+        switch value {
+        case .string: return Color(red: 0.8, green: 0.4, blue: 0.2) // Orange
+        case .number: return Color(red: 0.2, green: 0.6, blue: 0.8) // Blue
+        case .bool: return Color(red: 0.2, green: 0.7, blue: 0.3) // Green
+        case .object: return Color(red: 0.6, green: 0.3, blue: 0.8) // Purple
+        case .array: return Color(red: 0.3, green: 0.7, blue: 0.8) // Cyan
+        case .null: return Color(red: 0.5, green: 0.5, blue: 0.5) // Gray
+        }
+    }
 
     var body: some View {
         content
@@ -96,38 +119,176 @@ struct NodeRow: View {
                     NodeRow(node: child, expansion: expansion)
                 }
             } label: {
-                Text(title)
+                HStack(spacing: 0) {
+                    // Column 1: Icon + Key (Xcode-style)
+                    HStack(spacing: 4) {
+                        Group {
+                            if let image = NSImage(named: node.typeIconName) {
+                                Image(nsImage: image)
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .frame(width: 16, height: 16)
+                            } else {
+                                // Xcode-style SF Symbols
+                                Image(systemName: iconSystemName(for: node.value))
+                                    .font(.system(size: 13, weight: .medium))
+                                    .foregroundColor(iconColor(for: node.value))
+                            }
+                        }
+                        Text(title)
+                            .lineLimit(1)
+                            .foregroundColor(.primary)
+                            .font(.system(size: 13, weight: .regular))
+                            .help(title)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 4)
+                    .padding(.vertical, 2)
+                    
+                    // Column 2: Type (Xcode-style)
+                    Text(node.enhancedDataType)
+                        .foregroundColor(.secondary)
+                        .font(.system(size: 11, weight: .regular))
+                        .frame(width: 60, alignment: .trailing)
+                        .padding(.trailing, 8)
+                }
             }
-        case .string(let s):
-            HStack {
-                Text(title)
-                Spacer()
-                Text("\"\(s)\"")
+        case .string(let stringValue):
+            HStack(spacing: 0) {
+                // Column 1: Icon + Key: Value (Xcode-style)
+                HStack(spacing: 4) {
+                    Group {
+                        if let image = NSImage(named: node.typeIconName) {
+                            Image(nsImage: image)
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 16, height: 16)
+                        } else {
+                            // Xcode-style SF Symbols
+                            Image(systemName: iconSystemName(for: node.value))
+                                .font(.system(size: 13, weight: .medium))
+                                .foregroundColor(iconColor(for: node.value))
+                        }
+                    }
+                    Text("\(title): \"\(stringValue)\"") 
+                        .lineLimit(1)
+                        .foregroundColor(.primary)
+                        .font(.system(size: 13, weight: .regular))
+                        .help("\(title): \"\(stringValue)\"") 
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 4)
+                .padding(.vertical, 2)
+                
+                // Column 2: Type (Xcode-style)
+                Text(node.enhancedDataType)
                     .foregroundColor(.secondary)
+                    .font(.system(size: 11, weight: .regular))
+                    .frame(width: 60, alignment: .trailing)
+                    .padding(.trailing, 8)
             }
-        case .number(let n):
-            HStack {
-                Text(title)
-                Spacer()
-                Text(String(n))
+        case .number(let numberValue):
+            HStack(spacing: 0) {
+                // Column 1: Icon + Key: Value (Xcode-style)
+                HStack(spacing: 4) {
+                    Group {
+                        if let image = NSImage(named: node.typeIconName) {
+                            Image(nsImage: image)
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 16, height: 16)
+                        } else {
+                            // Xcode-style SF Symbols
+                            Image(systemName: iconSystemName(for: node.value))
+                                .font(.system(size: 13, weight: .medium))
+                                .foregroundColor(iconColor(for: node.value))
+                        }
+                    }
+                    Text("\(title): \(numberValue)")
+                        .lineLimit(1)
+                        .foregroundColor(.primary)
+                        .font(.system(size: 13, weight: .regular))
+                        .help("\(title): \(numberValue)")
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 4)
+                .padding(.vertical, 2)
+                
+                // Column 2: Type (Xcode-style)
+                Text(node.enhancedDataType)
                     .foregroundColor(.secondary)
+                    .font(.system(size: 11, weight: .regular))
+                    .frame(width: 60, alignment: .trailing)
+                    .padding(.trailing, 8)
             }
-        case .bool(let b):
-            HStack {
-                Text(title)
-                Spacer()
-                Text(b ? "true" : "false")
+        case .bool(let boolValue):
+            HStack(spacing: 0) {
+                // Column 1: Icon + Key: Value (Xcode-style)
+                HStack(spacing: 4) {
+                    Group {
+                        if let image = NSImage(named: node.typeIconName) {
+                            Image(nsImage: image)
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 16, height: 16)
+                        } else {
+                            // Xcode-style SF Symbols
+                            Image(systemName: iconSystemName(for: node.value))
+                                .font(.system(size: 13, weight: .medium))
+                                .foregroundColor(iconColor(for: node.value))
+                        }
+                    }
+                    Text("\(title): \(boolValue ? "true" : "false")")
+                        .lineLimit(1)
+                        .foregroundColor(.primary)
+                        .font(.system(size: 13, weight: .regular))
+                        .help("\(title): \(boolValue ? "true" : "false")")
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 4)
+                .padding(.vertical, 2)
+                
+                // Column 2: Type (Xcode-style)
+                Text(node.enhancedDataType)
                     .foregroundColor(.secondary)
+                    .font(.system(size: 11, weight: .regular))
+                    .frame(width: 60, alignment: .trailing)
+                    .padding(.trailing, 8)
             }
         case .null:
-            HStack {
-                Text(title)
-                Spacer()
-                Text("null")
+            HStack(spacing: 0) {
+                // Column 1: Icon + Key: Value (Xcode-style)
+                HStack(spacing: 4) {
+                    Group {
+                        if let image = NSImage(named: node.typeIconName) {
+                            Image(nsImage: image)
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 16, height: 16)
+                        } else {
+                            // Xcode-style SF Symbols
+                            Image(systemName: iconSystemName(for: node.value))
+                                .font(.system(size: 13, weight: .medium))
+                                .foregroundColor(iconColor(for: node.value))
+                        }
+                    }
+                    Text("\(title): null")
+                        .lineLimit(1)
+                        .foregroundColor(.primary)
+                        .font(.system(size: 13, weight: .regular))
+                        .help("\(title): null")
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 4)
+                .padding(.vertical, 2)
+                
+                // Column 2: Type (Xcode-style)
+                Text(node.enhancedDataType)
                     .foregroundColor(.secondary)
+                    .font(.system(size: 11, weight: .regular))
+                    .frame(width: 60, alignment: .trailing)
+                    .padding(.trailing, 8)
             }
         }
     }
 }
-
-
