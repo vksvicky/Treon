@@ -176,43 +176,42 @@ class TreonFileManager: ObservableObject {
     }
     
     func openFile(url: URL) async throws -> FileInfo {
-        return try await validateAndLoadFile(url: url)
-    }
-    
-    func openFileWithPermission(url: URL) async throws -> FileInfo {
-        logger.info("Opening file with permission: \(url.path)")
-        return try await withCheckedThrowingContinuation { continuation in
-            DispatchQueue.main.async {
-                let panel = NSOpenPanel()
-                panel.allowsMultipleSelection = false
-                panel.canChooseDirectories = false
-                panel.allowedContentTypes = [.json]
-                panel.title = "Open JSON File"
-                panel.message = "Select a JSON file to open"
+        // Try to access the file directly first
+        do {
+            return try await validateAndLoadFile(url: url)
+        } catch {
+            // Log the actual error for debugging
+            logger.warning("Error accessing file \(url.path): \(error)")
+            logger.warning("Error type: \(type(of: error))")
+            
+            // Check for various permission-related errors
+            if let nsError = error as NSError? {
+                logger.warning("NSError domain: \(nsError.domain), code: \(nsError.code)")
+                logger.warning("NSError description: \(nsError.localizedDescription)")
                 
-                // Pre-select the file if it exists
-                if FileManager.default.fileExists(atPath: url.path) {
-                    panel.directoryURL = url.deletingLastPathComponent()
-                    panel.nameFieldStringValue = url.lastPathComponent
-                }
+                // Check for different permission error codes and domains
+                let isPermissionError = (nsError.domain == NSCocoaErrorDomain && 
+                                       (nsError.code == NSFileReadNoPermissionError || 
+                                        nsError.code == NSFileReadCorruptFileError ||
+                                        nsError.code == 257)) ||
+                                      (nsError.domain == "NSCocoaErrorDomain" && nsError.code == 257) ||
+                                      (nsError.localizedDescription.contains("permission") && nsError.localizedDescription.contains("view"))
                 
-                if panel.runModal() == .OK, let selectedUrl = panel.url {
-                    self.logger.info("User selected file: \(selectedUrl.path)")
-                    Task {
-                        do {
-                            let fileInfo = try await self.validateAndLoadFile(url: selectedUrl)
-                            self.logger.info("Successfully loaded file: \(fileInfo.name)")
-                            continuation.resume(returning: fileInfo)
-                        } catch {
-                            self.logger.error("Failed to load file: \(error.localizedDescription)")
-                            continuation.resume(throwing: error)
-                        }
-                    }
-                } else {
-                    self.logger.info("User cancelled file selection")
-                    continuation.resume(throwing: FileManagerError.userCancelled)
+                if isPermissionError {
+                    logger.warning("Permission required for file: \(url.path)")
+                    throw FileManagerError.permissionDenied("File requires permission. Please use 'Open File' to grant access to this file.")
                 }
             }
+            
+            // Also check if the error message contains permission-related text
+            let errorMessage = error.localizedDescription.lowercased()
+            if errorMessage.contains("permission") && errorMessage.contains("view") {
+                logger.warning("Permission error detected from message: \(error.localizedDescription)")
+                throw FileManagerError.permissionDenied("File requires permission. Please use 'Open File' to grant access to this file.")
+            }
+            
+            // Re-throw other errors
+            throw error
         }
     }
     
@@ -273,6 +272,11 @@ class TreonFileManager: ObservableObject {
         // Validate JSON content and load it
         let (isValidJSON, errorMessage, content) = await validateAndLoadJSONContent(url: url)
         
+        // Check if this is a permission error
+        if errorMessage == "PERMISSION_ERROR" {
+            throw FileManagerError.permissionDenied("File requires permission. Please use 'Open File' to grant access to this file.")
+        }
+        
         let fileInfo = FileInfo(
             url: url,
             name: url.lastPathComponent,
@@ -319,7 +323,24 @@ class TreonFileManager: ObservableObject {
                     // But if we can parse it without error, it's valid JSON
                     continuation.resume(returning: (true, nil, content))
                 } catch {
-                    // Even if JSON is invalid, we still want to return the content for editing
+                    // Check if this is a permission error
+                    if let nsError = error as NSError? {
+                        let isPermissionError = (nsError.domain == NSCocoaErrorDomain && 
+                                               (nsError.code == NSFileReadNoPermissionError || 
+                                                nsError.code == NSFileReadCorruptFileError ||
+                                                nsError.code == 257)) ||
+                                              (nsError.domain == "NSCocoaErrorDomain" && nsError.code == 257) ||
+                                              (nsError.localizedDescription.contains("permission") && nsError.localizedDescription.contains("view"))
+                        
+                        if isPermissionError {
+                            // For permission errors, we need to throw the error instead of returning a FileInfo
+                            // This will be caught by the calling method and handled appropriately
+                            continuation.resume(returning: (false, "PERMISSION_ERROR", nil))
+                            return
+                        }
+                    }
+                    
+                    // For other errors, try to get content for editing
                     let content = (try? String(contentsOf: url, encoding: .utf8)) ?? ""
                     continuation.resume(returning: (false, error.localizedDescription, content))
                 }

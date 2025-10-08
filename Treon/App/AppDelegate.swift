@@ -41,6 +41,21 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if handleIfRunningUnderTests() { return }
         if handleIfCLI() { return }
         print("AppDelegate: Running in GUI mode")
+        setupMenuActions()
+    }
+    
+    private func setupMenuActions() {
+        // Connect the Preferences menu item to show settings
+        if let mainMenu = NSApp.mainMenu,
+           let appMenu = mainMenu.item(at: 0)?.submenu,
+           let preferencesItem = appMenu.item(withTitle: "Preferences…") {
+            preferencesItem.target = self
+            preferencesItem.action = #selector(showPreferences)
+        }
+    }
+    
+    @objc private func showPreferences() {
+        SettingsWindowController.shared.showWindow()
     }
 
     private func handleIfRunningUnderTests() -> Bool {

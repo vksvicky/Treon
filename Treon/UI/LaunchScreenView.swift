@@ -1,15 +1,19 @@
 import SwiftUI
 import UniformTypeIdentifiers
 import AppKit
+import os.log
 
 struct LaunchScreenView: View {
     @StateObject private var fileManager = TreonFileManager.shared
+    @StateObject private var permissionManager = PermissionManager.shared
     @State private var showingRecentFiles = false
     @State private var showingURLInput = false
     @State private var showingCurlInput = false
     @State private var urlInput = ""
     @State private var curlInput = ""
     
+    private let logger = Logger(subsystem: "club.cycleruncode.Treon", category: "LaunchScreenView")
+
     var body: some View {
         Group {
             if fileManager.currentFile != nil {
@@ -165,13 +169,68 @@ struct LaunchScreenView: View {
     private var errorBanner: some View {
         Group {
             if let errorMessage = fileManager.errorMessage {
-                Text(errorMessage)
-                    .font(.caption)
-                    .foregroundColor(.red)
-                    .padding(.horizontal)
-                    .multilineTextAlignment(.center)
+                // Check if this is a permission error
+                if errorMessage.contains("permission") || errorMessage.contains("Permission") {
+                    permissionRequestBanner
+                } else {
+                    // Show regular error message for non-permission errors
+                    Text(errorMessage)
+                        .font(.caption)
+                        .foregroundColor(.red)
+                        .padding(.horizontal)
+                        .multilineTextAlignment(.center)
+                }
             }
         }
+    }
+    
+    private var permissionRequestBanner: some View {
+        VStack(spacing: 12) {
+            HStack {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundColor(.orange)
+                
+                Text("File Access Permission Required")
+                    .font(.caption)
+                    .fontWeight(.medium)
+                    .foregroundColor(.primary)
+            }
+            
+            Text("Treon needs permission to access files on your system. This is required to open files from Recent Files.")
+                .font(.caption2)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal)
+            
+            HStack(spacing: 12) {
+                Button("Grant Permission") {
+                    Task {
+                        let granted = await permissionManager.requestFileAccessPermission()
+                        if granted {
+                            logger.info("Permission granted from error banner")
+                            // Clear the error and try to open the file again
+                            fileManager.clearError()
+                            // The file should now be accessible
+                        } else {
+                            logger.info("Permission denied from error banner")
+                        }
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.small)
+                
+                Button("Reject") {
+                    logger.info("Permission request rejected from error banner")
+                    fileManager.clearError()
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+            }
+        }
+        .padding()
+        .background(Color(NSColor.controlBackgroundColor))
+        .cornerRadius(8)
+        .padding(.horizontal)
     }
 
     private var dragAndDropHint: some View {
@@ -183,7 +242,7 @@ struct LaunchScreenView: View {
             }
         }
     }
-    
+
     private func openFile() {
         Task {
             do {
@@ -191,55 +250,64 @@ struct LaunchScreenView: View {
                 fileManager.clearError()
                 let fileInfo = try await fileManager.openFile()
                 fileManager.currentFile = fileInfo
-                print("Successfully opened file: \(fileInfo.name)")
+                logger.info("Successfully opened file: \(fileInfo.name)")
             } catch {
                 // Only show error if it's not a user cancellation
-                if let fileManagerError = error as? FileManagerError, 
+                if let fileManagerError = error as? FileManagerError,
                    case .userCancelled = fileManagerError {
-                    print("User cancelled file selection")
+                    logger.info("User cancelled file selection")
                 } else {
+                    // Clear the current file so we show the landing screen instead of JSON viewer
+                    fileManager.currentFile = nil
                     fileManager.setError(error)
-                    print("Error opening file: \(error.localizedDescription)")
+                    logger.error("Error opening file: \(error.localizedDescription)")
                 }
             }
             fileManager.isLoading = false
         }
     }
-    
+
     private func newFile() {
         let fileInfo = fileManager.createNewFile()
         fileManager.currentFile = fileInfo
-        print("Created new file: \(fileInfo.name)")
+        logger.info("Created new file: \(fileInfo.name)")
     }
-    
+
     private func openRecentFile(_ recentFile: RecentFile) {
         Task {
             do {
                 fileManager.isLoading = true
                 fileManager.clearError()
-                let fileInfo = try await fileManager.openFileWithPermission(url: recentFile.url)
+                logger.info("Attempting to open recent file: \(recentFile.url.path)")
+                let fileInfo = try await fileManager.openFile(url: recentFile.url)
+                logger.info("Successfully got file info, setting current file")
                 fileManager.currentFile = fileInfo
-                print("Successfully opened recent file: \(fileInfo.name)")
+                logger.info("Successfully opened recent file: \(fileInfo.name)")
             } catch {
+                logger.error("Error caught in openRecentFile: \(error.localizedDescription)")
+                logger.debug("Error type: \(type(of: error))")
                 // Only show error if it's not a user cancellation
-                if let fileManagerError = error as? FileManagerError, 
+                if let fileManagerError = error as? FileManagerError,
                    case .userCancelled = fileManagerError {
-                    print("User cancelled file selection")
+                    logger.info("User cancelled file selection")
                 } else {
+                    // Clear the current file so we show the landing screen instead of JSON viewer
+                    logger.info("Clearing current file and setting error")
+                    fileManager.currentFile = nil
                     fileManager.setError(error)
-                    print("Error opening recent file: \(error.localizedDescription)")
+                    logger.error("Error opening recent file: \(error.localizedDescription)")
                 }
             }
             fileManager.isLoading = false
         }
     }
-    
+
     private func newFromPasteboard() {
         Task {
             do {
                 fileManager.isLoading = true
                 fileManager.clearError()
-                
+
                 // Get content from pasteboard
                 let pasteboard = NSPasteboard.general
                 guard let content = pasteboard.string(forType: .string), !content.isEmpty else {
@@ -247,75 +315,81 @@ struct LaunchScreenView: View {
                     fileManager.isLoading = false
                     return
                 }
-                
+
                 // Create file from pasteboard content (even if not valid JSON)
                 let fileInfo = try await fileManager.createFileFromContent(content, name: "Pasteboard Content")
                 fileManager.currentFile = fileInfo
-                
+
                 if fileInfo.isValidJSON {
-                    print("Successfully created JSON file from pasteboard: \(fileInfo.name)")
+                    logger.info("Successfully created JSON file from pasteboard: \(fileInfo.name)")
                 } else {
-                    print("Created file from pasteboard (not valid JSON): \(fileInfo.name)")
+                    logger.info("Created file from pasteboard (not valid JSON): \(fileInfo.name)")
                     // Don't show error for non-JSON content, just log it
                 }
             } catch {
+                // Clear the current file so we show the landing screen instead of JSON viewer
+                fileManager.currentFile = nil
                 fileManager.setError(error)
-                print("Error creating file from pasteboard: \(error.localizedDescription)")
+                logger.error("Error creating file from pasteboard: \(error.localizedDescription)")
             }
             fileManager.isLoading = false
         }
     }
-    
+
     private func loadFromURL() {
         Task {
             do {
                 fileManager.isLoading = true
                 fileManager.clearError()
-                
+
                 guard let url = URL(string: urlInput) else {
                     fileManager.setError(FileManagerError.invalidJSON("Invalid URL format"))
                     fileManager.isLoading = false
                     return
                 }
-                
+
                 // Load content from URL
                 let fileInfo = try await fileManager.loadFromURL(url)
                 fileManager.currentFile = fileInfo
-                print("Successfully loaded from URL: \(fileInfo.name)")
-                
+                logger.info("Successfully loaded from URL: \(fileInfo.name)")
+
                 // Clear the input and hide the section
                 urlInput = ""
                 showingURLInput = false
             } catch {
+                // Clear the current file so we show the landing screen instead of JSON viewer
+                fileManager.currentFile = nil
                 fileManager.setError(error)
-                print("Error loading from URL: \(error.localizedDescription)")
+                logger.error("Error loading from URL: \(error.localizedDescription)")
             }
             fileManager.isLoading = false
         }
     }
-    
+
     private func executeCurlCommand() {
         Task {
             do {
                 fileManager.isLoading = true
                 fileManager.clearError()
-                
+
                 // Parse and execute cURL command
                 let fileInfo = try await fileManager.executeCurlCommand(curlInput)
                 fileManager.currentFile = fileInfo
-                print("Successfully executed cURL command: \(fileInfo.name)")
-                
+                logger.info("Successfully executed cURL command: \(fileInfo.name)")
+
                 // Clear the input and hide the section
                 curlInput = ""
                 showingCurlInput = false
             } catch {
+                // Clear the current file so we show the landing screen instead of JSON viewer
+                fileManager.currentFile = nil
                 fileManager.setError(error)
-                print("Error executing cURL command: \(error.localizedDescription)")
+                logger.error("Error executing cURL command: \(error.localizedDescription)")
             }
             fileManager.isLoading = false
         }
     }
-    
+
     private func handleFileDrop(providers: [NSItemProvider]) -> Bool {
         for provider in providers {
             if provider.hasItemConformingToTypeIdentifier("public.file-url") {
@@ -329,10 +403,12 @@ struct LaunchScreenView: View {
                                     fileManager.clearError()
                                     let fileInfo = try await fileManager.openFile(url: url)
                                     fileManager.currentFile = fileInfo
-                                    print("Successfully opened dropped file: \(fileInfo.name)")
+                                    logger.info("Successfully opened dropped file: \(fileInfo.name)")
                                 } catch {
+                                    // Clear the current file so we show the landing screen instead of JSON viewer
+                                    fileManager.currentFile = nil
                                     fileManager.setError(error)
-                                    print("Error opening dropped file: \(error.localizedDescription)")
+                                    logger.error("Error opening dropped file: \(error.localizedDescription)")
                                 }
                                 fileManager.isLoading = false
                             }
@@ -352,37 +428,37 @@ struct RecentFileRow: View {
     let recentFile: RecentFile
     let onTap: () -> Void
     @State private var isHovering = false
-    
+
     var body: some View {
         Button(action: onTap) {
             HStack {
                 Image(systemName: recentFile.isValidJSON ? "doc.text" : "doc.text.badge.exclamationmark")
                     .foregroundColor(recentFile.isValidJSON ? .blue : .orange)
                     .frame(width: 20)
-                
+
                 VStack(alignment: .leading, spacing: 2) {
                     Text(recentFile.name)
                         .font(.system(size: 14, weight: .medium))
                         .foregroundColor(.primary)
                         .lineLimit(1)
-                    
+
                     HStack {
                         Text(recentFile.formattedSize)
                             .font(.caption)
                             .foregroundColor(.secondary)
-                        
+
                         Text("•")
                             .font(.caption)
                             .foregroundColor(.secondary)
-                        
+
                         Text(recentFile.lastOpened, style: .relative)
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
                 }
-                
+
                 Spacer()
-                
+
                 if !recentFile.isValidJSON {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .foregroundColor(.orange)
