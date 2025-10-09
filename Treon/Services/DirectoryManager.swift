@@ -10,6 +10,7 @@ import Foundation
 import os.log
 
 /// Manages directory memory functionality for file dialogs
+@MainActor
 class DirectoryManager {
     static let shared = DirectoryManager()
     

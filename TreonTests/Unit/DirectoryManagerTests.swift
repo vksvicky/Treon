@@ -13,6 +13,7 @@ final class DirectoryManagerTests: XCTestCase {
     var directoryManager: DirectoryManager!
     var tempDirectory: URL!
     
+    @MainActor
     override func setUp() {
         super.setUp()
         directoryManager = DirectoryManager.shared
@@ -27,6 +28,7 @@ final class DirectoryManagerTests: XCTestCase {
         super.tearDown()
     }
     
+    @MainActor
     func testGetLastOpenedDirectory_returnsDocumentsWhenNoSavedDirectory() {
         // Clear any existing directory memory
         UserDefaults.standard.removeObject(forKey: UserDefaultsKeys.lastOpenedDirectory)
@@ -38,6 +40,7 @@ final class DirectoryManagerTests: XCTestCase {
         XCTAssertEqual(directory.path, expectedDocuments.path)
     }
     
+    @MainActor
     func testGetLastOpenedDirectory_returnsSavedDirectoryWhenValid() async {
         // Create a test directory and save it
         let testDir = tempDirectory.appendingPathComponent("testDir")
@@ -51,6 +54,7 @@ final class DirectoryManagerTests: XCTestCase {
         XCTAssertEqual(directory.path, testDir.path)
     }
     
+    @MainActor
     func testGetLastOpenedDirectory_returnsDocumentsWhenSavedDirectoryInvalid() async {
         // Save an invalid directory path
         let invalidPath = "/nonexistent/directory/path"
@@ -69,6 +73,7 @@ final class DirectoryManagerTests: XCTestCase {
         XCTAssertNil(savedData)
     }
     
+    @MainActor
     func testSaveLastOpenedDirectory_savesCorrectDirectory() async {
         // Create a test file in a specific directory
         let testDir = tempDirectory.appendingPathComponent("saveTest")
@@ -91,6 +96,7 @@ final class DirectoryManagerTests: XCTestCase {
         XCTAssertEqual(savedURL?.path, testDir.path)
     }
     
+    @MainActor
     func testClearLastOpenedDirectory_removesSavedDirectory() async {
         // Save a directory first
         let testDir = tempDirectory.appendingPathComponent("clearTest")

@@ -8,6 +8,21 @@ public enum JSONNodeValue: Equatable {
     case number(Double)
     case bool(Bool)
     case null
+    
+    nonisolated public static func == (lhs: JSONNodeValue, rhs: JSONNodeValue) -> Bool {
+        switch (lhs, rhs) {
+        case (.object, .object), (.array, .array), (.null, .null):
+            return true
+        case (.string(let l), .string(let r)):
+            return l == r
+        case (.number(let l), .number(let r)):
+            return l == r
+        case (.bool(let l), .bool(let r)):
+            return l == r
+        default:
+            return false
+        }
+    }
 }
 
 @MainActor
@@ -71,7 +86,7 @@ public struct JSONNode: Identifiable {
     public let value: JSONNodeValue
     public let children: [JSONNode]
     public let path: String
-    
+
     public init(key: String?, value: JSONNodeValue, children: [JSONNode] = [], path: String) {
         self.id = path
         self.key = key
@@ -97,7 +112,7 @@ public struct JSONNode: Identifiable {
             // Object key as-is
             return key
         }
-        
+
         var dataType: String {
             switch value {
             case .string: return "String"
@@ -108,7 +123,7 @@ public struct JSONNode: Identifiable {
             case .null: return "null"
             }
         }
-        
+
         var typeIcon: String {
             switch value {
             case .string: return "\"\""
@@ -119,7 +134,7 @@ public struct JSONNode: Identifiable {
             case .null: return "∅"
             }
         }
-        
+
         var typeIconName: String {
             switch value {
             case .string: return "string-data-type"
@@ -130,7 +145,7 @@ public struct JSONNode: Identifiable {
             case .null: return "null-data-type"
             }
         }
-        
+
         var enhancedDataType: String {
             switch value {
             case .string: return "String"
