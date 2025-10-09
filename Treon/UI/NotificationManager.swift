@@ -5,19 +5,19 @@ import OSLog
 /// Manages custom notifications for the app
 class NotificationManager: ObservableObject {
     static let shared = NotificationManager()
-    
+
     @Published var currentNotification: AppNotification?
     @Published var isShowingNotification = false
-    
+
     private let logger = Logger(subsystem: "club.cycleruncode.Treon", category: "NotificationManager")
-    
+
     private init() {}
-    
+
     func showNotification(_ notification: AppNotification) {
         logger.info("Showing notification: \(notification.title)")
         currentNotification = notification
         isShowingNotification = true
-        
+
         // Auto-dismiss after duration if specified
         if let duration = notification.autoDismissDuration {
             DispatchQueue.main.asyncAfter(deadline: .now() + duration) {
@@ -25,13 +25,13 @@ class NotificationManager: ObservableObject {
             }
         }
     }
-    
+
     func dismissNotification() {
         logger.info("Dismissing notification")
         withAnimation(.easeInOut(duration: 0.3)) {
             isShowingNotification = false
         }
-        
+
         // Clear notification after animation
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             self.currentNotification = nil
@@ -48,7 +48,7 @@ struct AppNotification: Identifiable {
     let primaryAction: NotificationAction?
     let secondaryAction: NotificationAction?
     let autoDismissDuration: TimeInterval?
-    
+
     init(
         type: NotificationType,
         title: String,
@@ -71,7 +71,7 @@ enum NotificationType {
     case error
     case success
     case info
-    
+
     var iconName: String {
         switch self {
         case .permission:
@@ -84,7 +84,7 @@ enum NotificationType {
             return "info.circle.fill"
         }
     }
-    
+
     var iconColor: Color {
         switch self {
         case .permission:
@@ -103,7 +103,7 @@ struct NotificationAction {
     let title: String
     let action: () -> Void
     let style: ActionStyle
-    
+
     enum ActionStyle {
         case primary
         case secondary

@@ -3,7 +3,7 @@ import OSLog
 
 public struct JSONFormatter {
     public init() {}
-    
+
     // Static convenience methods
     public static func prettyPrint(_ jsonString: String) throws -> String {
         let data = Data(jsonString.utf8)
@@ -11,7 +11,7 @@ public struct JSONFormatter {
         let formattedData = try formatter.prettyPrinted(from: data)
         return String(data: formattedData, encoding: .utf8) ?? jsonString
     }
-    
+
     public static func minify(_ jsonString: String) throws -> String {
         let data = Data(jsonString.utf8)
         let formatter = JSONFormatter()

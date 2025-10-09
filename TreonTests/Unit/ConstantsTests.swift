@@ -4,9 +4,9 @@ import SwiftUI
 @testable import Treon
 
 class ConstantsTests: XCTestCase {
-    
+
     // MARK: - App Constants Tests
-    
+
     func testAppConstants_haveExpectedValues() {
         XCTAssertEqual(AppConstants.bundleIdentifierRoot, "club.cycleruncode")
         XCTAssertEqual(AppConstants.appName, "Treon")
@@ -15,47 +15,47 @@ class ConstantsTests: XCTestCase {
         XCTAssertNotNil(AppConstants.version)
         XCTAssertNotNil(AppConstants.buildNumber)
     }
-    
+
     // MARK: - UI Constants Tests
-    
+
     func testUIConstants_dimensionsAndTimings_areExpected() {
         // Window constants
         XCTAssertEqual(UIConstants.defaultWindowWidth, 1200)
         XCTAssertEqual(UIConstants.defaultWindowHeight, 800)
         XCTAssertEqual(UIConstants.minimumWindowWidth, 800)
         XCTAssertEqual(UIConstants.minimumWindowHeight, 600)
-        
+
         // Button constants
         XCTAssertEqual(UIConstants.buttonWidth, 160)
         XCTAssertEqual(UIConstants.buttonHeight, 44)
         XCTAssertEqual(UIConstants.buttonCornerRadius, 8)
         XCTAssertEqual(UIConstants.buttonSpacing, 16)
-        
+
         // Typography constants
         XCTAssertEqual(UIConstants.buttonFontSize, 14)
         XCTAssertEqual(UIConstants.titleFontSize, 24)
         XCTAssertEqual(UIConstants.subtitleFontSize, 16)
         XCTAssertEqual(UIConstants.bodyFontSize, 14)
         XCTAssertEqual(UIConstants.captionFontSize, 12)
-        
+
         // Animation constants
         XCTAssertEqual(UIConstants.hoverAnimationDuration, 0.2)
         XCTAssertEqual(UIConstants.buttonPressAnimationDuration, 0.1)
         XCTAssertEqual(UIConstants.fadeAnimationDuration, 0.3)
-        
+
         // Spacing constants
         XCTAssertEqual(UIConstants.smallSpacing, 8)
         XCTAssertEqual(UIConstants.mediumSpacing, 16)
         XCTAssertEqual(UIConstants.largeSpacing, 24)
         XCTAssertEqual(UIConstants.extraLargeSpacing, 40)
-        
+
         // Input field constants
         XCTAssertEqual(UIConstants.textFieldWidth, 300)
         XCTAssertEqual(UIConstants.textFieldHeight, 32)
         XCTAssertEqual(UIConstants.multilineTextFieldWidth, 400)
         XCTAssertEqual(UIConstants.multilineTextFieldHeight, 60)
     }
-    
+
     func testUIConstants_colors_areAccessible() {
         // Test that color constants are accessible
         let _ = UIConstants.primaryBlue
@@ -64,7 +64,7 @@ class ConstantsTests: XCTestCase {
         let _ = UIConstants.errorRed
         let _ = UIConstants.infoPurple
         let _ = UIConstants.secondaryGray
-        
+
         // Accessing colors is sufficient; compile-time types guarantee correctness
         _ = UIConstants.primaryBlue.opacity(1.0)
         _ = UIConstants.successGreen.opacity(1.0)
@@ -73,33 +73,33 @@ class ConstantsTests: XCTestCase {
         _ = UIConstants.infoPurple.opacity(1.0)
         _ = UIConstants.secondaryGray.opacity(1.0)
     }
-    
+
     // MARK: - File Constants Tests
-    
+
     func testFileConstants_limitsAndTypes_areExpected() {
         // File size limits
         XCTAssertEqual(FileConstants.maxFileSize, 50 * 1024 * 1024) // 50MB
         XCTAssertEqual(FileConstants.maxJSONSize, 10 * 1024 * 1024) // 10MB
         XCTAssertEqual(FileConstants.maxRecentFiles, 10)
-        
+
         // Supported file types
         XCTAssertTrue(FileConstants.supportedFileTypes.contains("json"))
         XCTAssertTrue(FileConstants.supportedFileTypes.contains("txt"))
         XCTAssertTrue(FileConstants.jsonFileExtensions.contains("json"))
-        
+
         // File operations
         XCTAssertEqual(FileConstants.defaultFileName, "Untitled")
         XCTAssertEqual(FileConstants.pasteboardFileName, "Pasteboard Content")
         XCTAssertEqual(FileConstants.urlFileName, "URL Content")
         XCTAssertEqual(FileConstants.curlFileName, "cURL Response")
-        
+
         // Timeouts
         XCTAssertEqual(FileConstants.networkTimeout, 30.0)
         XCTAssertEqual(FileConstants.fileOperationTimeout, 10.0)
     }
-    
+
     // MARK: - Error Messages Tests
-    
+
     func testErrorMessages_keys_haveExpectedDefaultStrings() {
         XCTAssertEqual(ErrorMessages.fileNotFound, "File not found")
         XCTAssertEqual(ErrorMessages.invalidJSON, "Invalid JSON format")
@@ -115,9 +115,9 @@ class ConstantsTests: XCTestCase {
         XCTAssertEqual(ErrorMessages.emptyPasteboard, "No content found in pasteboard")
         XCTAssertEqual(ErrorMessages.loadingFailed, "Failed to load content")
     }
-    
+
     // MARK: - Success Messages Tests
-    
+
     func testSuccessMessages_keys_haveExpectedDefaultStrings() {
         XCTAssertEqual(SuccessMessages.fileOpened, "File opened successfully")
         XCTAssertEqual(SuccessMessages.fileSaved, "File saved successfully")
@@ -125,9 +125,9 @@ class ConstantsTests: XCTestCase {
         XCTAssertEqual(SuccessMessages.contentLoaded, "Content loaded successfully")
         XCTAssertEqual(SuccessMessages.operationCompleted, "Operation completed successfully")
     }
-    
+
     // MARK: - Localization Keys Tests
-    
+
     func testLocalizationKeys_values_matchNamingConventions() {
         // General keys
         XCTAssertEqual(LocalizationKeys.General.ok, "general.ok")
@@ -139,7 +139,7 @@ class ConstantsTests: XCTestCase {
         XCTAssertEqual(LocalizationKeys.General.loading, "general.loading")
         XCTAssertEqual(LocalizationKeys.General.error, "general.error")
         XCTAssertEqual(LocalizationKeys.General.success, "general.success")
-        
+
         // Error keys
         XCTAssertEqual(LocalizationKeys.Errors.parseFailed, "errors.parse_failed")
         XCTAssertEqual(LocalizationKeys.Errors.fileNotFound, "errors.file_not_found")
@@ -151,7 +151,7 @@ class ConstantsTests: XCTestCase {
         XCTAssertEqual(LocalizationKeys.Errors.networkError, "errors.network_error")
         XCTAssertEqual(LocalizationKeys.Errors.userCancelled, "errors.user_cancelled")
         XCTAssertEqual(LocalizationKeys.Errors.unknownError, "errors.unknown_error")
-        
+
         // UI keys
         XCTAssertEqual(LocalizationKeys.UI.openFile, "ui.open_file")
         XCTAssertEqual(LocalizationKeys.UI.newFile, "ui.new_file")
@@ -164,9 +164,9 @@ class ConstantsTests: XCTestCase {
         XCTAssertEqual(LocalizationKeys.UI.load, "ui.load")
         XCTAssertEqual(LocalizationKeys.UI.execute, "ui.execute")
     }
-    
+
     // MARK: - User Defaults Keys Tests
-    
+
     func testUserDefaultsKeys_values_areExpected() {
         XCTAssertEqual(UserDefaultsKeys.recentFiles, "recentFiles")
         XCTAssertEqual(UserDefaultsKeys.lastOpenedDirectory, "lastOpenedDirectory")
@@ -176,9 +176,9 @@ class ConstantsTests: XCTestCase {
         XCTAssertEqual(UserDefaultsKeys.fontSize, "fontSize")
         XCTAssertEqual(UserDefaultsKeys.theme, "theme")
     }
-    
+
     // MARK: - Notification Names Tests
-    
+
     func testNotificationNames_values_areExpected() {
         XCTAssertEqual(NotificationNames.fileOpened.rawValue, "fileOpened")
         XCTAssertEqual(NotificationNames.fileSaved.rawValue, "fileSaved")
@@ -186,42 +186,42 @@ class ConstantsTests: XCTestCase {
         XCTAssertEqual(NotificationNames.errorOccurred.rawValue, "errorOccurred")
         XCTAssertEqual(NotificationNames.operationCompleted.rawValue, "operationCompleted")
     }
-    
+
     // MARK: - Constants Consistency Tests
-    
+
     func testConstantsConsistency_internalRelationships_hold() {
         // Test that UI constants are consistent
         XCTAssertGreaterThan(UIConstants.defaultWindowWidth, UIConstants.minimumWindowWidth)
         XCTAssertGreaterThan(UIConstants.defaultWindowHeight, UIConstants.minimumWindowHeight)
-        
+
         // Test that button dimensions are reasonable
         XCTAssertGreaterThan(UIConstants.buttonWidth, 0)
         XCTAssertGreaterThan(UIConstants.buttonHeight, 0)
         XCTAssertGreaterThan(UIConstants.buttonCornerRadius, 0)
-        
+
         // Test that font sizes are reasonable
         XCTAssertGreaterThan(UIConstants.titleFontSize, UIConstants.subtitleFontSize)
         XCTAssertGreaterThan(UIConstants.subtitleFontSize, UIConstants.bodyFontSize)
         XCTAssertGreaterThan(UIConstants.bodyFontSize, UIConstants.captionFontSize)
-        
+
         // Test that spacing is consistent
         XCTAssertGreaterThan(UIConstants.mediumSpacing, UIConstants.smallSpacing)
         XCTAssertGreaterThan(UIConstants.largeSpacing, UIConstants.mediumSpacing)
         XCTAssertGreaterThan(UIConstants.extraLargeSpacing, UIConstants.largeSpacing)
-        
+
         // Test that file size limits are reasonable
         XCTAssertGreaterThan(FileConstants.maxFileSize, FileConstants.maxJSONSize)
         XCTAssertGreaterThan(FileConstants.maxFileSize, 0)
         XCTAssertGreaterThan(FileConstants.maxJSONSize, 0)
-        
+
         // Test that timeouts are reasonable
         XCTAssertGreaterThan(FileConstants.networkTimeout, 0)
         XCTAssertGreaterThan(FileConstants.fileOperationTimeout, 0)
         XCTAssertGreaterThan(FileConstants.networkTimeout, FileConstants.fileOperationTimeout)
     }
-    
+
     // MARK: - Constants Performance Tests
-    
+
     func testConstantsAccessPerformance_isFast() {
         measure {
             for _ in 0..<10000 {
@@ -236,9 +236,9 @@ class ConstantsTests: XCTestCase {
             }
         }
     }
-    
+
     // MARK: - Constants Validation Tests
-    
+
     func testConstantsValidation_nonEmptyWhereRequired() {
         // Validate that all constants have non-empty values where appropriate
         XCTAssertFalse(AppConstants.appName.isEmpty)
@@ -248,7 +248,7 @@ class ConstantsTests: XCTestCase {
         XCTAssertFalse(FileConstants.pasteboardFileName.isEmpty)
         XCTAssertFalse(FileConstants.urlFileName.isEmpty)
         XCTAssertFalse(FileConstants.curlFileName.isEmpty)
-        
+
         // Validate that all error messages are non-empty
         XCTAssertFalse(ErrorMessages.fileNotFound.isEmpty)
         XCTAssertFalse(ErrorMessages.invalidJSON.isEmpty)
@@ -259,7 +259,7 @@ class ConstantsTests: XCTestCase {
         XCTAssertFalse(ErrorMessages.networkError.isEmpty)
         XCTAssertFalse(ErrorMessages.userCancelled.isEmpty)
         XCTAssertFalse(ErrorMessages.unknownError.isEmpty)
-        
+
         // Validate that all success messages are non-empty
         XCTAssertFalse(SuccessMessages.fileOpened.isEmpty)
         XCTAssertFalse(SuccessMessages.fileSaved.isEmpty)

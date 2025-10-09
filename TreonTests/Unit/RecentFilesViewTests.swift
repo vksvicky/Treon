@@ -4,31 +4,31 @@ import SwiftUI
 
 @MainActor
 final class RecentFilesViewTests: XCTestCase {
-    
+
     private var fileManager: TreonFileManager!
-    
+
     override func setUp() {
         super.setUp()
         fileManager = TreonFileManager.shared
         // Clear any existing recent files for clean test state
         fileManager.clearRecentFiles()
     }
-    
+
     override func tearDown() {
         fileManager.clearRecentFiles()
         super.tearDown()
     }
-    
+
     func testRecentFilesView_initialState_showsDropdownButton() {
         // Given: A RecentFilesView with no recent files
         _ = RecentFilesView { _ in }
-        
+
         // When: View is created
         // Then: The dropdown button should be visible (we can't directly test SwiftUI views,
         // but we can test the underlying logic)
         XCTAssertTrue(fileManager.recentFiles.isEmpty)
     }
-    
+
     func testRecentFilesView_withRecentFiles_showsFilesInList() {
         // Given: Some recent files
         let testFile1 = RecentFile(
@@ -45,30 +45,30 @@ final class RecentFilesViewTests: XCTestCase {
             size: 2048,
             isValidJSON: false
         )
-        
+
         // When: Adding recent files (simulating what happens when files are opened)
         // Note: We can't directly add to recent files, but we can test the logic
         // by checking if the file manager has the expected behavior
-        
+
         // Then: We can test the RecentFile struct creation
         XCTAssertEqual(testFile1.name, "file1.json")
         XCTAssertEqual(testFile2.name, "file2.json")
         XCTAssertTrue(testFile1.isValidJSON)
         XCTAssertFalse(testFile2.isValidJSON)
     }
-    
+
     func testRecentFilesView_emptyState_showsNoRecentFilesMessage() {
         // Given: No recent files
         XCTAssertTrue(fileManager.recentFiles.isEmpty)
-        
+
         // When: Creating RecentFilesView
         _ = RecentFilesView { _ in }
-        
+
         // Then: Should handle empty state gracefully
         // (The actual UI testing would require SwiftUI testing framework)
         XCTAssertTrue(fileManager.recentFiles.isEmpty)
     }
-    
+
     func testRecentFilesView_fileSelection_callsCallback() {
         // Given: A recent file and a callback expectation
         let testFile = RecentFile(
@@ -78,24 +78,24 @@ final class RecentFilesViewTests: XCTestCase {
             size: 1024,
             isValidJSON: true
         )
-        
+
         var selectedFile: RecentFile?
         _ = RecentFilesView { file in
             selectedFile = file
         }
-        
+
         // When: Simulating file selection (in real UI, this would be triggered by tap)
         // We can't directly test the SwiftUI interaction, but we can test the callback logic
         let callback: (RecentFile) -> Void = { file in
             selectedFile = file
         }
         callback(testFile)
-        
+
         // Then: Callback should be called with correct file
         XCTAssertNotNil(selectedFile)
         XCTAssertEqual(selectedFile?.name, "file.json")
     }
-    
+
     func testRecentFilesView_maxFiles_showsOnlyFirstFive() {
         // Given: More than 5 recent files
         var testFiles: [RecentFile] = []
@@ -109,10 +109,10 @@ final class RecentFilesViewTests: XCTestCase {
             )
             testFiles.append(testFile)
         }
-        
+
         // When: Testing the prefix logic (as used in the view)
         let firstFive = Array(testFiles.prefix(5))
-        
+
         // Then: Should only show the first 5 files
         XCTAssertEqual(firstFive.count, 5)
         XCTAssertEqual(firstFive.first?.name, "file1.json")

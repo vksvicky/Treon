@@ -4,9 +4,9 @@ import AppKit
 struct RecentFilesView: View {
     @StateObject private var fileManager = TreonFileManager.shared
     @State private var showingRecentFiles = false
-    
+
     let onFileSelected: (RecentFile) -> Void
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Button(action: { showingRecentFiles.toggle() }) {
@@ -20,7 +20,7 @@ struct RecentFilesView: View {
                 }
             }
             .buttonStyle(.borderless)
-            
+
             if showingRecentFiles {
                 VStack(alignment: .leading, spacing: 6) {
                     if fileManager.recentFiles.isEmpty {
@@ -47,24 +47,24 @@ struct RecentFilesView: View {
 struct RecentFileRow: View {
     let recentFile: RecentFile
     let onTap: () -> Void
-    
+
     var body: some View {
         HStack(spacing: 8) {
             Text("•")
                 .foregroundColor(.secondary)
                 .font(.system(size: 14))
-            
+
             VStack(alignment: .leading, spacing: 2) {
                 Text(recentFile.name)
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(.primary)
                     .lineLimit(1)
-                
+
                 Text("\(recentFile.formattedSize) • \(recentFile.lastOpened, style: .relative)")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
-            
+
             Spacer()
         }
         .contentShape(Rectangle())

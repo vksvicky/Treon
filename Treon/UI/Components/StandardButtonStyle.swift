@@ -16,7 +16,7 @@ struct StandardButtonStyle: ButtonStyle {
     let backgroundColor: Color
     let foregroundColor: Color
     let isOutlined: Bool
-    
+
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: DesignConstants.buttonFontSize, weight: DesignConstants.buttonFontWeight))

@@ -11,14 +11,14 @@ public struct TwoPaneRootView: View {
             Text("Treon - JSON Formatter")
                 .font(.largeTitle)
                 .padding()
-            
+
             Text("Welcome to Treon!")
                 .font(.headline)
                 .padding()
-            
+
             Text("This is a simple test to see if the app loads correctly.")
                 .padding()
-            
+
             Button("Test Button") {
                 print("Button clicked!")
             }
@@ -73,7 +73,7 @@ struct NodeRow: View {
     }
 
     var title: String { node.displayTitle }
-    
+
     // Xcode-style icons and colors
     private func iconSystemName(for value: JSONNodeValue) -> String {
         switch value {
@@ -85,7 +85,7 @@ struct NodeRow: View {
         case .null: return "circle.slash"
         }
     }
-    
+
     private func iconColor(for value: JSONNodeValue) -> Color {
         switch value {
         case .string: return Color(red: 0.8, green: 0.4, blue: 0.2) // Orange
@@ -144,7 +144,7 @@ struct NodeRow: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 4)
                     .padding(.vertical, 2)
-                    
+
                     // Column 2: Type (Xcode-style)
                     Text(node.enhancedDataType)
                         .foregroundColor(.secondary)
@@ -170,16 +170,16 @@ struct NodeRow: View {
                                 .foregroundColor(iconColor(for: node.value))
                         }
                     }
-                    Text("\(title): \"\(stringValue)\"") 
+                    Text("\(title): \"\(stringValue)\"")
                         .lineLimit(1)
                         .foregroundColor(.primary)
                         .font(.system(size: 13, weight: .regular))
-                        .help("\(title): \"\(stringValue)\"") 
+                        .help("\(title): \"\(stringValue)\"")
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 4)
                 .padding(.vertical, 2)
-                
+
                 // Column 2: Type (Xcode-style)
                 Text(node.enhancedDataType)
                     .foregroundColor(.secondary)
@@ -213,7 +213,7 @@ struct NodeRow: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 4)
                 .padding(.vertical, 2)
-                
+
                 // Column 2: Type (Xcode-style)
                 Text(node.enhancedDataType)
                     .foregroundColor(.secondary)
@@ -247,7 +247,7 @@ struct NodeRow: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 4)
                 .padding(.vertical, 2)
-                
+
                 // Column 2: Type (Xcode-style)
                 Text(node.enhancedDataType)
                     .foregroundColor(.secondary)
@@ -281,7 +281,7 @@ struct NodeRow: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 4)
                 .padding(.vertical, 2)
-                
+
                 // Column 2: Type (Xcode-style)
                 Text(node.enhancedDataType)
                     .foregroundColor(.secondary)

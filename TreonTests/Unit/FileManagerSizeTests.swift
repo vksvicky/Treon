@@ -5,7 +5,7 @@ import Foundation
 class FileManagerSizeTests: XCTestCase {
     var fileManager: TreonFileManager!
     var tempDirectory: URL!
-    
+
     override func setUp() {
         super.setUp()
         fileManager = TreonFileManager.shared
@@ -13,13 +13,13 @@ class FileManagerSizeTests: XCTestCase {
         try? FileManager.default.createDirectory(at: tempDirectory, withIntermediateDirectories: true)
         fileManager.clearRecentFiles()
     }
-    
+
     override func tearDown() {
         try? FileManager.default.removeItem(at: tempDirectory)
         fileManager.clearRecentFiles()
         super.tearDown()
     }
-    
+
     func testOpenFile_smallJSON_under1KB() async throws {
         let smallJSON = "{\"test\": \"small\"}"
         let fileURL = tempDirectory.appendingPathComponent("small.json")
@@ -28,7 +28,7 @@ class FileManagerSizeTests: XCTestCase {
         XCTAssertTrue(fileInfo.isValidJSON)
         XCTAssertLessThan(fileInfo.size, 1024)
     }
-    
+
     func testOpenFile_largeJSON_atLeast1MB() async throws {
         var largeJSON = "{\n"
         var current = 2
@@ -50,7 +50,7 @@ class FileManagerSizeTests: XCTestCase {
         XCTAssertTrue(fileInfo.isValidJSON)
         XCTAssertGreaterThanOrEqual(fileInfo.size, 1024 * 1024)
     }
-    
+
     func testOpenFile_veryLargeJSON_atLeast10MB() async throws {
         var json = "{\n"
         var current = 2
@@ -72,13 +72,13 @@ class FileManagerSizeTests: XCTestCase {
         XCTAssertTrue(fileInfo.isValidJSON)
         XCTAssertGreaterThanOrEqual(fileInfo.size, 10 * 1024 * 1024)
     }
-    
+
     func testOpenFile_extremelyLargeJSON_underMaxLimit() async throws {
         let maxBytes = await TreonFileManager.shared.maxFileSize
         let slackBytes = await TreonFileManager.shared.sizeSlackBytes
         let safetyMargin: Int64 = 16 * 1024
         let target = Int(max(0, maxBytes + slackBytes - safetyMargin))
-        
+
         var json = "{\n"
         var current = 2
         var index = 0
@@ -100,7 +100,7 @@ class FileManagerSizeTests: XCTestCase {
         XCTAssertTrue(fileInfo.isValidJSON)
         XCTAssertLessThanOrEqual(fileInfo.size, maxBytes + slackBytes)
     }
-    
+
     func testOpenFile_rejectsOverMaxSize() async throws {
         let largeContent = String(repeating: "a", count: 101 * 1024 * 1024)
         let fileURL = tempDirectory.appendingPathComponent("toolarge.json")

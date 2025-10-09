@@ -44,8 +44,8 @@ class FileValidator {
             throw FileManagerError.unknownError("Could not determine file size")
         }
         
-        // Check if file is too large (100MB limit)
-        let maxSize: Int64 = 100 * 1024 * 1024 // 100MB
+        // Check if file is too large (use configured limit)
+        let maxSize: Int64 = FileConstants.maxFileSize
         if fileSize > maxSize {
             logger.error("File too large: \(fileSize) bytes")
             throw FileManagerError.fileTooLarge(fileSize, maxSize)
@@ -82,7 +82,11 @@ class FileValidator {
             content: content
         )
         
-        logger.info("Successfully validated file: \(fileInfo.name)")
+        if isValidJSON {
+            logger.info("Successfully validated file: \(fileInfo.name)")
+        } else {
+            logger.info("File validation completed (invalid JSON): \(fileInfo.name)")
+        }
         return fileInfo
     }
     

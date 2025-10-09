@@ -108,8 +108,8 @@ class LargeFileTests: XCTestCase {
     }
 
     func testOpensValidJSON_approximately50MB_underLimit() async throws {
-        let content = generateJSONContent(targetSize: 50 * 1024 * 1024) // 50MB
-        let fileURL = tempDirectory.appendingPathComponent("50mb.json")
+        let content = generateJSONContent(targetSize: 49 * 1024 * 1024) // 49MB (under 50MB limit)
+        let fileURL = tempDirectory.appendingPathComponent("49mb.json")
         try content.write(to: fileURL, atomically: true, encoding: .utf8)
 
         let startTime = CFAbsoluteTimeGetCurrent()
@@ -117,21 +117,21 @@ class LargeFileTests: XCTestCase {
         let timeElapsed = CFAbsoluteTimeGetCurrent() - startTime
 
         XCTAssertTrue(fileInfo.isValidJSON)
-        XCTAssertEqual(fileInfo.name, "50mb.json")
-        XCTAssertLessThan(fileInfo.size, 100 * 1024 * 1024) // Should be around 50MB
+        XCTAssertEqual(fileInfo.name, "49mb.json")
+        XCTAssertLessThan(fileInfo.size, 100 * 1024 * 1024) // Should be around 49MB
         XCTAssertLessThan(timeElapsed, 30.0) // Should be reasonably fast
-        print("50MB file processed in \(timeElapsed)s")
+        print("49MB file processed in \(timeElapsed)s")
     }
 
-    func testRejectsFileSize_over50MBLimit_with100MB() async throws {
-        // With app limit at 50MB (+slack), 100MB should be rejected
-        let content = generateJSONContent(targetSize: 100 * 1024 * 1024)
-        let fileURL = tempDirectory.appendingPathComponent("100mb.json")
+    func testRejectsFileSize_over50MBLimit_with51MB() async throws {
+        // With app limit at 50MB (+slack), 51MB should be rejected
+        let content = generateJSONContent(targetSize: 51 * 1024 * 1024)
+        let fileURL = tempDirectory.appendingPathComponent("51mb.json")
         try content.write(to: fileURL, atomically: true, encoding: .utf8)
 
         do {
             _ = try await fileManager.openFile(url: fileURL)
-            XCTFail("Should have thrown file too large error for 100MB file")
+            XCTFail("Should have thrown file too large error for 51MB file")
         } catch FileManagerError.fileTooLarge {
             // Expected
         } catch {
@@ -141,9 +141,9 @@ class LargeFileTests: XCTestCase {
 
     // MARK: - Test File Size Limit
 
-    func testRejectsFileSize_overLimit_101MB() async throws {
-        let content = generateJSONContent(targetSize: 101 * 1024 * 1024) // 101MB (exceeds 100MB limit)
-        let fileURL = tempDirectory.appendingPathComponent("101mb.json")
+    func testRejectsFileSize_overLimit_51MB() async throws {
+        let content = generateJSONContent(targetSize: 51 * 1024 * 1024) // 51MB (exceeds 50MB limit)
+        let fileURL = tempDirectory.appendingPathComponent("51mb.json")
         try content.write(to: fileURL, atomically: true, encoding: .utf8)
 
         do {
@@ -151,7 +151,7 @@ class LargeFileTests: XCTestCase {
             XCTFail("Should have thrown file too large error")
         } catch FileManagerError.fileTooLarge {
             // Expected error
-            print("Correctly rejected 101MB file as too large")
+            print("Correctly rejected 51MB file as too large")
         } catch {
             XCTFail("Unexpected error: \(error)")
         }
@@ -160,7 +160,7 @@ class LargeFileTests: XCTestCase {
     // MARK: - Test Memory Usage
 
     func testMemoryUsage_remainsReasonable_acrossSizes() async throws {
-        let sizes = [1024, 1024 * 1024, 10 * 1024 * 1024, 50 * 1024 * 1024] // 1KB, 1MB, 10MB, 50MB
+        let sizes = [1024, 1024 * 1024, 10 * 1024 * 1024, 49 * 1024 * 1024] // 1KB, 1MB, 10MB, 49MB (under 50MB limit)
 
         for size in sizes {
             let content = generateJSONContent(targetSize: size)

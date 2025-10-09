@@ -15,9 +15,9 @@ final class JSONNodeTests: XCTestCase {
         XCTAssertEqual(root.children.first?.path, "$[0]")
         XCTAssertEqual(root.children.last?.path, "$[1]")
     }
-    
+
     // MARK: - JSON Array Tests
-    
+
     func testBuildTreeFromSimpleArray() throws {
         let data = try XCTUnwrap("[1, 2, 3]".data(using: .utf8))
         let root = try JSONTreeBuilder.build(from: data)
@@ -28,7 +28,7 @@ final class JSONNodeTests: XCTestCase {
         XCTAssertEqual(root.children[1].key, "1")
         XCTAssertEqual(root.children[2].key, "2")
     }
-    
+
     func testBuildTreeFromArrayOfObjects() throws {
         let jsonString = """
         [
@@ -41,20 +41,20 @@ final class JSONNodeTests: XCTestCase {
         XCTAssertEqual(root.path, "$")
         XCTAssertEqual(root.value, .array)
         XCTAssertEqual(root.children.count, 2)
-        
+
         // Check first object
         let firstObject = root.children[0]
         XCTAssertEqual(firstObject.path, "$[0]")
         XCTAssertEqual(firstObject.value, .object)
         XCTAssertEqual(firstObject.children.count, 2)
-        
+
         // Check second object
         let secondObject = root.children[1]
         XCTAssertEqual(secondObject.path, "$[1]")
         XCTAssertEqual(secondObject.value, .object)
         XCTAssertEqual(secondObject.children.count, 2)
     }
-    
+
     func testBuildTreeFromNestedArrays() throws {
         let jsonString = """
         [
@@ -68,7 +68,7 @@ final class JSONNodeTests: XCTestCase {
         XCTAssertEqual(root.path, "$")
         XCTAssertEqual(root.value, .array)
         XCTAssertEqual(root.children.count, 3)
-        
+
         // Check nested arrays
         for i in 0..<3 {
             let nestedArray = root.children[i]
@@ -77,7 +77,7 @@ final class JSONNodeTests: XCTestCase {
             XCTAssertEqual(nestedArray.children.count, 3)
         }
     }
-    
+
     func testBuildTreeFromComplexArray() throws {
         let jsonString = """
         [
@@ -102,22 +102,22 @@ final class JSONNodeTests: XCTestCase {
         XCTAssertEqual(root.path, "$")
         XCTAssertEqual(root.value, .array)
         XCTAssertEqual(root.children.count, 2)
-        
+
         // Check first object structure
         let firstObject = root.children[0]
         XCTAssertEqual(firstObject.path, "$[0]")
         XCTAssertEqual(firstObject.value, .object)
         XCTAssertEqual(firstObject.children.count, 5)
-        
+
         // Check tags array in first object
         let tagsArray = firstObject.children.first { $0.key == "tags" }
         XCTAssertNotNil(tagsArray)
         XCTAssertEqual(tagsArray?.value, .array)
         XCTAssertEqual(tagsArray?.children.count, 3)
     }
-    
+
     // MARK: - Various JSON Format Tests
-    
+
     func testBuildTreeFromEmptyArray() throws {
         let data = try XCTUnwrap("[]".data(using: .utf8))
         let root = try JSONTreeBuilder.build(from: data)
@@ -125,7 +125,7 @@ final class JSONNodeTests: XCTestCase {
         XCTAssertEqual(root.value, .array)
         XCTAssertEqual(root.children.count, 0)
     }
-    
+
     func testBuildTreeFromArrayWithMixedTypes() throws {
         let jsonString = """
         [
@@ -144,7 +144,7 @@ final class JSONNodeTests: XCTestCase {
         XCTAssertEqual(root.path, "$")
         XCTAssertEqual(root.value, .array)
         XCTAssertEqual(root.children.count, 8)
-        
+
         // Check different value types
         XCTAssertEqual(root.children[0].value, .string("string"))
         XCTAssertEqual(root.children[1].value, .number(42))
@@ -155,7 +155,7 @@ final class JSONNodeTests: XCTestCase {
         XCTAssertEqual(root.children[6].value, .object)
         XCTAssertEqual(root.children[7].value, .array)
     }
-    
+
     func testBuildTreeFromArrayWithNumbers() throws {
         let jsonString = """
         [
@@ -172,7 +172,7 @@ final class JSONNodeTests: XCTestCase {
         XCTAssertEqual(root.path, "$")
         XCTAssertEqual(root.value, .array)
         XCTAssertEqual(root.children.count, 6)
-        
+
         // Check number values
         XCTAssertEqual(root.children[0].value, .number(0))
         XCTAssertEqual(root.children[1].value, .number(-1))
@@ -181,7 +181,7 @@ final class JSONNodeTests: XCTestCase {
         XCTAssertEqual(root.children[4].value, .number(1e10))
         XCTAssertEqual(root.children[5].value, .number(-2.5e-3))
     }
-    
+
     func testBuildTreeFromArrayWithStrings() throws {
         let jsonString = """
         [
@@ -200,7 +200,7 @@ final class JSONNodeTests: XCTestCase {
         XCTAssertEqual(root.path, "$")
         XCTAssertEqual(root.value, .array)
         XCTAssertEqual(root.children.count, 8)
-        
+
         // Check string values
         XCTAssertEqual(root.children[0].value, .string("simple"))
         XCTAssertEqual(root.children[1].value, .string("with spaces"))

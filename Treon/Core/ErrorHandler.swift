@@ -25,7 +25,7 @@ struct ErrorContext {
     let userAction: String?
     let timestamp: Date
     let additionalInfo: [String: Any]?
-    
+
     init(operation: String, userAction: String? = nil, additionalInfo: [String: Any]? = nil) {
         self.operation = operation
         self.userAction = userAction
@@ -41,11 +41,11 @@ class TreonErrorHandler: ObservableObject, ErrorHandling {
     @Published var showErrorAlert: Bool = false
     @Published var isRecoverable: Bool = false
     @Published var recoveryActions: [ErrorRecoveryAction] = []
-    
+
     private let logger = Loggers.error
-    
+
     // MARK: - Error Handling Methods
-    
+
     func handleError(_ error: Error, context: String? = nil) {
         logError(error, context: context)
         if isRunningUnderTests() {
@@ -87,20 +87,20 @@ class TreonErrorHandler: ObservableObject, ErrorHandling {
             userInfo: ["context": context ?? "Unknown"]
         )
     }
-    
+
     func showErrorAlert(_ error: Error, context: String? = nil) {
         handleError(error, context: context)
     }
-    
+
     func logError(_ error: Error, context: String? = nil) {
         let contextString = context ?? "Unknown"
         logger.error("Error in \(contextString): \(error.localizedDescription)")
-        
+
         // Log additional details for debugging
         if let fileManagerError = error as? FileManagerError {
             logger.error("FileManagerError details: \(fileManagerError)")
         }
-        
+
         // Log to console for development
         #if DEBUG
         print("🚨 Error in \(contextString): \(error)")
@@ -111,9 +111,9 @@ class TreonErrorHandler: ObservableObject, ErrorHandling {
         }
         #endif
     }
-    
+
     // MARK: - Error Recovery
-    
+
     func performRecoveryAction(_ action: ErrorRecoveryAction) {
         switch action {
         case .retry:
@@ -128,7 +128,7 @@ class TreonErrorHandler: ObservableObject, ErrorHandling {
             contactSupport()
         }
     }
-    
+
     func dismissError() {
         if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil {
             self.currentError = nil
@@ -146,14 +146,14 @@ class TreonErrorHandler: ObservableObject, ErrorHandling {
             }
         }
     }
-    
+
     // MARK: - Private Methods
-    
+
     private func getUserFriendlyMessage(for error: Error) -> String {
         if let fileManagerError = error as? FileManagerError {
             return fileManagerError.errorDescription ?? ErrorMessages.unknownError
         }
-        
+
         // Handle common system errors
         if let nsError = error as NSError? {
             switch nsError.domain {
@@ -167,10 +167,10 @@ class TreonErrorHandler: ObservableObject, ErrorHandling {
                 return error.localizedDescription.isEmpty ? ErrorMessages.unknownError : error.localizedDescription
             }
         }
-        
+
         return error.localizedDescription.isEmpty ? ErrorMessages.unknownError : error.localizedDescription
     }
-    
+
     private func handleCocoaError(_ error: NSError) -> String {
         switch error.code {
         case NSFileReadNoSuchFileError:
@@ -185,7 +185,7 @@ class TreonErrorHandler: ObservableObject, ErrorHandling {
             return error.localizedDescription
         }
     }
-    
+
     private func handleURLError(_ error: NSError) -> String {
         switch error.code {
         case NSURLErrorNotConnectedToInternet:
@@ -202,7 +202,7 @@ class TreonErrorHandler: ObservableObject, ErrorHandling {
             return ErrorMessages.networkError
         }
     }
-    
+
     private func handlePOSIXError(_ error: NSError) -> String {
         switch error.code {
         case Int(ENOENT):
@@ -215,7 +215,7 @@ class TreonErrorHandler: ObservableObject, ErrorHandling {
             return error.localizedDescription
         }
     }
-    
+
     private func isErrorRecoverable(_ error: Error) -> Bool {
         if let fileManagerError = error as? FileManagerError {
             switch fileManagerError {
@@ -227,7 +227,7 @@ class TreonErrorHandler: ObservableObject, ErrorHandling {
                 return true
             }
         }
-        
+
         if let nsError = error as NSError? {
             switch nsError.domain {
             case NSURLErrorDomain:
@@ -250,17 +250,17 @@ class TreonErrorHandler: ObservableObject, ErrorHandling {
                 return false
             }
         }
-        
+
         return false
     }
-    
+
     private func getRecoveryActions(for error: Error) -> [ErrorRecoveryAction] {
         var actions: [ErrorRecoveryAction] = [.cancel]
-        
+
         if isErrorRecoverable(error) {
             actions.insert(.retry, at: 0)
         }
-        
+
         if let fileManagerError = error as? FileManagerError {
             switch fileManagerError {
             case .permissionDenied:
@@ -271,23 +271,23 @@ class TreonErrorHandler: ObservableObject, ErrorHandling {
                 break
             }
         }
-        
+
         return actions
     }
-    
+
     private func retryLastOperation() {
         // This would be implemented based on the specific operation that failed
         // For now, we'll just dismiss the error
         dismissError()
     }
-    
+
     private func openAppSettings() {
         // Open system preferences for the app
         if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy") {
             NSWorkspace.shared.open(url)
         }
     }
-    
+
     private func contactSupport() {
         // Open email client with support information
         let subject = "Treon Support Request"
@@ -297,13 +297,13 @@ class TreonErrorHandler: ObservableObject, ErrorHandling {
         - Build: \(AppConstants.buildNumber)
         - Error: \(currentError?.localizedDescription ?? "Unknown")
         - Timestamp: \(Date())
-        
+
         Please describe what you were doing when this error occurred:
-        
+
         """
-        
+
         let mailtoURL = "mailto:\(AppConstants.supportEmail)?subject=\(subject.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")&body=\(body.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")"
-        
+
         if let url = URL(string: mailtoURL) {
             NSWorkspace.shared.open(url)
         }
@@ -314,33 +314,33 @@ class TreonErrorHandler: ObservableObject, ErrorHandling {
 struct ErrorAlertView: View {
     @ObservedObject var errorHandler: TreonErrorHandler
     let onDismiss: () -> Void
-    
+
     var body: some View {
         VStack(spacing: UIConstants.mediumSpacing) {
             // Error Icon
             Image(systemName: "exclamationmark.triangle.fill")
                 .font(.system(size: 48))
                 .foregroundColor(UIConstants.errorRed)
-            
+
             // Error Title
             Text("Error")
                 .font(.headline)
                 .foregroundColor(.primary)
-            
+
             // Error Message
             Text(errorHandler.errorMessage)
                 .font(.body)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
-            
+
             // Recovery Actions
             if errorHandler.isRecoverable {
                 VStack(spacing: UIConstants.smallSpacing) {
                     Text("What would you like to do?")
                         .font(.caption)
                         .foregroundColor(.secondary)
-                    
+
                     HStack(spacing: UIConstants.smallSpacing) {
                         ForEach(errorHandler.recoveryActions, id: \.self) { action in
                             Button(actionTitle(for: action)) {
@@ -362,7 +362,7 @@ struct ErrorAlertView: View {
         .padding(UIConstants.largeSpacing)
         .frame(maxWidth: 400)
     }
-    
+
     private func actionTitle(for action: ErrorRecoveryAction) -> String {
         switch action {
         case .retry:
@@ -382,7 +382,7 @@ struct ErrorAlertView: View {
 // MARK: - Error Handling View Modifier
 struct ErrorHandlingModifier: ViewModifier {
     @StateObject private var errorHandler = TreonErrorHandler()
-    
+
     func body(content: Content) -> some View {
         content
             .environmentObject(errorHandler)
@@ -399,7 +399,7 @@ struct ErrorHandlingModifier: ViewModifier {
                 Text(errorHandler.errorMessage)
             }
     }
-    
+
     private func actionTitle(for action: ErrorRecoveryAction) -> String {
         switch action {
         case .retry:

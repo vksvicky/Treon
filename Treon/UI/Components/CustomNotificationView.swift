@@ -3,7 +3,7 @@ import SwiftUI
 struct CustomNotificationView: View {
     let notification: AppNotification
     let onDismiss: () -> Void
-    
+
     var body: some View {
         VStack(spacing: 0) {
             // Main notification content
@@ -14,14 +14,14 @@ struct CustomNotificationView: View {
                         .font(.system(size: 20, weight: .medium))
                         .foregroundColor(notification.type.iconColor)
                         .frame(width: 24, height: 24)
-                    
+
                     Text(notification.title)
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundColor(.primary)
                         .multilineTextAlignment(.leading)
-                    
+
                     Spacer()
-                    
+
                     Button(action: onDismiss) {
                         Image(systemName: "xmark")
                             .font(.system(size: 12, weight: .medium))
@@ -30,14 +30,14 @@ struct CustomNotificationView: View {
                     .buttonStyle(.borderless)
                     .frame(width: 20, height: 20)
                 }
-                
+
                 // Message
                 Text(notification.message)
                     .font(.system(size: 14))
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.leading)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                
+
                 // Actions
                 if notification.primaryAction != nil || notification.secondaryAction != nil {
                     HStack(spacing: 12) {
@@ -52,9 +52,9 @@ struct CustomNotificationView: View {
                             .buttonStyle(.bordered)
                             .controlSize(.small)
                         }
-                        
+
                         Spacer()
-                        
+
                         if let primaryAction = notification.primaryAction {
                             Button(action: {
                                 primaryAction.action()
@@ -88,7 +88,7 @@ struct CustomNotificationView: View {
 #Preview {
     VStack {
         Spacer()
-        
+
         CustomNotificationView(
             notification: AppNotification(
                 type: .permission,
@@ -107,7 +107,7 @@ struct CustomNotificationView: View {
             ),
             onDismiss: { print("Dismiss") }
         )
-        
+
         Spacer()
     }
     .background(Color(NSColor.controlBackgroundColor))
