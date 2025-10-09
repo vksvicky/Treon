@@ -145,7 +145,7 @@ class TreonFileManager: ObservableObject {
         panel.allowedContentTypes = [.json]
         panel.title = "Open JSON File"
         panel.message = "Select a JSON file to open"
-        panel.directoryURL = getLastOpenedDirectory()
+        panel.directoryURL = DirectoryManager.shared.getLastOpenedDirectory()
         return panel
     }()
     
@@ -174,11 +174,11 @@ class TreonFileManager: ObservableObject {
                     self.logger.info("User selected file: \(url.path)")
                     Task {
                         do {
-                            let fileInfo = try await self.validateAndLoadFile(url: url)
+                            let fileInfo = try await FileValidator.shared.validateAndLoadFile(url: url)
                             self.logger.info("Successfully loaded file: \(fileInfo.name)")
                             
                             // Save the directory of the selected file for next time
-                            self.saveLastOpenedDirectory(url: url)
+                            DirectoryManager.shared.saveLastOpenedDirectory(url: url)
                             
                             continuation.resume(returning: fileInfo)
                         } catch {
@@ -197,10 +197,10 @@ class TreonFileManager: ObservableObject {
     func openFile(url: URL) async throws -> FileInfo {
         // Try to access the file directly first
         do {
-            let fileInfo = try await validateAndLoadFile(url: url)
+            let fileInfo = try await FileValidator.shared.validateAndLoadFile(url: url)
             
             // Save the directory of the opened file for next time
-            saveLastOpenedDirectory(url: url)
+            DirectoryManager.shared.saveLastOpenedDirectory(url: url)
             
             return fileInfo
         } catch {
@@ -267,108 +267,6 @@ class TreonFileManager: ObservableObject {
                 errorMessage: error.localizedDescription,
                 content: nil
             )
-        }
-    }
-    
-    // MARK: - File Validation
-    private func validateAndLoadFile(url: URL) async throws -> FileInfo {
-        // Check if file exists
-        guard FileManager.default.fileExists(atPath: url.path) else {
-            throw FileManagerError.fileNotFound(url.path)
-        }
-        
-        // Get file attributes
-        let attributes = try FileManager.default.attributesOfItem(atPath: url.path)
-        let fileSize = attributes[.size] as? Int64 ?? 0
-        let modifiedDate = attributes[.modificationDate] as? Date ?? Date()
-        
-        // Check file size
-        if fileSize > maxFileSize + sizeSlackBytes {
-            throw FileManagerError.fileTooLarge(fileSize, maxFileSize)
-        }
-        
-        // Check file type
-        let fileExtension = url.pathExtension.lowercased()
-        guard fileExtension == "json" else {
-            throw FileManagerError.unsupportedFileType(fileExtension)
-        }
-        
-        // Validate JSON content and load it
-        let (isValidJSON, errorMessage, content) = await validateAndLoadJSONContent(url: url)
-        
-        // Check if this is a permission error
-        if errorMessage == "PERMISSION_ERROR" {
-            throw FileManagerError.permissionDenied("File requires permission. Please use 'Open File' to grant access to this file.")
-        }
-        
-        let fileInfo = FileInfo(
-            url: url,
-            name: url.lastPathComponent,
-            size: fileSize,
-            modifiedDate: modifiedDate,
-            isValidJSON: isValidJSON,
-            errorMessage: errorMessage,
-            content: content
-        )
-        
-        // Add to recent files if valid
-        if isValidJSON {
-            addToRecentFiles(fileInfo: fileInfo)
-        }
-        
-        return fileInfo
-    }
-    
-    private func validateAndLoadJSONContent(url: URL) async -> (Bool, String?, String?) {
-        return await withCheckedContinuation { continuation in
-            DispatchQueue.global(qos: .userInitiated).async {
-                do {
-                    let data = try Data(contentsOf: url)
-                    guard let content = String(data: data, encoding: .utf8) else {
-                        continuation.resume(returning: (false, "Unable to decode file as UTF-8", nil))
-                        return
-                    }
-                    
-                    // Quick pre-parse checks for common malformations the parser may not flag clearly
-                    if content.contains(",]") || content.contains(",}") {
-                        continuation.resume(returning: (false, "Invalid JSON structure: Trailing comma", content))
-                        return
-                    }
-                    if content.contains("[,]") {
-                        continuation.resume(returning: (false, "Invalid JSON structure: Invalid array", content))
-                        return
-                    }
-                    
-                    // Try to parse JSON
-                    _ = try JSONSerialization.jsonObject(with: data, options: [])
-                    
-                    // Validate it's a valid JSON structure
-                    // Note: JSONSerialization.isValidJSONObject only validates objects, not arrays
-                    // But if we can parse it without error, it's valid JSON
-                    continuation.resume(returning: (true, nil, content))
-                } catch {
-                    // Check if this is a permission error
-                    if let nsError = error as NSError? {
-                        let isPermissionError = (nsError.domain == NSCocoaErrorDomain && 
-                                               (nsError.code == NSFileReadNoPermissionError || 
-                                                nsError.code == NSFileReadCorruptFileError ||
-                                                nsError.code == 257)) ||
-                                              (nsError.domain == "NSCocoaErrorDomain" && nsError.code == 257) ||
-                                              (nsError.localizedDescription.contains("permission") && nsError.localizedDescription.contains("view"))
-                        
-                        if isPermissionError {
-                            // For permission errors, we need to throw the error instead of returning a FileInfo
-                            // This will be caught by the calling method and handled appropriately
-                            continuation.resume(returning: (false, "PERMISSION_ERROR", nil))
-                            return
-                        }
-                    }
-                    
-                    // For other errors, try to get content for editing
-                    let content = (try? String(contentsOf: url, encoding: .utf8)) ?? ""
-                    continuation.resume(returning: (false, error.localizedDescription, content))
-                }
-            }
         }
     }
     
@@ -520,35 +418,5 @@ class TreonFileManager: ObservableObject {
         )
         logger.info("Successfully created file from content: \(name)")
         return fileInfo
-    }
-    
-    // MARK: - Directory Memory
-    
-    private func getLastOpenedDirectory() -> URL? {
-        if let data = UserDefaults.standard.data(forKey: UserDefaultsKeys.lastOpenedDirectory),
-           let url = URL(dataRepresentation: data, relativeTo: nil) {
-            // Verify the directory still exists
-            var isDirectory: ObjCBool = false
-            if FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory) && isDirectory.boolValue {
-                logger.info("Using last opened directory: \(url.path)")
-                return url
-            } else {
-                logger.info("Last opened directory no longer exists, removing from UserDefaults")
-                UserDefaults.standard.removeObject(forKey: UserDefaultsKeys.lastOpenedDirectory)
-            }
-        }
-        
-        // Fallback to Documents directory if no valid last directory
-        let documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
-        logger.info("Using default Documents directory: \(documentsURL?.path ?? "nil")")
-        return documentsURL
-    }
-    
-    private func saveLastOpenedDirectory(url: URL) {
-        let directoryURL = url.deletingLastPathComponent()
-        
-        let data = directoryURL.dataRepresentation
-        UserDefaults.standard.set(data, forKey: UserDefaultsKeys.lastOpenedDirectory)
-        logger.info("Saved last opened directory: \(directoryURL.path)")
     }
 }
