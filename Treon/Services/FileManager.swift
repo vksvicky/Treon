@@ -137,7 +137,9 @@ class TreonFileManager: ObservableObject {
         didSet {
             // Update TabManager when currentFile changes
             if let fileInfo = currentFile {
-                TabManager.shared.openFile(fileInfo)
+                Task { @MainActor in
+                    TabManager.shared.openFile(fileInfo)
+                }
             }
         }
     }
@@ -145,16 +147,16 @@ class TreonFileManager: ObservableObject {
     @Published var errorMessage: String?
     
     // MARK: - Cached Panel for Performance
-    private lazy var cachedOpenPanel: NSOpenPanel = {
+    private var cachedOpenPanel: NSOpenPanel {
         let panel = NSOpenPanel()
         panel.allowsMultipleSelection = true
         panel.canChooseDirectories = false
         panel.allowedContentTypes = [.json]
         panel.title = "Open JSON Files"
         panel.message = "Select one or more JSON files to open"
-        panel.directoryURL = DirectoryManager.shared.getLastOpenedDirectory()
+        // Note: directoryURL will be set when the panel is used, not during initialization
         return panel
-    }()
+    }
     
     // MARK: - Initialization
     private init() {
@@ -174,10 +176,11 @@ class TreonFileManager: ObservableObject {
         return try await withCheckedThrowingContinuation { continuation in
             // Use cached panel for faster launch - no need to create/configure each time
             DispatchQueue.main.async {
-                // Set panel to last opened directory (already set in lazy initialization)
-                // No need to reset to Documents - let it remember the last location
+                // Set panel to last opened directory
+                let panel = self.cachedOpenPanel
+                panel.directoryURL = DirectoryManager.shared.getLastOpenedDirectory()
                 
-                if self.cachedOpenPanel.runModal() == .OK {
+                if panel.runModal() == .OK {
                     let urls = self.cachedOpenPanel.urls
                     self.logger.info("User selected \(urls.count) file(s)")
                     
@@ -189,10 +192,14 @@ class TreonFileManager: ObservableObject {
                                 self.logger.info("Successfully loaded file: \(fileInfo.name)")
                                 
                                 // Save the directory of the selected file for next time
-                                DirectoryManager.shared.saveLastOpenedDirectory(url: url)
+                                Task { @MainActor in
+                                    DirectoryManager.shared.saveLastOpenedDirectory(url: url)
+                                }
                                 
                                 // Open each file as a tab
-                                TabManager.shared.openFile(fileInfo)
+                                Task { @MainActor in
+                                    TabManager.shared.openFile(fileInfo)
+                                }
                                 
                                 // Add to recent files
                                 self.addToRecentFiles(fileInfo: fileInfo)
@@ -224,7 +231,9 @@ class TreonFileManager: ObservableObject {
             let fileInfo = try await FileValidator.shared.validateAndLoadFile(url: url)
             
             // Save the directory of the opened file for next time
-            DirectoryManager.shared.saveLastOpenedDirectory(url: url)
+            Task { @MainActor in
+                DirectoryManager.shared.saveLastOpenedDirectory(url: url)
+            }
             
             // Add to recent files
             addToRecentFiles(fileInfo: fileInfo)
