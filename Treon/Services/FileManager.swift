@@ -133,18 +133,25 @@ class TreonFileManager: ObservableObject {
     
     // MARK: - Properties
     @Published var recentFiles: [RecentFile] = []
-    @Published var currentFile: FileInfo?
+    @Published var currentFile: FileInfo? {
+        didSet {
+            // Update TabManager when currentFile changes
+            if let fileInfo = currentFile {
+                TabManager.shared.openFile(fileInfo)
+            }
+        }
+    }
     @Published var isLoading = false
     @Published var errorMessage: String?
     
     // MARK: - Cached Panel for Performance
     private lazy var cachedOpenPanel: NSOpenPanel = {
         let panel = NSOpenPanel()
-        panel.allowsMultipleSelection = false
+        panel.allowsMultipleSelection = true
         panel.canChooseDirectories = false
         panel.allowedContentTypes = [.json]
-        panel.title = "Open JSON File"
-        panel.message = "Select a JSON file to open"
+        panel.title = "Open JSON Files"
+        panel.message = "Select one or more JSON files to open"
         panel.directoryURL = DirectoryManager.shared.getLastOpenedDirectory()
         return panel
     }()
@@ -170,19 +177,36 @@ class TreonFileManager: ObservableObject {
                 // Set panel to last opened directory (already set in lazy initialization)
                 // No need to reset to Documents - let it remember the last location
                 
-                if self.cachedOpenPanel.runModal() == .OK, let url = self.cachedOpenPanel.url {
-                    self.logger.info("User selected file: \(url.path)")
+                if self.cachedOpenPanel.runModal() == .OK {
+                    let urls = self.cachedOpenPanel.urls
+                    self.logger.info("User selected \(urls.count) file(s)")
+                    
                     Task {
                         do {
-                            let fileInfo = try await FileValidator.shared.validateAndLoadFile(url: url)
-                            self.logger.info("Successfully loaded file: \(fileInfo.name)")
-                            
-                            // Save the directory of the selected file for next time
-                            DirectoryManager.shared.saveLastOpenedDirectory(url: url)
-                            
-                            continuation.resume(returning: fileInfo)
+                            // Open all selected files
+                            for url in urls {
+                                let fileInfo = try await FileValidator.shared.validateAndLoadFile(url: url)
+                                self.logger.info("Successfully loaded file: \(fileInfo.name)")
+                                
+                                // Save the directory of the selected file for next time
+                                DirectoryManager.shared.saveLastOpenedDirectory(url: url)
+                                
+                                // Open each file as a tab
+                                TabManager.shared.openFile(fileInfo)
+                                
+                                // Add to recent files
+                                self.addToRecentFiles(fileInfo: fileInfo)
+                            }
+
+                            // Return the first file as the "current" file for backward compatibility
+                            if let firstFile = urls.first {
+                                let fileInfo = try await FileValidator.shared.validateAndLoadFile(url: firstFile)
+                                continuation.resume(returning: fileInfo)
+                            } else {
+                                continuation.resume(throwing: FileManagerError.userCancelled)
+                            }
                         } catch {
-                            self.logger.error("Failed to load file: \(error.localizedDescription)")
+                            self.logger.error("Failed to load files: \(error.localizedDescription)")
                             continuation.resume(throwing: error)
                         }
                     }
@@ -201,6 +225,9 @@ class TreonFileManager: ObservableObject {
             
             // Save the directory of the opened file for next time
             DirectoryManager.shared.saveLastOpenedDirectory(url: url)
+            
+            // Add to recent files
+            addToRecentFiles(fileInfo: fileInfo)
             
             return fileInfo
         } catch {
@@ -272,8 +299,8 @@ class TreonFileManager: ObservableObject {
     
     // MARK: - Recent Files Management
     private func addToRecentFiles(fileInfo: FileInfo) {
-        // Only add to recent files if there's a valid URL (not content-based files)
-        guard let url = fileInfo.url else { return }
+        // Only add to recent files if there's a valid URL (not content-based files) and valid JSON
+        guard let url = fileInfo.url, fileInfo.isValidJSON else { return }
         
         let recentFile = RecentFile(
             url: url,

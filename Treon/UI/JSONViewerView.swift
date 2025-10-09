@@ -9,6 +9,12 @@ struct JSONViewerView: View {
     @State private var errorMessage = ""
     @StateObject private var expansion = TreeExpansionState()
     
+    let fileInfo: FileInfo?
+    
+    init(fileInfo: FileInfo? = nil) {
+        self.fileInfo = fileInfo
+    }
+
     // Xcode-style navigator state
     @State private var navigatorWidth: CGFloat = 400
     @State private var isNavigatorCollapsed = false
@@ -16,7 +22,7 @@ struct JSONViewerView: View {
     @State private var isNavigatorPinned = false
     private let minNavigatorWidth: CGFloat = 200
     private let maxNavigatorWidth: CGFloat = 600
-    
+
     var body: some View {
         HStack(spacing: 0) {
             // Left pane - Tree Navigator (Xcode-style)
@@ -33,12 +39,12 @@ struct JSONViewerView: View {
                     .transition(.move(edge: .leading).combined(with: .opacity))
                     .animation(.easeInOut(duration: 0.25), value: isNavigatorCollapsed)
             }
-            
+
             // Resize handle (Xcode-style)
             if !isNavigatorCollapsed && !isNavigatorPinned {
                 resizeHandle
             }
-            
+
             // Right pane - JSON Text Editor
             jsonEditor
                 .frame(minWidth: 400)
@@ -46,7 +52,7 @@ struct JSONViewerView: View {
         .onAppear {
             loadCurrentFile()
         }
-        .onChange(of: fileManager.currentFile?.url) {
+        .onChange(of: fileInfo?.url) {
             loadCurrentFile()
         }
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ToggleNavigator"))) { _ in
@@ -60,12 +66,12 @@ struct JSONViewerView: View {
             Text(errorMessage)
         }
     }
-    
+
     private var treeNavigator: some View {
         VStack(alignment: .leading, spacing: 0) {
             // Header (Xcode-style)
             HStack {
-                Button(action: { 
+                Button(action: {
                     if !isNavigatorPinned {
                         withAnimation(.easeInOut(duration: 0.25)) {
                             isNavigatorCollapsed.toggle()
@@ -79,16 +85,16 @@ struct JSONViewerView: View {
                 .buttonStyle(.borderless)
                 .frame(width: 16, height: 16)
                 .disabled(isNavigatorPinned)
-                
+
                 Text("Navigator")
                     .font(.headline)
                     .foregroundColor(.primary)
-                
+
                 Spacer()
-                
+
                 HStack(spacing: 8) {
                     // Pin button (Xcode-style)
-                    Button(action: { 
+                    Button(action: {
                         isNavigatorPinned.toggle()
                     }) {
                         Image(systemName: isNavigatorPinned ? "lock.fill" : "lock.open.fill")
@@ -97,7 +103,7 @@ struct JSONViewerView: View {
                     }
                     .buttonStyle(.borderless)
                     .help(isNavigatorPinned ? "Unlock Navigator" : "Lock Navigator")
-                    
+
                     Button("Expand All") {
                         if let rootNode { expansion.expandAll(root: rootNode) }
                     }
@@ -114,9 +120,9 @@ struct JSONViewerView: View {
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
             .background(Color(NSColor.controlBackgroundColor))
-            
+
             Divider()
-            
+
             // Tree view
             if let rootNode = rootNode {
                 ListTreeView(root: rootNode, expansion: expansion)
@@ -132,11 +138,11 @@ struct JSONViewerView: View {
         }
         .background(Color(NSColor.controlBackgroundColor))
     }
-    
+
     // Xcode-style collapsed navigator indicator
     private var collapsedNavigatorIndicator: some View {
         VStack {
-            Button(action: { 
+            Button(action: {
                 if !isNavigatorPinned {
                     withAnimation(.easeInOut(duration: 0.25)) {
                         isNavigatorCollapsed = false
@@ -149,7 +155,7 @@ struct JSONViewerView: View {
             }
             .buttonStyle(.borderless)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            
+
             Spacer()
         }
         .background(Color(NSColor.controlBackgroundColor))
@@ -160,7 +166,7 @@ struct JSONViewerView: View {
             alignment: .trailing
         )
     }
-    
+
     // Xcode-style resize handle
     private var resizeHandle: some View {
         Rectangle()
@@ -181,7 +187,7 @@ struct JSONViewerView: View {
                                     isDragging = true
                                     NSCursor.resizeLeftRight.push()
                                 }
-                                
+
                                 let newWidth = navigatorWidth + value.translation.width
                                 navigatorWidth = max(minNavigatorWidth, min(maxNavigatorWidth, newWidth))
                             }
@@ -192,7 +198,7 @@ struct JSONViewerView: View {
                     )
             )
     }
-    
+
     private var jsonEditor: some View {
         VStack(alignment: .leading, spacing: 0) {
             // Header
@@ -207,19 +213,19 @@ struct JSONViewerView: View {
                     }
                     .buttonStyle(.borderless)
                     .font(.caption)
-                    
+
                     Button("Format") {
                         formatJSON()
                     }
                     .buttonStyle(.borderless)
                     .font(.caption)
-                    
+
                     Button("Minify") {
                         minifyJSON()
                     }
                     .buttonStyle(.borderless)
                     .font(.caption)
-                    
+
                     Button("Copy") {
                         copyToClipboard()
                     }
@@ -230,9 +236,9 @@ struct JSONViewerView: View {
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
             .background(Color(NSColor.controlBackgroundColor))
-            
+
             Divider()
-            
+
             // Text editor
             ScrollView {
                 TextEditor(text: $jsonText)
@@ -244,14 +250,14 @@ struct JSONViewerView: View {
         }
         .background(Color(NSColor.controlBackgroundColor))
     }
-    
+
     private func loadCurrentFile() {
-        guard let fileInfo = fileManager.currentFile else {
+        guard let fileInfo = fileInfo else {
             jsonText = ""
             rootNode = nil
             return
         }
-        
+
         // Load file content if not already loaded
         if let content = fileInfo.content {
             jsonText = content
@@ -273,16 +279,16 @@ struct JSONViewerView: View {
         } else {
             jsonText = ""
         }
-        
+
         parseJSONContent()
     }
-    
+
     private func parseJSONContent() {
-        guard let fileInfo = fileManager.currentFile else {
+        guard let fileInfo = fileInfo else {
             rootNode = nil
             return
         }
-        
+
         // Parse JSON to build tree on a background queue to avoid blocking UI
         if fileInfo.isValidJSON {
             let currentText = jsonText
@@ -309,45 +315,51 @@ struct JSONViewerView: View {
             }
         }
     }
-    
+
     private func formatJSON() {
         do {
             let data = Data(jsonText.utf8)
             let pretty = try JSONFormatter().prettyPrinted(from: data)
             jsonText = String(decoding: pretty, as: UTF8.self)
-            
+
             // Rebuild tree
             rootNode = try JSONTreeBuilder.build(from: pretty)
         } catch {
             showError("Failed to format JSON: \(error.localizedDescription)")
         }
     }
-    
+
     private func minifyJSON() {
         do {
             let data = Data(jsonText.utf8)
             let minified = try JSONFormatter().minified(from: data)
             jsonText = String(decoding: minified, as: UTF8.self)
-            
+
             // Rebuild tree
             rootNode = try JSONTreeBuilder.build(from: minified)
         } catch {
             showError("Failed to minify JSON: \(error.localizedDescription)")
         }
     }
-    
+
     private func copyToClipboard() {
         let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
         pasteboard.setString(jsonText, forType: .string)
     }
-    
+
     private func closeFile() {
-        fileManager.currentFile = nil
+        // Close the current tab if we have a fileInfo
+        if let fileInfo = fileInfo {
+            // Find the tab for this file and close it
+            if let tab = TabManager.shared.tabs.first(where: { $0.fileInfo.url == fileInfo.url }) {
+                TabManager.shared.closeTab(tab.id)
+            }
+        }
         jsonText = ""
         rootNode = nil
     }
-    
+
     private func showError(_ message: String) {
         errorMessage = message
         showingError = true

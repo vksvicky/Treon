@@ -31,6 +31,12 @@ class FileValidator {
             throw FileManagerError.fileNotFound(url.path)
         }
         
+        // Check file extension
+        guard url.pathExtension.lowercased() == "json" else {
+            logger.error("Unsupported file type: \(url.pathExtension)")
+            throw FileManagerError.unsupportedFileType(url.pathExtension)
+        }
+        
         // Check file size
         let attributes = try FileManager.default.attributesOfItem(atPath: url.path)
         guard let fileSize = attributes[.size] as? Int64 else {

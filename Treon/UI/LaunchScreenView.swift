@@ -6,6 +6,7 @@ import Combine
 
 struct LaunchScreenView: View {
     @StateObject private var fileManager = TreonFileManager.shared
+    @StateObject private var tabManager = TabManager.shared
     @StateObject private var permissionManager = PermissionManager.shared
     @StateObject private var notificationManager = NotificationManager.shared
     @State private var showingURLInput = false
@@ -18,9 +19,9 @@ struct LaunchScreenView: View {
     var body: some View {
         ZStack {
             Group {
-                if fileManager.currentFile != nil {
-                    // Show JSON viewer when a file is loaded
-                    JSONViewerView()
+                if tabManager.hasOpenTabs {
+                    // Show JSON viewer with tabs when files are loaded
+                    TabbedJSONViewerView()
                 } else {
                     // Show lightweight launch screen when no file is loaded
                     VStack(spacing: 60) {
