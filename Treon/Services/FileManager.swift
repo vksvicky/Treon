@@ -137,30 +137,49 @@ class TreonFileManager: ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage: String?
     
+    // MARK: - Cached Panel for Performance
+    private lazy var cachedOpenPanel: NSOpenPanel = {
+        let panel = NSOpenPanel()
+        panel.allowsMultipleSelection = false
+        panel.canChooseDirectories = false
+        panel.allowedContentTypes = [.json]
+        panel.title = "Open JSON File"
+        panel.message = "Select a JSON file to open"
+        panel.directoryURL = getLastOpenedDirectory()
+        return panel
+    }()
+    
     // MARK: - Initialization
     private init() {
         logger.info("Initializing TreonFileManager")
         loadRecentFiles()
+        
+        // Pre-warm the cached panel on the main thread (NSWindow must be created on main thread)
+        DispatchQueue.main.async {
+            _ = self.cachedOpenPanel
+            self.logger.info("Pre-warmed file dialog panel")
+        }
     }
     
     // MARK: - File Operations
     func openFile() async throws -> FileInfo {
         logger.info("Starting file open operation")
         return try await withCheckedThrowingContinuation { continuation in
+            // Use cached panel for faster launch - no need to create/configure each time
             DispatchQueue.main.async {
-                let panel = NSOpenPanel()
-                panel.allowsMultipleSelection = false
-                panel.canChooseDirectories = false
-                panel.allowedContentTypes = [.json]
-                panel.title = "Open JSON File"
-                panel.message = "Select a JSON file to open"
-
-                if panel.runModal() == .OK, let url = panel.url {
+                // Set panel to last opened directory (already set in lazy initialization)
+                // No need to reset to Documents - let it remember the last location
+                
+                if self.cachedOpenPanel.runModal() == .OK, let url = self.cachedOpenPanel.url {
                     self.logger.info("User selected file: \(url.path)")
                     Task {
                         do {
                             let fileInfo = try await self.validateAndLoadFile(url: url)
                             self.logger.info("Successfully loaded file: \(fileInfo.name)")
+                            
+                            // Save the directory of the selected file for next time
+                            self.saveLastOpenedDirectory(url: url)
+                            
                             continuation.resume(returning: fileInfo)
                         } catch {
                             self.logger.error("Failed to load file: \(error.localizedDescription)")
@@ -178,7 +197,12 @@ class TreonFileManager: ObservableObject {
     func openFile(url: URL) async throws -> FileInfo {
         // Try to access the file directly first
         do {
-            return try await validateAndLoadFile(url: url)
+            let fileInfo = try await validateAndLoadFile(url: url)
+            
+            // Save the directory of the opened file for next time
+            saveLastOpenedDirectory(url: url)
+            
+            return fileInfo
         } catch {
             // Log the actual error for debugging
             logger.warning("Error accessing file \(url.path): \(error)")
@@ -496,5 +520,35 @@ class TreonFileManager: ObservableObject {
         )
         logger.info("Successfully created file from content: \(name)")
         return fileInfo
+    }
+    
+    // MARK: - Directory Memory
+    
+    private func getLastOpenedDirectory() -> URL? {
+        if let data = UserDefaults.standard.data(forKey: UserDefaultsKeys.lastOpenedDirectory),
+           let url = URL(dataRepresentation: data, relativeTo: nil) {
+            // Verify the directory still exists
+            var isDirectory: ObjCBool = false
+            if FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory) && isDirectory.boolValue {
+                logger.info("Using last opened directory: \(url.path)")
+                return url
+            } else {
+                logger.info("Last opened directory no longer exists, removing from UserDefaults")
+                UserDefaults.standard.removeObject(forKey: UserDefaultsKeys.lastOpenedDirectory)
+            }
+        }
+        
+        // Fallback to Documents directory if no valid last directory
+        let documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+        logger.info("Using default Documents directory: \(documentsURL?.path ?? "nil")")
+        return documentsURL
+    }
+    
+    private func saveLastOpenedDirectory(url: URL) {
+        let directoryURL = url.deletingLastPathComponent()
+        
+        let data = directoryURL.dataRepresentation
+        UserDefaults.standard.set(data, forKey: UserDefaultsKeys.lastOpenedDirectory)
+        logger.info("Saved last opened directory: \(directoryURL.path)")
     }
 }

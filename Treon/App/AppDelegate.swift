@@ -45,26 +45,28 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         logger.info("AppDelegate: Running in GUI mode")
         setupMenuActions()
     }
-    
+
     private func setupMenuActions() {
         // Use a delayed approach to ensure the menu is fully loaded
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             self.connectPreferencesMenuItem()
+            self.connectFileMenuActions()
+            self.connectEditMenuActions()
         }
     }
-    
+
     private func connectPreferencesMenuItem() {
         // Connect the Preferences menu item to show settings
         guard let mainMenu = NSApp.mainMenu else {
             logger.error("AppDelegate: Could not find main menu")
             return
         }
-        
+
         guard let appMenu = mainMenu.item(at: 0)?.submenu else {
             logger.error("AppDelegate: Could not find app menu")
             return
         }
-        
+
         // Find the Preferences menu item by iterating through all items
         var preferencesItem: NSMenuItem?
         for i in 0..<appMenu.numberOfItems {
@@ -76,7 +78,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 }
             }
         }
-        
+
         if let preferencesItem = preferencesItem {
             preferencesItem.target = self
             preferencesItem.action = #selector(showPreferences)
@@ -85,17 +87,138 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             logger.error("AppDelegate: Could not find Settings menu item")
         }
     }
-    
+
     @IBAction func showPreferences(_ sender: Any?) {
         logger.info("AppDelegate: showPreferences called")
         SettingsWindowController.shared.showWindow()
         logger.info("AppDelegate: showWindow called")
     }
-    
+
     // Alternative method to show preferences via keyboard shortcut
     @objc func showPreferencesViaShortcut() {
         logger.info("AppDelegate: showPreferencesViaShortcut called")
         SettingsWindowController.shared.showWindow()
+    }
+    
+    private func connectFileMenuActions() {
+        guard let mainMenu = NSApp.mainMenu else {
+            logger.error("AppDelegate: Could not find main menu")
+            return
+        }
+        
+        // Find the File menu (usually at index 1)
+        guard let fileMenu = mainMenu.item(at: 1)?.submenu else {
+            logger.error("AppDelegate: Could not find File menu")
+            return
+        }
+        
+        // Connect Open menu item (CMD+O)
+        if let openItem = fileMenu.item(withTitle: "Open…") {
+            openItem.target = self
+            openItem.action = #selector(openDocument(_:))
+            logger.info("AppDelegate: Connected Open menu item")
+        }
+        
+        // Connect New menu item (CMD+N)
+        if let newItem = fileMenu.item(withTitle: "New") {
+            newItem.target = self
+            newItem.action = #selector(newDocument(_:))
+            logger.info("AppDelegate: Connected New menu item")
+        }
+        
+        // Connect Save menu item (CMD+S)
+        if let saveItem = fileMenu.item(withTitle: "Save…") {
+            saveItem.target = self
+            saveItem.action = #selector(saveDocument(_:))
+            logger.info("AppDelegate: Connected Save menu item")
+        }
+    }
+    
+    private func connectEditMenuActions() {
+        guard let mainMenu = NSApp.mainMenu else {
+            logger.error("AppDelegate: Could not find main menu")
+            return
+        }
+        
+        // Find the Edit menu (usually at index 2)
+        guard let editMenu = mainMenu.item(at: 2)?.submenu else {
+            logger.error("AppDelegate: Could not find Edit menu")
+            return
+        }
+        
+        // Connect Copy menu item (CMD+C)
+        if let copyItem = editMenu.item(withTitle: "Copy") {
+            copyItem.target = self
+            copyItem.action = #selector(copy(_:))
+            logger.info("AppDelegate: Connected Copy menu item")
+        }
+        
+        // Connect Paste menu item (CMD+V)
+        if let pasteItem = editMenu.item(withTitle: "Paste") {
+            pasteItem.target = self
+            pasteItem.action = #selector(paste(_:))
+            logger.info("AppDelegate: Connected Paste menu item")
+        }
+        
+        // Connect Cut menu item (CMD+X)
+        if let cutItem = editMenu.item(withTitle: "Cut") {
+            cutItem.target = self
+            cutItem.action = #selector(cut(_:))
+            logger.info("AppDelegate: Connected Cut menu item")
+        }
+        
+        // Connect Select All menu item (CMD+A)
+        if let selectAllItem = editMenu.item(withTitle: "Select All") {
+            selectAllItem.target = self
+            selectAllItem.action = #selector(selectAll(_:))
+            logger.info("AppDelegate: Connected Select All menu item")
+        }
+    }
+    
+    // MARK: - File Menu Actions
+    
+    @IBAction func openDocument(_ sender: Any?) {
+        logger.info("AppDelegate: openDocument called")
+        // Post notification to trigger file open in SwiftUI
+        NotificationCenter.default.post(name: NotificationNames.openFileRequested, object: nil)
+    }
+    
+    @IBAction func newDocument(_ sender: Any?) {
+        logger.info("AppDelegate: newDocument called")
+        // Post notification to trigger new file creation in SwiftUI
+        NotificationCenter.default.post(name: NotificationNames.newFileRequested, object: nil)
+    }
+    
+    @IBAction func saveDocument(_ sender: Any?) {
+        logger.info("AppDelegate: saveDocument called")
+        // Post notification to trigger file save in SwiftUI
+        NotificationCenter.default.post(name: NotificationNames.saveFileRequested, object: nil)
+    }
+    
+    // MARK: - Edit Menu Actions
+    
+    @IBAction func copy(_ sender: Any?) {
+        logger.info("AppDelegate: copy called")
+        // Forward to first responder for proper text handling
+        NSApp.sendAction(#selector(NSText.copy(_:)), to: nil, from: sender)
+    }
+    
+    @IBAction func paste(_ sender: Any?) {
+        logger.info("AppDelegate: paste called")
+        // Forward to first responder for proper text handling
+        NSApp.sendAction(#selector(NSText.paste(_:)), to: nil, from: sender)
+    }
+    
+    @IBAction func cut(_ sender: Any?) {
+        logger.info("AppDelegate: cut called")
+        // Forward to first responder for proper text handling
+        NSApp.sendAction(#selector(NSText.cut(_:)), to: nil, from: sender)
+    }
+    
+    @IBAction func selectAll(_ sender: Any?) {
+        logger.info("AppDelegate: selectAll called")
+        // Forward to first responder for proper text handling
+        NSApp.sendAction(#selector(NSText.selectAll(_:)), to: nil, from: sender)
     }
 
     private func handleIfRunningUnderTests() -> Bool {
@@ -129,7 +252,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationSupportsSecureRestorableState(_ app: NSApplication) -> Bool {
         return true
     }
-    
+
     // Handle app termination when all windows are closed
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         return true

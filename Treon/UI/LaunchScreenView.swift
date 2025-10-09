@@ -2,6 +2,7 @@ import SwiftUI
 import UniformTypeIdentifiers
 import AppKit
 import os.log
+import Combine
 
 struct LaunchScreenView: View {
     @StateObject private var fileManager = TreonFileManager.shared
@@ -46,6 +47,16 @@ struct LaunchScreenView: View {
                     .background(Color(NSColor.controlBackgroundColor))
                     .onDrop(of: [.fileURL], isTargeted: nil) { providers in
                         handleFileDrop(providers: providers)
+                    }
+                    .onReceive(NotificationCenter.default.publisher(for: NotificationNames.openFileRequested)) { _ in
+                        openFile()
+                    }
+                    .onReceive(NotificationCenter.default.publisher(for: NotificationNames.newFileRequested)) { _ in
+                        newFile()
+                    }
+                    .onReceive(NotificationCenter.default.publisher(for: NotificationNames.saveFileRequested)) { _ in
+                        // TODO: Implement save functionality
+                        logger.info("Save file requested via keyboard shortcut")
                     }
                 }
             }

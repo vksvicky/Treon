@@ -35,13 +35,13 @@ public enum UIConstants {
     public static let defaultWindowHeight: CGFloat = 800
     public static let minimumWindowWidth: CGFloat = 800
     public static let minimumWindowHeight: CGFloat = 600
-    
+
     // Button Sizing
     public static let buttonWidth: CGFloat = 160
     public static let buttonHeight: CGFloat = 44
     public static let buttonCornerRadius: CGFloat = 8
     public static let buttonSpacing: CGFloat = 16
-    
+
     // Typography
     public static let buttonFontSize: CGFloat = 14
     public static let buttonFontWeight: Font.Weight = .medium
@@ -49,24 +49,24 @@ public enum UIConstants {
     public static let subtitleFontSize: CGFloat = 16
     public static let bodyFontSize: CGFloat = 14
     public static let captionFontSize: CGFloat = 12
-    
+
     // Animation
     public static let hoverAnimationDuration: Double = 0.2
     public static let buttonPressAnimationDuration: Double = 0.1
     public static let fadeAnimationDuration: Double = 0.3
-    
+
     // Spacing
     public static let smallSpacing: CGFloat = 8
     public static let mediumSpacing: CGFloat = 16
     public static let largeSpacing: CGFloat = 24
     public static let extraLargeSpacing: CGFloat = 40
-    
+
     // Input Fields
     public static let textFieldWidth: CGFloat = 300
     public static let textFieldHeight: CGFloat = 32
     public static let multilineTextFieldWidth: CGFloat = 400
     public static let multilineTextFieldHeight: CGFloat = 60
-    
+
     // Colors
     public static let primaryBlue = Color.blue
     public static let successGreen = Color.green
@@ -83,17 +83,17 @@ public enum FileConstants {
     public static let sizeSlackBytes: Int64 = 2 * 1024 // allow small overhead (~2KB)
     public static let maxJSONSize: Int64 = 10 * 1024 * 1024 // 10MB
     public static let maxRecentFiles: Int = 10
-    
+
     // Supported File Types
     public static let supportedFileTypes: [String] = ["json", "txt"]
     public static let jsonFileExtensions: [String] = ["json"]
-    
+
     // File Operations
     public static let defaultFileName = "Untitled"
     public static let pasteboardFileName = "Pasteboard Content"
     public static let urlFileName = "URL Content"
     public static let curlFileName = "cURL Response"
-    
+
     // Timeouts
     public static let networkTimeout: TimeInterval = 30.0
     public static let fileOperationTimeout: TimeInterval = 10.0
@@ -138,7 +138,7 @@ public enum LocalizationKeys {
         public static let error = "general.error"
         public static let success = "general.success"
     }
-    
+
     public enum Errors {
         public static let parseFailed = "errors.parse_failed"
         public static let fileNotFound = "errors.file_not_found"
@@ -151,7 +151,7 @@ public enum LocalizationKeys {
         public static let userCancelled = "errors.user_cancelled"
         public static let unknownError = "errors.unknown_error"
     }
-    
+
     public enum UI {
         public static let openFile = "ui.open_file"
         public static let newFile = "ui.new_file"
@@ -184,6 +184,9 @@ public enum NotificationNames {
     public static let fileCreated = Notification.Name("fileCreated")
     public static let errorOccurred = Notification.Name("errorOccurred")
     public static let operationCompleted = Notification.Name("operationCompleted")
+    public static let openFileRequested = Notification.Name("openFileRequested")
+    public static let newFileRequested = Notification.Name("newFileRequested")
+    public static let saveFileRequested = Notification.Name("saveFileRequested")
 }
 
 
