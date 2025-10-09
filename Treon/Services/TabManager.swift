@@ -40,6 +40,10 @@ class TabManager: ObservableObject {
     @Published var tabs: [TabInfo] = []
     @Published var activeTabId: UUID?
     
+    var tabCount: Int {
+        tabs.count
+    }
+    
     private init() {
         logger.info("Initializing TabManager")
     }
@@ -134,11 +138,6 @@ class TabManager: ObservableObject {
         
         let wasActive = tabs[tabIndex].isActive
         tabs[tabIndex] = TabInfo(fileInfo: newFileInfo, isActive: wasActive)
-    }
-    
-    /// Gets the tab count
-    var tabCount: Int {
-        tabs.count
     }
     
     /// Checks if there are any open tabs

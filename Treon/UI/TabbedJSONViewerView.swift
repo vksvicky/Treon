@@ -15,9 +15,6 @@ struct TabbedJSONViewerView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            // Tab bar
-            tabBar
-            
             // Content area
             if let activeTab = tabManager.activeTab {
                 JSONViewerView(fileInfo: activeTab.fileInfo)
@@ -33,16 +30,28 @@ struct TabbedJSONViewerView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(Color(NSColor.controlBackgroundColor))
             }
+            
+            // Status bar with tabs at the bottom
+            statusBar
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NotificationNames.openFileRequested)) { _ in
+            Task {
+                do {
+                    _ = try await fileManager.openFile()
+                } catch {
+                    // Handle error if needed
+                }
+            }
         }
     }
     
-    private var tabBar: some View {
+    private var statusBar: some View {
         HStack(spacing: 0) {
-            // Tab buttons
+            // Left side - File tabs
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 0) {
                     ForEach(tabManager.tabs) { tab in
-                        TabButton(
+                        StatusBarTabButton(
                             tab: tab,
                             isActive: tab.isActive,
                             onSelect: { tabManager.switchToTab(tab.id) },
@@ -55,48 +64,56 @@ struct TabbedJSONViewerView: View {
             
             Spacer()
             
-            // Tab actions
-            HStack(spacing: 8) {
-                Button(action: {
-                    Task {
-                        do {
-                            _ = try await fileManager.openFile()
-                        } catch {
-                            // Handle error if needed
-                        }
-                    }
-                }) {
-                    Image(systemName: "plus")
-                        .font(.system(size: 12, weight: .medium))
-                }
-                .buttonStyle(.borderless)
-                .help("Open New File")
+            // Right side - Status info and actions
+            HStack(spacing: 12) {
+                // File count info
+                Text("\(tabManager.tabCount) file\(tabManager.tabCount == 1 ? "" : "s")")
+                    .font(.system(size: 11))
+                    .foregroundColor(.secondary)
                 
-                if tabManager.tabCount > 1 {
+                // Action buttons
+                HStack(spacing: 8) {
                     Button(action: {
-                        tabManager.closeAllTabs()
+                        Task {
+                            do {
+                                _ = try await fileManager.openFile()
+                            } catch {
+                                // Handle error if needed
+                            }
+                        }
                     }) {
-                        Image(systemName: "xmark.circle")
-                            .font(.system(size: 12, weight: .medium))
+                        Image(systemName: "plus")
+                            .font(.system(size: 11, weight: .medium))
                     }
                     .buttonStyle(.borderless)
-                    .help("Close All Tabs")
+                    .help("Open New File (CMD+O)")
+                    
+                    if tabManager.tabCount > 1 {
+                        Button(action: {
+                            tabManager.closeAllTabs()
+                        }) {
+                            Image(systemName: "xmark.circle")
+                                .font(.system(size: 11, weight: .medium))
+                        }
+                        .buttonStyle(.borderless)
+                        .help("Close All Tabs")
+                    }
                 }
             }
             .padding(.trailing, 8)
         }
-        .frame(height: 32)
+        .frame(height: 24)
         .background(Color(NSColor.controlBackgroundColor))
         .overlay(
             Rectangle()
                 .fill(Color(NSColor.separatorColor))
                 .frame(height: 1),
-            alignment: .bottom
+            alignment: .top
         )
     }
 }
 
-struct TabButton: View {
+struct StatusBarTabButton: View {
     let tab: TabInfo
     let isActive: Bool
     let onSelect: () -> Void
@@ -106,14 +123,9 @@ struct TabButton: View {
     
     var body: some View {
         HStack(spacing: 4) {
-            // Tab icon
-            Image(systemName: "doc.text")
-                .font(.system(size: 10, weight: .medium))
-                .foregroundColor(isActive ? .primary : .secondary)
-            
             // Tab title
             Text(tab.name)
-                .font(.system(size: 12, weight: .medium))
+                .font(.system(size: 11, weight: .medium))
                 .foregroundColor(isActive ? .primary : .secondary)
                 .lineLimit(1)
                 .truncationMode(.middle)
@@ -125,12 +137,12 @@ struct TabButton: View {
                     .foregroundColor(isHovered ? .primary : .clear)
             }
             .buttonStyle(.borderless)
-            .frame(width: 12, height: 12)
+            .frame(width: 10, height: 10)
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
+        .padding(.horizontal, 6)
+        .padding(.vertical, 2)
         .background(
-            RoundedRectangle(cornerRadius: 4)
+            RoundedRectangle(cornerRadius: 3)
                 .fill(isActive ? Color(NSColor.selectedControlColor) : Color.clear)
         )
         .onHover { hovering in
