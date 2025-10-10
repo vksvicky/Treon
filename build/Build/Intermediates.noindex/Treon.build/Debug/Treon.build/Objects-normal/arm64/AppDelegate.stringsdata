@@ -1,40 +1,5 @@
 {
-  "source": "/Users/vivek/Development/Treon/Treon/AppDelegate.swift",
-  "tables": {
-    "Localizable": [
-      {
-        "comment": "",
-        "key": "Treon - JSON Formatter",
-        "location": {
-          "startingColumn": 18,
-          "startingLine": 19
-        }
-      },
-      {
-        "comment": "",
-        "key": "Welcome to Treon!",
-        "location": {
-          "startingColumn": 18,
-          "startingLine": 23
-        }
-      },
-      {
-        "comment": "",
-        "key": "This is a simple test to see if the app loads correctly.",
-        "location": {
-          "startingColumn": 18,
-          "startingLine": 27
-        }
-      },
-      {
-        "comment": "",
-        "key": "Test Button",
-        "location": {
-          "startingColumn": 20,
-          "startingLine": 30
-        }
-      }
-    ]
-  },
+  "source": "/Users/vivek/Development/Treon/Treon/App/AppDelegate.swift",
+  "tables": {},
   "version": 1
 }

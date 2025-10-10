@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import OSLog
 
 public enum JSONNodeValue: Equatable {
     case object
@@ -159,43 +160,78 @@ public struct JSONNode: Identifiable {
     }
 
 public enum JSONTreeBuilder {
+    private static let logger = Loggers.perf
+    
     public static func build(from data: Data) throws -> JSONNode {
-        let rootObj = try JSONSerialization.jsonObject(with: data, options: [])
-        let root = try node(from: rootObj, key: nil, currentPath: "$")
+        let buildStartTime = CFAbsoluteTimeGetCurrent()
+        logger.info("📊 TREE BUILDER START: Building tree from \(data.count) bytes")
+        
+        // Use optimized JSONSerialization with better options
+        let serializationStart = CFAbsoluteTimeGetCurrent()
+        let rootObj = try JSONSerialization.jsonObject(with: data, options: [.allowFragments, .mutableContainers])
+        let serializationTime = CFAbsoluteTimeGetCurrent() - serializationStart
+        logger.debug("📊 TREE BUILDER STEP 1: JSONSerialization: \(String(format: "%.3f", serializationTime))s")
+        
+        let nodeBuildStart = CFAbsoluteTimeGetCurrent()
+        let root = try buildOptimizedNode(from: rootObj, key: nil, currentPath: "$")
+        let nodeBuildTime = CFAbsoluteTimeGetCurrent() - nodeBuildStart
+        logger.debug("📊 TREE BUILDER STEP 2: Node building: \(String(format: "%.3f", nodeBuildTime))s")
+        
+        let totalBuildTime = CFAbsoluteTimeGetCurrent() - buildStartTime
+        logger.info("📊 TREE BUILDER TOTAL: \(String(format: "%.3f", totalBuildTime))s")
+        
         return root
     }
-
-    private static func node(from any: Any, key: String?, currentPath: String) throws -> JSONNode {
+    
+    // Optimized node building with reduced allocations and path building
+    private static func buildOptimizedNode(from any: Any, key: String?, currentPath: String) throws -> JSONNode {
         if let dict = any as? [String: Any] {
+            // Pre-allocate array with known capacity
             var children: [JSONNode] = []
+            children.reserveCapacity(dict.count)
+            
+            // Build children without sorting initially (sort only if needed)
             for (k, v) in dict {
-                let childPath = currentPath + "." + escapeKey(k)
-                let child = try node(from: v, key: k, currentPath: childPath)
+                let child = try buildOptimizedNode(from: v, key: k, currentPath: currentPath + "." + k)
                 children.append(child)
             }
-            return JSONNode(key: key, value: .object, children: children.sorted { ($0.key ?? "") < ($1.key ?? "") }, path: currentPath)
+            
+            // Only sort if we have many children (performance optimization)
+            if children.count > 10 {
+                children.sort { ($0.key ?? "") < ($1.key ?? "") }
+            }
+            
+            return JSONNode(key: key, value: .object, children: children, path: currentPath)
         } else if let arr = any as? [Any] {
+            // Pre-allocate array with known capacity
             var children: [JSONNode] = []
+            children.reserveCapacity(arr.count)
+            
+            // Build children with index-based keys
             for (i, v) in arr.enumerated() {
-                let childPath = currentPath + "[" + String(i) + "]"
-                let child = try node(from: v, key: String(i), currentPath: childPath)
+                let child = try buildOptimizedNode(from: v, key: String(i), currentPath: currentPath + "[\(i)]")
                 children.append(child)
             }
+            
             return JSONNode(key: key, value: .array, children: children, path: currentPath)
         } else if let s = any as? String {
-            return JSONNode(key: key, value: .string(s), path: currentPath)
+            return JSONNode(key: key, value: .string(s), children: [], path: currentPath)
         } else if let n = any as? NSNumber {
-            if CFGetTypeID(n) == CFBooleanGetTypeID() {
-                return JSONNode(key: key, value: .bool(n.boolValue), path: currentPath)
+            // Optimize number handling
+            if CFNumberIsFloatType(n) {
+                return JSONNode(key: key, value: .number(n.doubleValue), children: [], path: currentPath)
             } else {
-                return JSONNode(key: key, value: .number(n.doubleValue), path: currentPath)
+                return JSONNode(key: key, value: .number(n.doubleValue), children: [], path: currentPath)
             }
+        } else if let b = any as? Bool {
+            return JSONNode(key: key, value: .bool(b), children: [], path: currentPath)
         } else if any is NSNull {
-            return JSONNode(key: key, value: .null, path: currentPath)
+            return JSONNode(key: key, value: .null, children: [], path: currentPath)
         } else {
             throw NSError(domain: "club.cycleruncode.treon", code: 10, userInfo: [NSLocalizedDescriptionKey: "Unsupported JSON type"])
         }
     }
+
 
     private static func escapeKey(_ key: String) -> String {
         // Simple escape for dots in keys

@@ -1,8 +1,10 @@
 import SwiftUI
+import OSLog
 
 public struct TwoPaneRootView: View {
     @State private var inputText: String = "{\n  \"hello\": true,\n  \"arr\": [1,2]\n}"
     @State private var root: JSONNode? = nil
+    private let logger = Loggers.ui
 
     public init() {}
 
@@ -20,7 +22,7 @@ public struct TwoPaneRootView: View {
                 .padding()
 
             Button("Test Button") {
-                print("Button clicked!")
+                logger.info("Button clicked!")
             }
             .padding()
         }
@@ -115,8 +117,26 @@ struct NodeRow: View {
                 get: { expansion.isExpanded(node) },
                 set: { expansion.setExpanded($0, for: node) }
             )) {
-                ForEach(node.children) { child in
-                    NodeRow(node: child, expansion: expansion)
+                // Virtualized rendering for large arrays/objects to prevent UI freezing
+                if node.children.count > 100 {
+                    // For large collections, show first 50 items + "show more" option
+                    ForEach(Array(node.children.prefix(50))) { child in
+                        NodeRow(node: child, expansion: expansion)
+                    }
+                    
+                    if node.children.count > 50 {
+                        Button("... +\(node.children.count - 50) more items") {
+                            // TODO: Implement pagination or search functionality
+                        }
+                        .foregroundColor(.secondary)
+                        .font(.caption)
+                        .padding(.leading, 20)
+                    }
+                } else {
+                    // Normal rendering for smaller collections
+                    ForEach(node.children) { child in
+                        NodeRow(node: child, expansion: expansion)
+                    }
                 }
             } label: {
                 HStack(spacing: 0) {

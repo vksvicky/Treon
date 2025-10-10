@@ -1,5 +1,6 @@
 import SwiftUI
 import AppKit
+import OSLog
 
 struct JSONViewerView: View {
     @StateObject private var fileManager = TreonFileManager.shared
@@ -10,6 +11,7 @@ struct JSONViewerView: View {
     @StateObject private var expansion = TreeExpansionState()
     
     let fileInfo: FileInfo?
+    private let logger = Loggers.ui
     
     init(fileInfo: FileInfo? = nil) {
         self.fileInfo = fileInfo
@@ -252,6 +254,9 @@ struct JSONViewerView: View {
     }
 
     private func loadCurrentFile() {
+        let displayStartTime = CFAbsoluteTimeGetCurrent()
+        logger.info("📊 DISPLAY START: Beginning file display for \(fileInfo?.name ?? "unknown")")
+        
         guard let fileInfo = fileInfo else {
             jsonText = ""
             rootNode = nil
@@ -260,14 +265,27 @@ struct JSONViewerView: View {
 
         // Load file content if not already loaded
         if let content = fileInfo.content {
+            let contentLoadTime = CFAbsoluteTimeGetCurrent()
             jsonText = content
+            let contentLoadDuration = CFAbsoluteTimeGetCurrent() - contentLoadTime
+            logger.debug("📊 DISPLAY STEP 1: Content loading (from FileInfo): \(String(format: "%.3f", contentLoadDuration))s")
         } else if let url = fileInfo.url {
             Task {
                 do {
+                    let networkLoadStart = CFAbsoluteTimeGetCurrent()
                     let content = try await fileManager.getFileContent(url: url)
+                    let networkLoadTime = CFAbsoluteTimeGetCurrent() - networkLoadStart
+                    logger.debug("📊 DISPLAY STEP 1: Network content loading: \(String(format: "%.3f", networkLoadTime))s")
+                    
                     await MainActor.run {
+                        let contentSetStart = CFAbsoluteTimeGetCurrent()
                         jsonText = content
+                        let contentSetTime = CFAbsoluteTimeGetCurrent() - contentSetStart
+                        logger.debug("📊 DISPLAY STEP 2: Content setting: \(String(format: "%.3f", contentSetTime))s")
                         parseJSONContent()
+                        
+                        let totalDisplayTime = CFAbsoluteTimeGetCurrent() - displayStartTime
+                        logger.info("📊 DISPLAY TOTAL: \(String(format: "%.3f", totalDisplayTime))s for \(fileInfo.name)")
                     }
                 } catch {
                     await MainActor.run {
@@ -281,6 +299,9 @@ struct JSONViewerView: View {
         }
 
         parseJSONContent()
+        
+        let totalDisplayTime = CFAbsoluteTimeGetCurrent() - displayStartTime
+        logger.info("📊 DISPLAY TOTAL: \(String(format: "%.3f", totalDisplayTime))s for \(fileInfo.name)")
     }
 
     private func parseJSONContent() {
@@ -292,19 +313,100 @@ struct JSONViewerView: View {
         // Parse JSON to build tree on a background queue to avoid blocking UI
         if fileInfo.isValidJSON {
             let currentText = jsonText
+            let parseStartTime = CFAbsoluteTimeGetCurrent()
+            logger.info("📊 PARSING START: Beginning optimized JSON tree building for \(fileInfo.name)")
+            
             DispatchQueue.global(qos: .userInitiated).async {
                 do {
+                    let dataConversionStart = CFAbsoluteTimeGetCurrent()
                     let data = Data(currentText.utf8)
-                    let built = try JSONTreeBuilder.build(from: data)
-                    DispatchQueue.main.async {
-                        // Only apply if text hasn't changed in the meantime
-                        if currentText == self.jsonText {
-                            self.rootNode = built
+                    let dataConversionTime = CFAbsoluteTimeGetCurrent() - dataConversionStart
+                    logger.debug("📊 PARSING STEP 1: Data conversion: \(String(format: "%.3f", dataConversionTime))s (size: \(data.count) bytes)")
+                    
+                    // Add timeout protection for very large files
+                    let timeout: TimeInterval = data.count > 100 * 1024 * 1024 ? 10.0 : 30.0 // 10s for >100MB, 30s for others
+                    let startTime = CFAbsoluteTimeGetCurrent()
+                    
+                    // Check for timeout periodically
+                    func checkTimeout() throws {
+                        let elapsed = CFAbsoluteTimeGetCurrent() - startTime
+                        if elapsed > timeout {
+                            throw NSError(domain: "club.cycleruncode.treon", code: 408, userInfo: [NSLocalizedDescriptionKey: "Tree building timeout after \(timeout)s"])
                         }
                     }
+                    
+                    try checkTimeout()
+                    
+                    // For large files, use streaming approach with timeout protection
+                    let treeBuildStart = CFAbsoluteTimeGetCurrent()
+                    let built: JSONNode
+                    
+                    if data.count > 5 * 1024 * 1024 { // 5MB threshold
+                        logger.info("📊 PARSING: Using streaming approach for large file (\(data.count) bytes)")
+                        
+                        // Add timeout protection for very large files
+                        if data.count > 100 * 1024 * 1024 { // 100MB threshold
+                            logger.info("📊 PARSING: Using ultra-conservative approach for very large file (\(data.count) bytes)")
+                            built = try OptimizedJSONTreeBuilder.buildUltraConservativeTree(from: data)
+                        } else {
+                            built = try OptimizedJSONTreeBuilder.buildStreamingTree(from: data)
+                        }
+                    } else {
+                        built = try JSONTreeBuilder.build(from: data)
+                    }
+                    
+                    try checkTimeout()
+                    
+                    let treeBuildTime = CFAbsoluteTimeGetCurrent() - treeBuildStart
+                    
+                    // Count nodes safely to avoid potential crashes with very large trees
+                    let nodeCount = self.countNodes(built)
+                    logger.debug("📊 PARSING STEP 2: Tree building: \(String(format: "%.3f", treeBuildTime))s (nodes: \(nodeCount))")
+                    
+                    let dispatchStart = CFAbsoluteTimeGetCurrent()
+                    
+                    // Always update UI, but use different strategies based on file size
+                    Task { @MainActor in
+                        let uiUpdateStart = CFAbsoluteTimeGetCurrent()
+                        let dispatchTime = uiUpdateStart - dispatchStart
+                        logger.debug("📊 PARSING STEP 3A: Task to main actor: \(String(format: "%.3f", dispatchTime))s")
+                        logger.debug("📊 PARSING STEP 3B: Starting UI update on main thread")
+                        
+                        // Only apply if text hasn't changed in the meantime
+                        if currentText == self.jsonText {
+                            let rootNodeSetStart = CFAbsoluteTimeGetCurrent()
+                            
+                            // For very large files, use a more conservative approach
+                            if data.count > 100 * 1024 * 1024 { // 100MB threshold
+                                logger.info("📊 PARSING: Using conservative UI update for very large file (\(data.count) bytes)")
+                                // Set rootNode but with a delay to prevent UI blocking
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                    self.rootNode = built
+                                }
+                            } else {
+                                // Normal update for smaller files
+                            self.rootNode = built
+                            }
+                            
+                            let rootNodeSetTime = CFAbsoluteTimeGetCurrent() - rootNodeSetStart
+                            logger.debug("📊 PARSING STEP 3C: rootNode assignment: \(String(format: "%.3f", rootNodeSetTime))s")
+                        }
+                        
+                        let uiUpdateTime = CFAbsoluteTimeGetCurrent() - uiUpdateStart
+                        let totalParseTime = CFAbsoluteTimeGetCurrent() - parseStartTime
+                        logger.debug("📊 PARSING STEP 3D: UI update complete: \(String(format: "%.3f", uiUpdateTime))s")
+                        logger.info("📊 PARSING TOTAL: \(String(format: "%.3f", totalParseTime))s for \(fileInfo.name)")
+                    }
                 } catch {
-                    DispatchQueue.main.async {
+                    Task { @MainActor in
+                        if let nsError = error as NSError?, nsError.code == 408 {
+                            // Timeout error - show a more helpful message
+                            self.showError("File too large to parse completely. Tree view will show limited content. Use the text view for full content.")
+                            // Still try to show the raw text
+                            self.rootNode = nil
+                        } else {
                         self.showError("Failed to parse JSON: \(error.localizedDescription)")
+                        }
                     }
                 }
             }
@@ -314,6 +416,29 @@ struct JSONViewerView: View {
                 showError(errorMsg)
             }
         }
+    }
+    
+    
+    private func countNodes(_ node: JSONNode) -> Int {
+        // Efficient counting with early termination for very large trees
+        var count = 1
+        var stack = node.children
+        let maxCount = 1000000 // Increased limit for larger files
+        
+        while let child = stack.popLast(), count < maxCount {
+            count += 1
+            // Only add children if we haven't hit the limit yet
+            if count < maxCount {
+                stack.append(contentsOf: child.children)
+            }
+        }
+        
+        // If we hit the limit, return an estimated count
+        if count >= maxCount {
+            return maxCount // Return the limit as an estimate
+        }
+        
+        return count
     }
 
     private func formatJSON() {

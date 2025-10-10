@@ -10,23 +10,23 @@
 		</data>
 		<key>Resources/Assets.car</key>
 		<data>
-		gY/O5CwdcVQL9KhllZ78jo/Yfoo=
+		Z5T3+QUlmPWoQwiXWHtJJZOjhHQ=
 		</data>
 		<key>Resources/Base.lproj/Main.storyboardc/Info.plist</key>
 		<data>
-		4ohBRFnuGRc9Zm+Pc8+Lf0O3EP0=
+		QxJk8WcqQIEXnRC6tjWrBciTw8I=
 		</data>
 		<key>Resources/Base.lproj/Main.storyboardc/MainMenu.nib</key>
 		<data>
-		HskyH6dd6Tbjy13bQKdI08ngB1I=
+		EnSBuTlbfQt938qmnPJmQE5tAac=
 		</data>
 		<key>Resources/Base.lproj/Main.storyboardc/NSWindowController-B8D-0N-5wS.nib</key>
 		<data>
-		3tWmuHm+eLEBkoAvEKxj0x/p+eY=
+		TofL7gjUA+oWCxoCVYzpe9QI1+0=
 		</data>
 		<key>Resources/Base.lproj/Main.storyboardc/XfG-lQ-9wD-view-m2S-Jp-Qdl.nib</key>
 		<data>
-		dcwLIQgURpAxDkq7VP/MHVMjaZg=
+		F9VsYhJM02gUintuhRCCuNj9qaI=
 		</data>
 		<key>Resources/Localizable.strings</key>
 		<data>
@@ -39,19 +39,19 @@
 		<dict>
 			<key>cdhash</key>
 			<data>
-			11fJcmmq3LQBDvtiFJY/z7khwlI=
+			f3XQr3Xs9J++7lyJ5OpDFwhB694=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"d757c97269aadcb4010efb6214963fcfb921c252"</string>
+			<string>cdhash H"7f75d0af75ecf49fbeee5c89e4ea43170841ebde"</string>
 		</dict>
 		<key>MacOS/__preview.dylib</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			/+dQ+ZYmqlM6BE/l+O7YJJm4nLU=
+			4wkWAp90GosCZYS79ALfVMZMO44=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"ffe750f99626aa533a044fe5f8eed82499b89cb5"</string>
+			<string>cdhash H"e30916029f741a8b026584bbf402df54c64c3b8e"</string>
 		</dict>
 		<key>Resources/AppIcon.icns</key>
 		<dict>
@@ -64,35 +64,35 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			8wSvgmv3LCcH6he0ZKc9MlHJHmbopuciiaJ4KDbh5Zw=
+			OwOd0FylWMvVmIiuCqY2zXOr8FdvWjb2/yatcHOkFws=
 			</data>
 		</dict>
 		<key>Resources/Base.lproj/Main.storyboardc/Info.plist</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			ZZ2EL/7YTLt53UdSE6Hgk4tE5Nw2gh1JIOKS4AmB2FI=
+			Hx98pMkaxLvULqNSbddCLgZnJjb9XYSw9TOTDeWWa/g=
 			</data>
 		</dict>
 		<key>Resources/Base.lproj/Main.storyboardc/MainMenu.nib</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			n5XYM1h6D2Mg+K/KXAF7NVyUKe2PAZWXv22SScXgHKI=
+			YiEMiyGkdyn2ZqI6oROi3FeC2pj9R+B9JV3UuihtjRw=
 			</data>
 		</dict>
 		<key>Resources/Base.lproj/Main.storyboardc/NSWindowController-B8D-0N-5wS.nib</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			Mg98JHat2niAe06CA9t3dSgqOuioGeglKPv4w0XKne8=
+			s5+LZTIK2LJOYDUrmYDV+UC/8CbApOYiIUzTIjqvgZ0=
 			</data>
 		</dict>
 		<key>Resources/Base.lproj/Main.storyboardc/XfG-lQ-9wD-view-m2S-Jp-Qdl.nib</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			E5TydeWynoe7ikUTfd2H87wFEu4leIDPGUwzqgAM40o=
+			+lHr2Wd/EcV04cfoC6GqbA/hc25OG3xT5G7FZlOXJTw=
 			</data>
 		</dict>
 		<key>Resources/Localizable.strings</key>

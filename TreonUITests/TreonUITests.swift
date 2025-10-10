@@ -6,8 +6,10 @@
 //
 
 import XCTest
+import OSLog
 
 final class TreonUITests: XCTestCase {
+    private let logger = Logger(subsystem: "club.cycleruncode.Treon", category: "TreonUITests")
 
     override func setUpWithError() throws {
         // Put setup code here. This method is called before the invocation of each test method in the class.
@@ -60,7 +62,7 @@ final class TreonUITests: XCTestCase {
         let mockAppState = "ready" // Simulating a successful launch state
         XCTAssertEqual(mockAppState, "ready", "App should be in ready state after launch")
         
-        print("Mock app launch test completed successfully - app instantiation and UI structure verified")
+        logger.info("Mock app launch test completed successfully - app instantiation and UI structure verified")
     }
 
     @MainActor
@@ -111,11 +113,11 @@ final class TreonUITests: XCTestCase {
                          "Mock launch performance should be under \(performanceThreshold) seconds")
         
         // Log performance metrics for monitoring
-        print("Mock performance metrics:")
-        print("  - Instantiation: \(instantiationTime * 1000)ms")
-        print("  - State access: \(stateTime * 1000)ms") 
-        print("  - UI discovery: \(uiTime * 1000)ms")
-        print("  - Total mock launch: \(totalMockLaunchTime * 1000)ms")
+        logger.info("Mock performance metrics:")
+        logger.info("  - Instantiation: \(instantiationTime * 1000)ms")
+        logger.info("  - State access: \(stateTime * 1000)ms") 
+        logger.info("  - UI discovery: \(uiTime * 1000)ms")
+        logger.info("  - Total mock launch: \(totalMockLaunchTime * 1000)ms")
         
         // Test 6: Verify performance consistency (run multiple iterations)
         var totalIterationTime: Double = 0
@@ -138,8 +140,8 @@ final class TreonUITests: XCTestCase {
         let averageIterationTime = totalIterationTime / Double(iterations)
         XCTAssertLessThan(averageIterationTime, 0.2, "Average iteration time should be under 200ms")
         
-        print("Performance consistency test: \(iterations) iterations, average: \(averageIterationTime * 1000)ms")
+        logger.info("Performance consistency test: \(iterations) iterations, average: \(averageIterationTime * 1000)ms")
         
-        print("Mock performance test completed successfully - all performance metrics within bounds")
+        logger.info("Mock performance test completed successfully - all performance metrics within bounds")
     }
 }

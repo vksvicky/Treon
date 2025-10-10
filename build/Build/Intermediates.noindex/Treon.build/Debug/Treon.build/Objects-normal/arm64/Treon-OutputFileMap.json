@@ -6,7 +6,7 @@
     "pch" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/Treon-primary-Bridging-header.pch",
     "swift-dependencies" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/Treon-primary.swiftdeps"
   },
-  "/Users/vivek/Development/Treon/Treon/AppDelegate.swift" : {
+  "/Users/vivek/Development/Treon/Treon/App/AppDelegate.swift" : {
     "const-values" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/AppDelegate.swiftconstvalues",
     "dependencies" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/AppDelegate.d",
     "diagnostics" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/AppDelegate.dia",
@@ -16,7 +16,7 @@
     "swift-dependencies" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/AppDelegate.swiftdeps",
     "swiftmodule" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/AppDelegate~partial.swiftmodule"
   },
-  "/Users/vivek/Development/Treon/Treon/Constants.swift" : {
+  "/Users/vivek/Development/Treon/Treon/Core/Constants.swift" : {
     "const-values" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/Constants.swiftconstvalues",
     "dependencies" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/Constants.d",
     "diagnostics" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/Constants.dia",
@@ -26,7 +26,17 @@
     "swift-dependencies" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/Constants.swiftdeps",
     "swiftmodule" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/Constants~partial.swiftmodule"
   },
-  "/Users/vivek/Development/Treon/Treon/JSONFormatter.swift" : {
+  "/Users/vivek/Development/Treon/Treon/Core/ErrorHandler.swift" : {
+    "const-values" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/ErrorHandler.swiftconstvalues",
+    "dependencies" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/ErrorHandler.d",
+    "diagnostics" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/ErrorHandler.dia",
+    "index-unit-output-path" : "/Treon.build/Debug/Treon.build/Objects-normal/arm64/ErrorHandler.o",
+    "llvm-bc" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/ErrorHandler.bc",
+    "object" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/ErrorHandler.o",
+    "swift-dependencies" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/ErrorHandler.swiftdeps",
+    "swiftmodule" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/ErrorHandler~partial.swiftmodule"
+  },
+  "/Users/vivek/Development/Treon/Treon/Core/JSONFormatter.swift" : {
     "const-values" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/JSONFormatter.swiftconstvalues",
     "dependencies" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/JSONFormatter.d",
     "diagnostics" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/JSONFormatter.dia",
@@ -36,7 +46,7 @@
     "swift-dependencies" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/JSONFormatter.swiftdeps",
     "swiftmodule" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/JSONFormatter~partial.swiftmodule"
   },
-  "/Users/vivek/Development/Treon/Treon/JSONNode.swift" : {
+  "/Users/vivek/Development/Treon/Treon/Core/JSONNode.swift" : {
     "const-values" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/JSONNode.swiftconstvalues",
     "dependencies" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/JSONNode.d",
     "diagnostics" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/JSONNode.dia",
@@ -45,6 +55,76 @@
     "object" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/JSONNode.o",
     "swift-dependencies" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/JSONNode.swiftdeps",
     "swiftmodule" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/JSONNode~partial.swiftmodule"
+  },
+  "/Users/vivek/Development/Treon/Treon/Services/DirectoryManager.swift" : {
+    "const-values" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/DirectoryManager.swiftconstvalues",
+    "dependencies" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/DirectoryManager.d",
+    "diagnostics" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/DirectoryManager.dia",
+    "index-unit-output-path" : "/Treon.build/Debug/Treon.build/Objects-normal/arm64/DirectoryManager.o",
+    "llvm-bc" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/DirectoryManager.bc",
+    "object" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/DirectoryManager.o",
+    "swift-dependencies" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/DirectoryManager.swiftdeps",
+    "swiftmodule" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/DirectoryManager~partial.swiftmodule"
+  },
+  "/Users/vivek/Development/Treon/Treon/Services/FileManager+Curl.swift" : {
+    "const-values" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/FileManager+Curl.swiftconstvalues",
+    "dependencies" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/FileManager+Curl.d",
+    "diagnostics" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/FileManager+Curl.dia",
+    "index-unit-output-path" : "/Treon.build/Debug/Treon.build/Objects-normal/arm64/FileManager+Curl.o",
+    "llvm-bc" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/FileManager+Curl.bc",
+    "object" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/FileManager+Curl.o",
+    "swift-dependencies" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/FileManager+Curl.swiftdeps",
+    "swiftmodule" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/FileManager+Curl~partial.swiftmodule"
+  },
+  "/Users/vivek/Development/Treon/Treon/Services/FileManager+Networking.swift" : {
+    "const-values" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/FileManager+Networking.swiftconstvalues",
+    "dependencies" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/FileManager+Networking.d",
+    "diagnostics" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/FileManager+Networking.dia",
+    "index-unit-output-path" : "/Treon.build/Debug/Treon.build/Objects-normal/arm64/FileManager+Networking.o",
+    "llvm-bc" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/FileManager+Networking.bc",
+    "object" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/FileManager+Networking.o",
+    "swift-dependencies" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/FileManager+Networking.swiftdeps",
+    "swiftmodule" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/FileManager+Networking~partial.swiftmodule"
+  },
+  "/Users/vivek/Development/Treon/Treon/Services/FileManager.swift" : {
+    "const-values" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/FileManager.swiftconstvalues",
+    "dependencies" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/FileManager.d",
+    "diagnostics" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/FileManager.dia",
+    "index-unit-output-path" : "/Treon.build/Debug/Treon.build/Objects-normal/arm64/FileManager.o",
+    "llvm-bc" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/FileManager.bc",
+    "object" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/FileManager.o",
+    "swift-dependencies" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/FileManager.swiftdeps",
+    "swiftmodule" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/FileManager~partial.swiftmodule"
+  },
+  "/Users/vivek/Development/Treon/Treon/Services/FileValidator.swift" : {
+    "const-values" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/FileValidator.swiftconstvalues",
+    "dependencies" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/FileValidator.d",
+    "diagnostics" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/FileValidator.dia",
+    "index-unit-output-path" : "/Treon.build/Debug/Treon.build/Objects-normal/arm64/FileValidator.o",
+    "llvm-bc" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/FileValidator.bc",
+    "object" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/FileValidator.o",
+    "swift-dependencies" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/FileValidator.swiftdeps",
+    "swiftmodule" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/FileValidator~partial.swiftmodule"
+  },
+  "/Users/vivek/Development/Treon/Treon/Services/PermissionManager.swift" : {
+    "const-values" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/PermissionManager.swiftconstvalues",
+    "dependencies" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/PermissionManager.d",
+    "diagnostics" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/PermissionManager.dia",
+    "index-unit-output-path" : "/Treon.build/Debug/Treon.build/Objects-normal/arm64/PermissionManager.o",
+    "llvm-bc" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/PermissionManager.bc",
+    "object" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/PermissionManager.o",
+    "swift-dependencies" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/PermissionManager.swiftdeps",
+    "swiftmodule" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/PermissionManager~partial.swiftmodule"
+  },
+  "/Users/vivek/Development/Treon/Treon/Services/TabManager.swift" : {
+    "const-values" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/TabManager.swiftconstvalues",
+    "dependencies" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/TabManager.d",
+    "diagnostics" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/TabManager.dia",
+    "index-unit-output-path" : "/Treon.build/Debug/Treon.build/Objects-normal/arm64/TabManager.o",
+    "llvm-bc" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/TabManager.bc",
+    "object" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/TabManager.o",
+    "swift-dependencies" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/TabManager.swiftdeps",
+    "swiftmodule" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/TabManager~partial.swiftmodule"
   },
   "/Users/vivek/Development/Treon/Treon/Stubs/HistoryStub.swift" : {
     "const-values" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/HistoryStub.swiftconstvalues",
@@ -96,7 +176,97 @@
     "swift-dependencies" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/ScriptsStub.swiftdeps",
     "swiftmodule" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/ScriptsStub~partial.swiftmodule"
   },
-  "/Users/vivek/Development/Treon/Treon/TwoPaneRootView.swift" : {
+  "/Users/vivek/Development/Treon/Treon/UI/Components/CustomNotificationView.swift" : {
+    "const-values" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/CustomNotificationView.swiftconstvalues",
+    "dependencies" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/CustomNotificationView.d",
+    "diagnostics" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/CustomNotificationView.dia",
+    "index-unit-output-path" : "/Treon.build/Debug/Treon.build/Objects-normal/arm64/CustomNotificationView.o",
+    "llvm-bc" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/CustomNotificationView.bc",
+    "object" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/CustomNotificationView.o",
+    "swift-dependencies" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/CustomNotificationView.swiftdeps",
+    "swiftmodule" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/CustomNotificationView~partial.swiftmodule"
+  },
+  "/Users/vivek/Development/Treon/Treon/UI/Components/RecentFilesView.swift" : {
+    "const-values" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/RecentFilesView.swiftconstvalues",
+    "dependencies" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/RecentFilesView.d",
+    "diagnostics" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/RecentFilesView.dia",
+    "index-unit-output-path" : "/Treon.build/Debug/Treon.build/Objects-normal/arm64/RecentFilesView.o",
+    "llvm-bc" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/RecentFilesView.bc",
+    "object" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/RecentFilesView.o",
+    "swift-dependencies" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/RecentFilesView.swiftdeps",
+    "swiftmodule" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/RecentFilesView~partial.swiftmodule"
+  },
+  "/Users/vivek/Development/Treon/Treon/UI/Components/StandardButtonStyle.swift" : {
+    "const-values" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/StandardButtonStyle.swiftconstvalues",
+    "dependencies" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/StandardButtonStyle.d",
+    "diagnostics" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/StandardButtonStyle.dia",
+    "index-unit-output-path" : "/Treon.build/Debug/Treon.build/Objects-normal/arm64/StandardButtonStyle.o",
+    "llvm-bc" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/StandardButtonStyle.bc",
+    "object" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/StandardButtonStyle.o",
+    "swift-dependencies" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/StandardButtonStyle.swiftdeps",
+    "swiftmodule" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/StandardButtonStyle~partial.swiftmodule"
+  },
+  "/Users/vivek/Development/Treon/Treon/UI/JSONViewerView.swift" : {
+    "const-values" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/JSONViewerView.swiftconstvalues",
+    "dependencies" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/JSONViewerView.d",
+    "diagnostics" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/JSONViewerView.dia",
+    "index-unit-output-path" : "/Treon.build/Debug/Treon.build/Objects-normal/arm64/JSONViewerView.o",
+    "llvm-bc" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/JSONViewerView.bc",
+    "object" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/JSONViewerView.o",
+    "swift-dependencies" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/JSONViewerView.swiftdeps",
+    "swiftmodule" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/JSONViewerView~partial.swiftmodule"
+  },
+  "/Users/vivek/Development/Treon/Treon/UI/LaunchScreenView.swift" : {
+    "const-values" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/LaunchScreenView.swiftconstvalues",
+    "dependencies" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/LaunchScreenView.d",
+    "diagnostics" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/LaunchScreenView.dia",
+    "index-unit-output-path" : "/Treon.build/Debug/Treon.build/Objects-normal/arm64/LaunchScreenView.o",
+    "llvm-bc" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/LaunchScreenView.bc",
+    "object" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/LaunchScreenView.o",
+    "swift-dependencies" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/LaunchScreenView.swiftdeps",
+    "swiftmodule" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/LaunchScreenView~partial.swiftmodule"
+  },
+  "/Users/vivek/Development/Treon/Treon/UI/NotificationManager.swift" : {
+    "const-values" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/NotificationManager.swiftconstvalues",
+    "dependencies" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/NotificationManager.d",
+    "diagnostics" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/NotificationManager.dia",
+    "index-unit-output-path" : "/Treon.build/Debug/Treon.build/Objects-normal/arm64/NotificationManager.o",
+    "llvm-bc" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/NotificationManager.bc",
+    "object" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/NotificationManager.o",
+    "swift-dependencies" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/NotificationManager.swiftdeps",
+    "swiftmodule" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/NotificationManager~partial.swiftmodule"
+  },
+  "/Users/vivek/Development/Treon/Treon/UI/SettingsView.swift" : {
+    "const-values" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/SettingsView.swiftconstvalues",
+    "dependencies" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/SettingsView.d",
+    "diagnostics" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/SettingsView.dia",
+    "index-unit-output-path" : "/Treon.build/Debug/Treon.build/Objects-normal/arm64/SettingsView.o",
+    "llvm-bc" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/SettingsView.bc",
+    "object" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/SettingsView.o",
+    "swift-dependencies" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/SettingsView.swiftdeps",
+    "swiftmodule" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/SettingsView~partial.swiftmodule"
+  },
+  "/Users/vivek/Development/Treon/Treon/UI/SettingsWindowController.swift" : {
+    "const-values" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/SettingsWindowController.swiftconstvalues",
+    "dependencies" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/SettingsWindowController.d",
+    "diagnostics" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/SettingsWindowController.dia",
+    "index-unit-output-path" : "/Treon.build/Debug/Treon.build/Objects-normal/arm64/SettingsWindowController.o",
+    "llvm-bc" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/SettingsWindowController.bc",
+    "object" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/SettingsWindowController.o",
+    "swift-dependencies" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/SettingsWindowController.swiftdeps",
+    "swiftmodule" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/SettingsWindowController~partial.swiftmodule"
+  },
+  "/Users/vivek/Development/Treon/Treon/UI/TabbedJSONViewerView.swift" : {
+    "const-values" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/TabbedJSONViewerView.swiftconstvalues",
+    "dependencies" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/TabbedJSONViewerView.d",
+    "diagnostics" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/TabbedJSONViewerView.dia",
+    "index-unit-output-path" : "/Treon.build/Debug/Treon.build/Objects-normal/arm64/TabbedJSONViewerView.o",
+    "llvm-bc" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/TabbedJSONViewerView.bc",
+    "object" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/TabbedJSONViewerView.o",
+    "swift-dependencies" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/TabbedJSONViewerView.swiftdeps",
+    "swiftmodule" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/TabbedJSONViewerView~partial.swiftmodule"
+  },
+  "/Users/vivek/Development/Treon/Treon/UI/TwoPaneRootView.swift" : {
     "const-values" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/TwoPaneRootView.swiftconstvalues",
     "dependencies" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/TwoPaneRootView.d",
     "diagnostics" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/TwoPaneRootView.dia",
@@ -106,7 +276,7 @@
     "swift-dependencies" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/TwoPaneRootView.swiftdeps",
     "swiftmodule" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/TwoPaneRootView~partial.swiftmodule"
   },
-  "/Users/vivek/Development/Treon/Treon/ViewController.swift" : {
+  "/Users/vivek/Development/Treon/Treon/UI/ViewController.swift" : {
     "const-values" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/ViewController.swiftconstvalues",
     "dependencies" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/ViewController.d",
     "diagnostics" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/ViewController.dia",
@@ -115,16 +285,6 @@
     "object" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/ViewController.o",
     "swift-dependencies" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/ViewController.swiftdeps",
     "swiftmodule" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/ViewController~partial.swiftmodule"
-  },
-  "/Users/vivek/Development/Treon/Treon/main.swift" : {
-    "const-values" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/main.swiftconstvalues",
-    "dependencies" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/main.d",
-    "diagnostics" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/main.dia",
-    "index-unit-output-path" : "/Treon.build/Debug/Treon.build/Objects-normal/arm64/main.o",
-    "llvm-bc" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/main.bc",
-    "object" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/main.o",
-    "swift-dependencies" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/main.swiftdeps",
-    "swiftmodule" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/main~partial.swiftmodule"
   },
   "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/DerivedSources/GeneratedAssetSymbols.swift" : {
     "const-values" : "/Users/vivek/Development/Treon/build/Build/Intermediates.noindex/Treon.build/Debug/Treon.build/Objects-normal/arm64/GeneratedAssetSymbols.swiftconstvalues",

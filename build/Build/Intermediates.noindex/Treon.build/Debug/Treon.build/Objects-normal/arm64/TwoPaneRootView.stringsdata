@@ -1,5 +1,5 @@
 {
-  "source": "/Users/vivek/Development/Treon/Treon/TwoPaneRootView.swift",
+  "source": "/Users/vivek/Development/Treon/Treon/UI/TwoPaneRootView.swift",
   "tables": {
     "Localizable": [
       {
@@ -32,6 +32,102 @@
         "location": {
           "startingColumn": 20,
           "startingLine": 22
+        }
+      },
+      {
+        "comment": "",
+        "key": "Expand",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 103
+        }
+      },
+      {
+        "comment": "",
+        "key": "Expand with Children",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 104
+        }
+      },
+      {
+        "comment": "",
+        "key": "Collapse",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 105
+        }
+      },
+      {
+        "comment": "",
+        "key": "Collapse with Children",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 106
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@: \"%@\"",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 173
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@: \"%@\"",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 177
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@: %lf",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 207
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@: %lf",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 211
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@: %@",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 241
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@: %@",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 245
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@: null",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 275
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@: null",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 279
         }
       }
     ]

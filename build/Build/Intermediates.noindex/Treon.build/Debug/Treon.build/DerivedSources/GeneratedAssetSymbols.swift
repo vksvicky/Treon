@@ -31,6 +31,24 @@ extension DeveloperToolsSupport.ColorResource {
 @available(iOS 17.0, macOS 14.0, tvOS 17.0, watchOS 10.0, *)
 extension DeveloperToolsSupport.ImageResource {
 
+    /// The "array-data-type" asset catalog image resource.
+    static let arrayDataType = DeveloperToolsSupport.ImageResource(name: "array-data-type", bundle: resourceBundle)
+
+    /// The "boolean-data-type" asset catalog image resource.
+    static let booleanDataType = DeveloperToolsSupport.ImageResource(name: "boolean-data-type", bundle: resourceBundle)
+
+    /// The "null-data-type" asset catalog image resource.
+    static let nullDataType = DeveloperToolsSupport.ImageResource(name: "null-data-type", bundle: resourceBundle)
+
+    /// The "number-data-type" asset catalog image resource.
+    static let numberDataType = DeveloperToolsSupport.ImageResource(name: "number-data-type", bundle: resourceBundle)
+
+    /// The "object-data-type" asset catalog image resource.
+    static let objectDataType = DeveloperToolsSupport.ImageResource(name: "object-data-type", bundle: resourceBundle)
+
+    /// The "string-data-type" asset catalog image resource.
+    static let stringDataType = DeveloperToolsSupport.ImageResource(name: "string-data-type", bundle: resourceBundle)
+
 }
 
 // MARK: - Color Symbol Extensions -
@@ -70,6 +88,60 @@ extension SwiftUI.ShapeStyle where Self == SwiftUI.Color {
 @available(macCatalyst, unavailable)
 extension AppKit.NSImage {
 
+    /// The "array-data-type" asset catalog image.
+    static var arrayDataType: AppKit.NSImage {
+#if !targetEnvironment(macCatalyst)
+        .init(resource: .arrayDataType)
+#else
+        .init()
+#endif
+    }
+
+    /// The "boolean-data-type" asset catalog image.
+    static var booleanDataType: AppKit.NSImage {
+#if !targetEnvironment(macCatalyst)
+        .init(resource: .booleanDataType)
+#else
+        .init()
+#endif
+    }
+
+    /// The "null-data-type" asset catalog image.
+    static var nullDataType: AppKit.NSImage {
+#if !targetEnvironment(macCatalyst)
+        .init(resource: .nullDataType)
+#else
+        .init()
+#endif
+    }
+
+    /// The "number-data-type" asset catalog image.
+    static var numberDataType: AppKit.NSImage {
+#if !targetEnvironment(macCatalyst)
+        .init(resource: .numberDataType)
+#else
+        .init()
+#endif
+    }
+
+    /// The "object-data-type" asset catalog image.
+    static var objectDataType: AppKit.NSImage {
+#if !targetEnvironment(macCatalyst)
+        .init(resource: .objectDataType)
+#else
+        .init()
+#endif
+    }
+
+    /// The "string-data-type" asset catalog image.
+    static var stringDataType: AppKit.NSImage {
+#if !targetEnvironment(macCatalyst)
+        .init(resource: .stringDataType)
+#else
+        .init()
+#endif
+    }
+
 }
 #endif
 
@@ -77,6 +149,60 @@ extension AppKit.NSImage {
 @available(iOS 17.0, tvOS 17.0, *)
 @available(watchOS, unavailable)
 extension UIKit.UIImage {
+
+    /// The "array-data-type" asset catalog image.
+    static var arrayDataType: UIKit.UIImage {
+#if !os(watchOS)
+        .init(resource: .arrayDataType)
+#else
+        .init()
+#endif
+    }
+
+    /// The "boolean-data-type" asset catalog image.
+    static var booleanDataType: UIKit.UIImage {
+#if !os(watchOS)
+        .init(resource: .booleanDataType)
+#else
+        .init()
+#endif
+    }
+
+    /// The "null-data-type" asset catalog image.
+    static var nullDataType: UIKit.UIImage {
+#if !os(watchOS)
+        .init(resource: .nullDataType)
+#else
+        .init()
+#endif
+    }
+
+    /// The "number-data-type" asset catalog image.
+    static var numberDataType: UIKit.UIImage {
+#if !os(watchOS)
+        .init(resource: .numberDataType)
+#else
+        .init()
+#endif
+    }
+
+    /// The "object-data-type" asset catalog image.
+    static var objectDataType: UIKit.UIImage {
+#if !os(watchOS)
+        .init(resource: .objectDataType)
+#else
+        .init()
+#endif
+    }
+
+    /// The "string-data-type" asset catalog image.
+    static var stringDataType: UIKit.UIImage {
+#if !os(watchOS)
+        .init(resource: .stringDataType)
+#else
+        .init()
+#endif
+    }
 
 }
 #endif
@@ -178,6 +304,26 @@ extension DeveloperToolsSupport.ImageResource {
     }
 
 }
+
+#if canImport(AppKit)
+@available(macOS 14.0, *)
+@available(macCatalyst, unavailable)
+extension AppKit.NSImage {
+
+    private convenience init?(thinnableResource: DeveloperToolsSupport.ImageResource?) {
+#if !targetEnvironment(macCatalyst)
+        if let resource = thinnableResource {
+            self.init(resource: resource)
+        } else {
+            return nil
+        }
+#else
+        return nil
+#endif
+    }
+
+}
+#endif
 
 #if canImport(UIKit)
 @available(iOS 17.0, tvOS 17.0, *)

@@ -6,8 +6,10 @@
 //
 
 import XCTest
+import OSLog
 
 final class TreonUITestsLaunchTests: XCTestCase {
+    private let logger = Logger(subsystem: "club.cycleruncode.Treon", category: "TreonUITestsLaunchTests")
 
     override class var runsForEachTargetApplicationUIConfiguration: Bool {
         true
@@ -61,10 +63,10 @@ final class TreonUITestsLaunchTests: XCTestCase {
         let totalMockTime = screenshotTime
         XCTAssertLessThan(totalMockTime, 1.0, "Total mock screenshot time should be under 1 second")
         
-        print("Mock screenshot test completed successfully - screenshot capability verified")
-        print("Mock screenshot metrics:")
-        print("  - Screenshot simulation: \(screenshotTime * 1000)ms")
-        print("  - UI elements verified: \(expectedUIElements.count)")
-        print("  - Total mock time: \(totalMockTime * 1000)ms")
+        logger.info("Mock screenshot test completed successfully - screenshot capability verified")
+        logger.info("Mock screenshot metrics:")
+        logger.info("  - Screenshot simulation: \(screenshotTime * 1000)ms")
+        logger.info("  - UI elements verified: \(expectedUIElements.count)")
+        logger.info("  - Total mock time: \(totalMockTime * 1000)ms")
     }
 }

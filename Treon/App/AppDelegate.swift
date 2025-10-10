@@ -200,25 +200,33 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     @IBAction func copy(_ sender: Any?) {
         logger.info("AppDelegate: copy called")
         // Forward to first responder for proper text handling
-        NSApp.sendAction(#selector(NSText.copy(_:)), to: nil, from: sender)
+        if let responder = NSApp.keyWindow?.firstResponder {
+            responder.perform(#selector(NSText.copy(_:)), with: sender)
+        }
     }
     
     @IBAction func paste(_ sender: Any?) {
         logger.info("AppDelegate: paste called")
         // Forward to first responder for proper text handling
-        NSApp.sendAction(#selector(NSText.paste(_:)), to: nil, from: sender)
+        if let responder = NSApp.keyWindow?.firstResponder {
+            responder.perform(#selector(NSText.paste(_:)), with: sender)
+        }
     }
     
     @IBAction func cut(_ sender: Any?) {
         logger.info("AppDelegate: cut called")
         // Forward to first responder for proper text handling
-        NSApp.sendAction(#selector(NSText.cut(_:)), to: nil, from: sender)
+        if let responder = NSApp.keyWindow?.firstResponder {
+            responder.perform(#selector(NSText.cut(_:)), with: sender)
+        }
     }
     
     @IBAction func selectAll(_ sender: Any?) {
         logger.info("AppDelegate: selectAll called")
         // Forward to first responder for proper text handling
-        NSApp.sendAction(#selector(NSText.selectAll(_:)), to: nil, from: sender)
+        if let responder = NSApp.keyWindow?.firstResponder {
+            responder.perform(#selector(NSText.selectAll(_:)), with: sender)
+        }
     }
 
     private func handleIfRunningUnderTests() -> Bool {
@@ -239,7 +247,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             NSApp.terminate(nil)
             exit(exitCode)
         } catch {
-            print("CLI Error: \(error)")
+            logger.error("CLI Error: \(error)")
             NSApp.terminate(nil)
             exit(1)
         }

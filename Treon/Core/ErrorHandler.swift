@@ -103,11 +103,11 @@ class TreonErrorHandler: ObservableObject, ErrorHandling {
 
         // Log to console for development
         #if DEBUG
-        print("🚨 Error in \(contextString): \(error)")
+        logger.error("🚨 Error in \(contextString): \(error)")
         if let nsError = error as NSError? {
-            print("   Domain: \(nsError.domain)")
-            print("   Code: \(nsError.code)")
-            print("   UserInfo: \(nsError.userInfo)")
+            logger.error("   Domain: \(nsError.domain)")
+            logger.error("   Code: \(nsError.code)")
+            logger.error("   UserInfo: \(nsError.userInfo)")
         }
         #endif
     }

@@ -1,8 +1,10 @@
 import XCTest
 import Foundation
+import OSLog
 @testable import Treon
 
 class LargeFileTests: XCTestCase {
+    private let logger = Logger(subsystem: "club.cycleruncode.Treon", category: "LargeFileTests")
     var fileManager: TreonFileManager!
     var tempDirectory: URL!
 
@@ -40,7 +42,7 @@ class LargeFileTests: XCTestCase {
         XCTAssertEqual(fileInfo.name, "1kb.json")
         XCTAssertLessThan(fileInfo.size, 2 * 1024) // Should be around 1KB
         XCTAssertLessThan(timeElapsed, 1.0) // Should be very fast
-        print("1KB file processed in \(timeElapsed)s")
+        logger.info("1KB file processed in \(timeElapsed)s")
     }
 
     func testOpensValidJSON_approximately10KB() async throws {
@@ -56,7 +58,7 @@ class LargeFileTests: XCTestCase {
         XCTAssertEqual(fileInfo.name, "10kb.json")
         XCTAssertLessThan(fileInfo.size, 20 * 1024) // Should be around 10KB
         XCTAssertLessThan(timeElapsed, 1.0) // Should be fast
-        print("10KB file processed in \(timeElapsed)s")
+        logger.info("10KB file processed in \(timeElapsed)s")
     }
 
     func testOpensValidJSON_approximately100KB() async throws {
@@ -72,7 +74,7 @@ class LargeFileTests: XCTestCase {
         XCTAssertEqual(fileInfo.name, "100kb.json")
         XCTAssertLessThan(fileInfo.size, 200 * 1024) // Should be around 100KB
         XCTAssertLessThan(timeElapsed, 2.0) // Should be reasonably fast
-        print("100KB file processed in \(timeElapsed)s")
+        logger.info("100KB file processed in \(timeElapsed)s")
     }
 
     func testOpensValidJSON_approximately1MB() async throws {
@@ -88,7 +90,7 @@ class LargeFileTests: XCTestCase {
         XCTAssertEqual(fileInfo.name, "1mb.json")
         XCTAssertLessThan(fileInfo.size, 2 * 1024 * 1024) // Should be around 1MB
         XCTAssertLessThan(timeElapsed, 5.0) // Should be reasonably fast
-        print("1MB file processed in \(timeElapsed)s")
+        logger.info("1MB file processed in \(timeElapsed)s")
     }
 
     func testOpensValidJSON_approximately10MB() async throws {
@@ -104,7 +106,7 @@ class LargeFileTests: XCTestCase {
         XCTAssertEqual(fileInfo.name, "10mb.json")
         XCTAssertLessThan(fileInfo.size, 20 * 1024 * 1024) // Should be around 10MB
         XCTAssertLessThan(timeElapsed, 10.0) // Should be reasonably fast
-        print("10MB file processed in \(timeElapsed)s")
+        logger.info("10MB file processed in \(timeElapsed)s")
     }
 
     func testOpensValidJSON_approximately50MB_underLimit() async throws {
@@ -120,7 +122,7 @@ class LargeFileTests: XCTestCase {
         XCTAssertEqual(fileInfo.name, "49mb.json")
         XCTAssertLessThan(fileInfo.size, 100 * 1024 * 1024) // Should be around 49MB
         XCTAssertLessThan(timeElapsed, 30.0) // Should be reasonably fast
-        print("49MB file processed in \(timeElapsed)s")
+        logger.info("49MB file processed in \(timeElapsed)s")
     }
 
     func testRejectsFileSize_over50MBLimit_with51MB() async throws {
@@ -151,7 +153,7 @@ class LargeFileTests: XCTestCase {
             XCTFail("Should have thrown file too large error")
         } catch FileManagerError.fileTooLarge {
             // Expected error
-            print("Correctly rejected 51MB file as too large")
+            logger.info("Correctly rejected 51MB file as too large")
         } catch {
             XCTFail("Unexpected error: \(error)")
         }
@@ -172,7 +174,7 @@ class LargeFileTests: XCTestCase {
             let timeElapsed = CFAbsoluteTimeGetCurrent() - startTime
 
             XCTAssertTrue(fileInfo.isValidJSON)
-            print("\(size / 1024 / 1024)MB file processed in \(timeElapsed)s")
+            logger.info("\(size / 1024 / 1024)MB file processed in \(timeElapsed)s")
 
             // Clean up to free memory
             try? FileManager.default.removeItem(at: fileURL)
@@ -216,7 +218,7 @@ class LargeFileTests: XCTestCase {
         }
         let timeElapsed = CFAbsoluteTimeGetCurrent() - startTime
 
-        print("Concurrent processing of \(sizes.count) files completed in \(timeElapsed)s")
+        logger.info("Concurrent processing of \(sizes.count) files completed in \(timeElapsed)s")
     }
 
     // MARK: - Test Different JSON Structures
@@ -249,7 +251,7 @@ class LargeFileTests: XCTestCase {
         XCTAssertTrue(fileInfo.isValidJSON)
         XCTAssertGreaterThan(fileInfo.size, 1024 * 1024) // Should be over 1MB
         XCTAssertLessThan(timeElapsed, 10.0) // Should be reasonably fast
-        print("Large array JSON processed in \(timeElapsed)s")
+        logger.info("Large array JSON processed in \(timeElapsed)s")
     }
 
     func testParsesLargeObjectJSON_quickly() async throws {
@@ -284,7 +286,7 @@ class LargeFileTests: XCTestCase {
         XCTAssertTrue(fileInfo.isValidJSON)
         XCTAssertGreaterThan(fileInfo.size, 1024 * 1024) // Should be over 1MB
         XCTAssertLessThan(timeElapsed, 10.0) // Should be reasonably fast
-        print("Large object JSON processed in \(timeElapsed)s")
+        logger.info("Large object JSON processed in \(timeElapsed)s")
     }
 
     // MARK: - Helper Methods

@@ -310,13 +310,32 @@ typedef unsigned int swift_uint4  __attribute__((__ext_vector_type__(4)));
 SWIFT_CLASS("_TtC5Treon11AppDelegate")
 @interface AppDelegate : NSObject <NSApplicationDelegate>
 - (void)applicationDidFinishLaunching:(NSNotification * _Nonnull)aNotification;
+- (IBAction)showPreferences:(id _Nullable)sender;
+- (void)showPreferencesViaShortcut;
+- (IBAction)openDocument:(id _Nullable)sender;
+- (IBAction)newDocument:(id _Nullable)sender;
+- (IBAction)saveDocument:(id _Nullable)sender;
+- (IBAction)copy:(id _Nullable)sender;
+- (IBAction)paste:(id _Nullable)sender;
+- (IBAction)cut:(id _Nullable)sender;
+- (IBAction)selectAll:(id _Nullable)sender;
 - (void)applicationWillTerminate:(NSNotification * _Nonnull)aNotification;
 - (BOOL)applicationSupportsSecureRestorableState:(NSApplication * _Nonnull)app SWIFT_WARN_UNUSED_RESULT;
+- (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication * _Nonnull)sender SWIFT_WARN_UNUSED_RESULT;
 - (nonnull instancetype)init OBJC_DESIGNATED_INITIALIZER;
 @end
 
-@class NSBundle;
 @class NSCoder;
+@class NSWindow;
+SWIFT_CLASS("_TtC5Treon24SettingsWindowController")
+@interface SettingsWindowController : NSWindowController
+- (nullable instancetype)initWithCoder:(NSCoder * _Nonnull)coder OBJC_DESIGNATED_INITIALIZER;
+- (nonnull instancetype)init SWIFT_UNAVAILABLE;
++ (nonnull instancetype)new SWIFT_UNAVAILABLE_MSG("-init is unavailable");
+- (nonnull instancetype)initWithWindow:(NSWindow * _Nullable)window SWIFT_UNAVAILABLE;
+@end
+
+@class NSBundle;
 SWIFT_CLASS("_TtC5Treon14ViewController")
 @interface ViewController : NSViewController
 - (void)viewDidLoad;

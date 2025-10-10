@@ -1,4 +1,5 @@
 import SwiftUI
+import OSLog
 
 struct CustomNotificationView: View {
     let notification: AppNotification
