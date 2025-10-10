@@ -2,7 +2,7 @@
 #include <QSignalSpy>
 #include <QUrl>
 
-#include "treon/Application.h"
+#include "treon/Application.hpp"
 
 class TestApplication : public QObject
 {

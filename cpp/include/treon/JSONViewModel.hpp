@@ -4,7 +4,7 @@
 #include <QString>
 #include <memory>
 
-#include "treon/JSONNode.h"
+#include "treon/JSONNode.hpp"
 
 namespace treon {
 

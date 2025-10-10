@@ -49,6 +49,10 @@ public:
     QException* clone() const override;
 
 private:
+    static QString getUserFriendlyMessage(ErrorType type);
+    static QStringList getRecoveryActions(ErrorType type);
+    static bool isErrorRecoverable(ErrorType type);
+    
     ErrorType m_type;
     QString m_message;
 };

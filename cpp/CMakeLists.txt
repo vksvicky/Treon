@@ -7,7 +7,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # Find Qt6
-find_package(Qt6 REQUIRED COMPONENTS Core Quick Widgets)
+find_package(Qt6 REQUIRED COMPONENTS Core Quick Widgets Test)
 
 # Enable Qt MOC
 set(CMAKE_AUTOMOC ON)
@@ -33,6 +33,7 @@ target_include_directories(treon_core
 target_link_libraries(treon_core
     PUBLIC
         Qt6::Core
+        Qt6::Widgets
 )
 
 target_compile_features(treon_core PUBLIC cxx_std_20)

@@ -1,5 +1,5 @@
-#include "treon/Application.h"
-#include "treon/JSONParser.h"
+#include "treon/Application.hpp"
+#include "treon/JSONParser.hpp"
 
 #include <QDebug>
 
@@ -14,8 +14,12 @@ Application::Application(QObject *parent)
     // Connect to FileManager signals
     connect(m_fileManager, &FileManager::fileOpened, this, &Application::onFileOpened);
     connect(m_fileManager, &FileManager::fileCreated, this, &Application::onFileCreated);
-    connect(m_fileManager, &FileManager::isLoadingChanged, this, &Application::setLoading);
-    connect(m_fileManager, &FileManager::errorMessageChanged, this, &Application::setErrorMessage);
+    connect(m_fileManager, &FileManager::isLoadingChanged, this, [this]() {
+        setLoading(m_fileManager->isLoading());
+    });
+    connect(m_fileManager, &FileManager::errorMessageChanged, this, [this]() {
+        setErrorMessage(m_fileManager->errorMessage());
+    });
     
     // Connect to ErrorHandler signals
     connect(m_errorHandler, &ErrorHandler::errorOccurred, this, &Application::onFileManagerError);

@@ -1,9 +1,10 @@
-#include "treon/ErrorHandler.h"
-#include "treon/Constants.h"
+#include "treon/ErrorHandler.hpp"
+#include "treon/Constants.hpp"
 
 #include <QDebug>
 #include <QDesktopServices>
 #include <QUrl>
+#include <QDateTime>
 
 using namespace treon;
 
@@ -11,7 +12,7 @@ using namespace treon;
 
 TreonException::TreonException(ErrorType type, const QString& message)
     : m_type(type)
-    , m_message(message.isEmpty() ? getUserFriendlyMessage(type) : message)
+    , m_message(message.isEmpty() ? TreonException::getUserFriendlyMessage(type) : message)
 {
 }
 
@@ -22,11 +23,11 @@ TreonException::TreonException(const QString& message)
 }
 
 QStringList TreonException::recoveryActions() const {
-    return getRecoveryActions(m_type);
+    return TreonException::getRecoveryActions(m_type);
 }
 
 bool TreonException::isRecoverable() const {
-    return isErrorRecoverable(m_type);
+    return TreonException::isErrorRecoverable(m_type);
 }
 
 void TreonException::raise() const {
@@ -37,7 +38,7 @@ QException* TreonException::clone() const {
     return new TreonException(*this);
 }
 
-QString TreonException::getUserFriendlyMessage(ErrorType type) const {
+QString TreonException::getUserFriendlyMessage(ErrorType type) {
     switch (type) {
         case ErrorType::FileNotFound: return ErrorMessages::fileNotFound;
         case ErrorType::InvalidJSON: return ErrorMessages::invalidJSON;
@@ -56,7 +57,7 @@ QString TreonException::getUserFriendlyMessage(ErrorType type) const {
     return ErrorMessages::unknownError;
 }
 
-QStringList TreonException::getRecoveryActions(ErrorType type) const {
+QStringList TreonException::getRecoveryActions(ErrorType type) {
     QStringList actions;
     actions << "Cancel";
     
@@ -79,7 +80,7 @@ QStringList TreonException::getRecoveryActions(ErrorType type) const {
     return actions;
 }
 
-bool TreonException::isErrorRecoverable(ErrorType type) const {
+bool TreonException::isErrorRecoverable(ErrorType type) {
     switch (type) {
         case ErrorType::FileNotFound:
         case ErrorType::PermissionDenied:

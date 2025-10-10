@@ -1,6 +1,6 @@
-#include "treon/FileManager.h"
-#include "treon/JSONParser.h"
-#include "treon/Constants.h"
+#include "treon/FileManager.hpp"
+#include "treon/JSONParser.hpp"
+#include "treon/Constants.hpp"
 
 #include <QFileDialog>
 #include <QFile>
@@ -9,6 +9,9 @@
 #include <QStandardPaths>
 #include <QJsonDocument>
 #include <QJsonParseError>
+#include <QJsonArray>
+#include <QJsonObject>
+#include <QJsonValue>
 #include <QDebug>
 #include <QDateTime>
 

@@ -3,7 +3,7 @@
 #include <QQmlContext>
 #include <QDir>
 
-#include "treon/Application.h"
+#include "treon/Application.hpp"
 
 int main(int argc, char *argv[])
 {

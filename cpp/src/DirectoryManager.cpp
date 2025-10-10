@@ -1,5 +1,5 @@
-#include "treon/DirectoryManager.h"
-#include "treon/Constants.h"
+#include "treon/DirectoryManager.hpp"
+#include "treon/Constants.hpp"
 
 #include <QStandardPaths>
 #include <QDir>

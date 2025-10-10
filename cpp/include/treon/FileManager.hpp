@@ -8,9 +8,9 @@
 #include <QSettings>
 #include <memory>
 
-#include "treon/FileInfo.h"
-#include "treon/ErrorHandler.h"
-#include "treon/DirectoryManager.h"
+#include "treon/FileInfo.hpp"
+#include "treon/ErrorHandler.hpp"
+#include "treon/DirectoryManager.hpp"
 
 namespace treon {
 

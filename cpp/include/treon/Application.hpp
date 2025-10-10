@@ -5,9 +5,9 @@
 #include <QUrl>
 #include <memory>
 
-#include "treon/JSONViewModel.h"
-#include "treon/FileManager.h"
-#include "treon/ErrorHandler.h"
+#include "treon/JSONViewModel.hpp"
+#include "treon/FileManager.hpp"
+#include "treon/ErrorHandler.hpp"
 
 namespace treon {
 

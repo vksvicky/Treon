@@ -1,5 +1,5 @@
-#include "treon/JSONViewModel.h"
-#include "treon/JSONParser.h"
+#include "treon/JSONViewModel.hpp"
+#include "treon/JSONParser.hpp"
 
 using namespace treon;
 

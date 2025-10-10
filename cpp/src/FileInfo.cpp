@@ -1,4 +1,4 @@
-#include "treon/FileInfo.h"
+#include "treon/FileInfo.hpp"
 
 #include <QFileInfo>
 #include <QTextStream>
