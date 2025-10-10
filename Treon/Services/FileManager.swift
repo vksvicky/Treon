@@ -167,14 +167,11 @@ class TreonFileManager: ObservableObject {
         let startTime = CFAbsoluteTimeGetCurrent()
         logger.info("Starting file open operation")
         return try await withCheckedThrowingContinuation { continuation in
-            // Use cached panel for faster launch - no need to create/configure each time
             DispatchQueue.main.async {
-                // Set panel to last opened directory
                 let panel = self.cachedOpenPanel
                 panel.directoryURL = DirectoryManager.shared.getLastOpenedDirectory()
                 
                 self.logger.info("Presenting file dialog with directory: \(panel.directoryURL?.path ?? "nil")")
-                self.logger.info("Panel configuration - allowsMultipleSelection: \(panel.allowsMultipleSelection), allowedContentTypes: \(panel.allowedContentTypes)")
                 let result = panel.runModal()
                 self.logger.info("File dialog result: \(result.rawValue) (OK=1, Cancel=0)")
                 
@@ -182,68 +179,69 @@ class TreonFileManager: ObservableObject {
                     let urls = panel.urls
                     self.logger.info("User selected \(urls.count) file(s): \(urls.map { $0.lastPathComponent })")
                     
-                Task {
-                    do {
-                        var firstFileInfo: FileInfo?
-                        
-                        // Open all selected files
-                        for url in urls {
-                            let fileInfo = try await FileValidator.shared.validateAndLoadFile(url: url)
-                            self.logger.info("Successfully loaded file: \(fileInfo.name)")
-                            
-                            // Store the first file for return value
-                            if firstFileInfo == nil {
-                                firstFileInfo = fileInfo
-                            }
-                            
-                            // Save the directory of the selected file for next time
-                            let directorySaveStart = CFAbsoluteTimeGetCurrent()
-                            await MainActor.run {
-                                DirectoryManager.shared.saveLastOpenedDirectory(url: url)
-                            }
-                            let directorySaveTime = CFAbsoluteTimeGetCurrent() - directorySaveStart
-                            self.logger.info("📊 FILE LOADING STEP: Directory save: \(String(format: "%.3f", directorySaveTime))s")
-                            
-                            // Open each file as a tab
-                            let tabOpenStart = CFAbsoluteTimeGetCurrent()
-                            await MainActor.run {
-                                TabManager.shared.openFile(fileInfo)
-                            }
-                            let tabOpenTime = CFAbsoluteTimeGetCurrent() - tabOpenStart
-                            self.logger.info("📊 FILE LOADING STEP: Tab open: \(String(format: "%.3f", tabOpenTime))s")
-                            
-                            // Add to recent files
-                            let recentFilesStart = CFAbsoluteTimeGetCurrent()
-                            self.addToRecentFiles(fileInfo: fileInfo)
-                            let recentFilesTime = CFAbsoluteTimeGetCurrent() - recentFilesStart
-                            self.logger.info("📊 FILE LOADING STEP: Recent files: \(String(format: "%.3f", recentFilesTime))s")
+                    Task {
+                        do {
+                            let firstFileInfo = try await self.processSelectedFiles(urls, startTime: startTime)
+                            continuation.resume(returning: firstFileInfo)
+                        } catch {
+                            self.logger.error("Failed to load files: \(error.localizedDescription)")
+                            continuation.resume(throwing: error)
                         }
-
-                        // Return the first file as the "current" file for backward compatibility
-                        if let fileInfo = firstFileInfo {
-                            let continuationStart = CFAbsoluteTimeGetCurrent()
-                            continuation.resume(returning: fileInfo)
-                            let continuationTime = CFAbsoluteTimeGetCurrent() - continuationStart
-                            self.logger.info("📊 FILE LOADING STEP: continuation resume: \(String(format: "%.3f", continuationTime))s")
-                            
-                            // Note: currentFile is now managed by TabManager, not set here to avoid expensive UI updates
-                            
-                            let totalTime = CFAbsoluteTimeGetCurrent() - startTime
-                            self.logger.info("📊 FILE LOADING PERFORMANCE: Total time: \(String(format: "%.3f", totalTime))s")
-                        } else {
-                            continuation.resume(throwing: FileManagerError.userCancelled)
-                        }
-                    } catch {
-                        self.logger.error("Failed to load files: \(error.localizedDescription)")
-                        continuation.resume(throwing: error)
                     }
-                }
-            } else {
+                } else {
                     self.logger.info("User cancelled file selection")
-                continuation.resume(throwing: FileManagerError.userCancelled)
+                    continuation.resume(throwing: FileManagerError.userCancelled)
                 }
             }
         }
+    }
+    
+    private func processSelectedFiles(_ urls: [URL], startTime: CFAbsoluteTime) async throws -> FileInfo {
+        var firstFileInfo: FileInfo?
+        
+        for url in urls {
+            let fileInfo = try await FileValidator.shared.validateAndLoadFile(url: url)
+            self.logger.info("Successfully loaded file: \(fileInfo.name)")
+            
+            if firstFileInfo == nil {
+                firstFileInfo = fileInfo
+            }
+            
+            try await self.processFilePostLoad(url: url, fileInfo: fileInfo)
+        }
+        
+        guard let fileInfo = firstFileInfo else {
+            throw FileManagerError.userCancelled
+        }
+        
+        let totalTime = CFAbsoluteTimeGetCurrent() - startTime
+        self.logger.info("📊 FILE LOADING PERFORMANCE: Total time: \(String(format: "%.3f", totalTime))s")
+        
+        return fileInfo
+    }
+    
+    private func processFilePostLoad(url: URL, fileInfo: FileInfo) async throws {
+        // Save directory
+        let directorySaveStart = CFAbsoluteTimeGetCurrent()
+        await MainActor.run {
+            DirectoryManager.shared.saveLastOpenedDirectory(url: url)
+        }
+        let directorySaveTime = CFAbsoluteTimeGetCurrent() - directorySaveStart
+        self.logger.info("📊 FILE LOADING STEP: Directory save: \(String(format: "%.3f", directorySaveTime))s")
+        
+        // Open tab
+        let tabOpenStart = CFAbsoluteTimeGetCurrent()
+        await MainActor.run {
+            TabManager.shared.openFile(fileInfo)
+        }
+        let tabOpenTime = CFAbsoluteTimeGetCurrent() - tabOpenStart
+        self.logger.info("📊 FILE LOADING STEP: Tab open: \(String(format: "%.3f", tabOpenTime))s")
+        
+        // Add to recent files
+        let recentFilesStart = CFAbsoluteTimeGetCurrent()
+        self.addToRecentFiles(fileInfo: fileInfo)
+        let recentFilesTime = CFAbsoluteTimeGetCurrent() - recentFilesStart
+        self.logger.info("📊 FILE LOADING STEP: Recent files: \(String(format: "%.3f", recentFilesTime))s")
     }
 
     func openFile(url: URL) async throws -> FileInfo {
