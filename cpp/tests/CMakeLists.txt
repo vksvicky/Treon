@@ -1,6 +1,8 @@
+# Automatically discover test files
+file(GLOB_RECURSE TEST_SOURCES "*.cpp")
+
 add_executable(tests
-    test_json_validate.cpp
-    test_application.cpp
+    ${TEST_SOURCES}
 )
 
 target_link_libraries(tests PRIVATE treon_core Qt6::Core Qt6::Test)

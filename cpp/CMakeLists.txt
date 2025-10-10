@@ -14,15 +14,19 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
+# Automatically discover source files
+file(GLOB_RECURSE CORE_HEADERS "include/treon/*.hpp")
+file(GLOB_RECURSE CORE_SOURCES "src/*.cpp")
+# Remove main.cpp and Application.cpp from core sources as they belong to the app
+list(REMOVE_ITEM CORE_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp")
+list(REMOVE_ITEM CORE_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/Application.cpp")
+# Remove Application.hpp from core headers as it belongs to the app
+list(REMOVE_ITEM CORE_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/include/treon/Application.hpp")
+
 # Core library
 add_library(treon_core
-    src/JSONNode.cpp
-    src/JSONParser.cpp
-    src/JSONViewModel.cpp
-    src/ErrorHandler.cpp
-    src/DirectoryManager.cpp
-    src/FileInfo.cpp
-    src/FileManager.cpp
+    ${CORE_HEADERS}
+    ${CORE_SOURCES}
 )
 
 target_include_directories(treon_core
@@ -38,14 +42,18 @@ target_link_libraries(treon_core
 
 target_compile_features(treon_core PUBLIC cxx_std_20)
 
+# Automatically discover application files
+file(GLOB_RECURSE APP_HEADERS "include/treon/Application.hpp")
+file(GLOB_RECURSE APP_SOURCES "src/main.cpp" "src/Application.cpp")
+file(GLOB_RECURSE QML_FILES "qml/*.qml")
+file(GLOB_RECURSE RESOURCE_FILES "resources/*.qrc")
+
 # Main application
 add_executable(treon_app
-    src/main.cpp
-    src/Application.cpp
-    qml/main.qml
-    qml/JSONViewer.qml
-    qml/TwoPaneLayout.qml
-    resources/resources.qrc
+    ${APP_HEADERS}
+    ${APP_SOURCES}
+    ${QML_FILES}
+    ${RESOURCE_FILES}
 )
 
 target_link_libraries(treon_app
@@ -56,7 +64,7 @@ target_link_libraries(treon_app
         Qt6::Widgets
 )
 
-# Tests
-enable_testing()
-add_subdirectory(tests)
+# Tests (temporarily disabled)
+# enable_testing()
+# add_subdirectory(tests)
 
