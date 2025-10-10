@@ -19,14 +19,23 @@ Item {
             Layout.preferredWidth: parent.width * 0.4
             Layout.minimumWidth: 200
 
-            TreeView {
+            ListView {
                 id: treeView
                 anchors.fill: parent
                 model: jsonTreeModel
                 
-                delegate: TreeViewDelegate {
-                    text: model.display || ""
-                    indentation: model.depth * 20
+                delegate: Rectangle {
+                    width: treeView.width
+                    height: 30
+                    color: treeView.currentIndex === index ? "#e0e0e0" : "transparent"
+                    
+                    Text {
+                        anchors.left: parent.left
+                        anchors.leftMargin: model.depth * 20
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: model.display || ""
+                        font.pointSize: 12
+                    }
                     
                     MouseArea {
                         anchors.fill: parent

@@ -7,7 +7,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # Find Qt6
-find_package(Qt6 REQUIRED COMPONENTS Core Quick Widgets Test)
+find_package(Qt6 REQUIRED COMPONENTS Core Quick Widgets Test QuickDialogs2)
 
 # Enable Qt MOC
 set(CMAKE_AUTOMOC ON)
@@ -62,9 +62,10 @@ target_link_libraries(treon_app
         Qt6::Core
         Qt6::Quick
         Qt6::Widgets
+        Qt6::QuickDialogs2
 )
 
-# Tests (temporarily disabled)
-# enable_testing()
-# add_subdirectory(tests)
+# Tests
+enable_testing()
+add_subdirectory(tests)
 

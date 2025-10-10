@@ -1,30 +1,34 @@
-#include <cassert>
-#include <iostream>
-
+#include <QtTest>
 #include "treon/JSONParser.hpp"
 
-using treon::JSONParser;
+class TestJSONValidate : public QObject
+{
+    Q_OBJECT
 
-static void test_valid_object() {
+private slots:
+    void testValidObject();
+    void testValidArray();
+    void testInvalidValue();
+};
+
+void TestJSONValidate::testValidObject()
+{
     const char* json = "{\"a\":1}";
-    assert(JSONParser::validate(json) && "object should be valid by structure");
+    QVERIFY(treon::JSONParser::validate(json));
 }
 
-static void test_valid_array() {
+void TestJSONValidate::testValidArray()
+{
     const char* json = "[1,2,3]";
-    assert(JSONParser::validate(json) && "array should be valid by structure");
+    QVERIFY(treon::JSONParser::validate(json));
 }
 
-static void test_invalid_value() {
+void TestJSONValidate::testInvalidValue()
+{
     const char* json = "true";
-    assert(!JSONParser::validate(json) && "bare literal not accepted by structural check");
+    QVERIFY(!treon::JSONParser::validate(json));
 }
 
-int main() {
-    test_valid_object();
-    test_valid_array();
-    test_invalid_value();
-    std::cout << "All tests passed\n";
-    return 0;
-}
+QTEST_MAIN(TestJSONValidate)
+#include "test_json_validate.moc"
 
