@@ -34,6 +34,9 @@ brew install qt6 cmake
 make build
 make run-app
 
+# Or use the simple launcher
+./run debug
+
 # Run tests
 make test
 ```
@@ -46,11 +49,65 @@ make dev-setup
 # Build application
 make build
 
+# Run in different modes
+./run debug          # Debug mode
+./run release        # Release mode
+./run dev            # Development mode
+./run watch          # Watch for changes
+./run debugger       # With debugger
+./run profile        # With profiling
+
+# Or use make targets
+make dev             # Development mode
+make watch           # Watch mode
+make debug           # Debug mode
+make profile         # Profile mode
+
 # Run tests
 make test
 
 # Clean build artifacts
 make clean
+```
+
+## Run Scripts
+
+### Simple Launcher (`./run`)
+Quick launcher with common commands:
+- `./run debug` - Debug mode (default)
+- `./run release` - Release mode
+- `./run dev` - Development mode
+- `./run watch` - Watch for changes
+- `./run debugger` - With debugger
+- `./run profile` - With profiling
+
+### Advanced Runner (`scripts/run_app.sh`)
+Full-featured application runner:
+```bash
+# Basic usage
+./scripts/run_app.sh debug
+./scripts/run_app.sh release
+
+# With debugging tools
+./scripts/run_app.sh debug --gdb
+./scripts/run_app.sh debug --valgrind
+./scripts/run_app.sh debug --profile
+
+# Verbose output
+./scripts/run_app.sh debug --verbose
+```
+
+### Development Runner (`scripts/dev_run.sh`)
+Development-focused runner with hot reload:
+```bash
+# Development commands
+./scripts/dev_run.sh run          # Run application
+./scripts/dev_run.sh build        # Build only
+./scripts/dev_run.sh test         # Run tests
+./scripts/dev_run.sh watch        # Watch mode
+./scripts/dev_run.sh debug        # Debug mode
+./scripts/dev_run.sh profile      # Profile mode
+./scripts/dev_run.sh clean        # Clean build
 ```
 
 ## Known Issues

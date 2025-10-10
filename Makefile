@@ -31,7 +31,32 @@ test: build
 # Run the application
 run-app: build
 	@echo "Running Treon application..."
-	cd cpp/build && ./treon_app
+	./scripts/run_app.sh debug
+
+# Run in release mode
+run-release: build
+	@echo "Running Treon application in release mode..."
+	./scripts/run_app.sh release
+
+# Development mode
+dev: 
+	@echo "Starting development mode..."
+	./scripts/dev_run.sh run
+
+# Watch mode for development
+watch:
+	@echo "Starting watch mode..."
+	./scripts/dev_run.sh watch
+
+# Debug mode
+debug:
+	@echo "Starting debug mode..."
+	./scripts/dev_run.sh debug
+
+# Profile mode
+profile:
+	@echo "Starting profile mode..."
+	./scripts/dev_run.sh profile
 
 # Clean build artifacts
 clean:

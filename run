@@ -1,0 +1,72 @@
+#!/bin/bash
+# Simple launcher script for Treon
+# Usage: ./run [debug|release|dev|watch|debug|profile]
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+case "${1:-debug}" in
+    debug)
+        echo "🚀 Starting Treon in debug mode..."
+        "$SCRIPT_DIR/scripts/run_app.sh" debug
+        ;;
+    release)
+        echo "🚀 Starting Treon in release mode..."
+        "$SCRIPT_DIR/scripts/run_app.sh" release
+        ;;
+    dev)
+        echo "🛠️  Starting Treon in development mode..."
+        "$SCRIPT_DIR/scripts/dev_run.sh" run
+        ;;
+    watch)
+        echo "👀 Starting Treon in watch mode..."
+        "$SCRIPT_DIR/scripts/dev_run.sh" watch
+        ;;
+    debugger)
+        echo "🐛 Starting Treon with debugger..."
+        "$SCRIPT_DIR/scripts/dev_run.sh" debug
+        ;;
+    profile)
+        echo "📊 Starting Treon in profile mode..."
+        "$SCRIPT_DIR/scripts/dev_run.sh" profile
+        ;;
+    build)
+        echo "🔨 Building Treon..."
+        make build
+        ;;
+    test)
+        echo "🧪 Running tests..."
+        make test
+        ;;
+    clean)
+        echo "🧹 Cleaning build artifacts..."
+        make clean
+        ;;
+    help|--help|-h)
+        echo "Treon Launcher"
+        echo ""
+        echo "Usage: $0 [COMMAND]"
+        echo ""
+        echo "Commands:"
+        echo "  debug      Run in debug mode (default)"
+        echo "  release    Run in release mode"
+        echo "  dev        Development mode with hot reload"
+        echo "  watch      Watch for changes and rebuild"
+        echo "  debugger   Run with debugger"
+        echo "  profile    Run with profiling"
+        echo "  build      Build the application"
+        echo "  test       Run tests"
+        echo "  clean      Clean build artifacts"
+        echo "  help       Show this help"
+        echo ""
+        echo "Examples:"
+        echo "  $0              # Run in debug mode"
+        echo "  $0 release      # Run in release mode"
+        echo "  $0 dev          # Development mode"
+        echo "  $0 watch        # Watch mode"
+        ;;
+    *)
+        echo "❌ Unknown command: $1"
+        echo "Run '$0 help' for available commands"
+        exit 1
+        ;;
+esac
