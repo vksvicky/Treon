@@ -15,6 +15,7 @@ Native macOS JSON viewer/formatter and query tool. Two-pane UI (tree + formatted
 ## Build
 - SwiftPM; macOS 12+
 - Universal builds by default; Apple Silicon–only builds supported
+ - C++ core (optional): CMake 3.20+, Xcode 15+, AppleClang 16+
 
 ## CLI
 ```bash
@@ -67,4 +68,10 @@ echo '{
 - Close other memory-intensive applications when working with large JSON files
 
 ## License
-TBD# Test commit
+TBD
+
+## C++ Core (Experimental)
+
+- Location: `cpp/`
+- Build: `cmake -S cpp -B cpp/build -G Xcode && cmake --build cpp/build --config Debug`
+- Tests: `ctest --test-dir cpp/build -C Debug`
