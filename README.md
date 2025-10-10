@@ -70,8 +70,11 @@ echo '{
 ## License
 TBD
 
-## C++ Core (Experimental)
+## C++ Application (Pure C++ Implementation)
 
 - Location: `cpp/`
 - Build: `cmake -S cpp -B cpp/build -G Xcode && cmake --build cpp/build --config Debug`
 - Tests: `ctest --test-dir cpp/build -C Debug`
+- UI: Qt Quick for modern, performant cross-platform interface
+- Dependencies: Qt 6.5+, CMake 3.20+
+- Code limits: 500 lines per file, 80 lines per function (enforced by CI)
