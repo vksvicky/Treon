@@ -1,8 +1,6 @@
 #include "treon/Application.h"
 #include "treon/JSONParser.h"
 
-#include <QFile>
-#include <QTextStream>
 #include <QDebug>
 
 using namespace treon;
@@ -10,49 +8,32 @@ using namespace treon;
 Application::Application(QObject *parent)
     : QObject(parent)
     , m_jsonViewModel(std::make_unique<JSONViewModel>())
+    , m_fileManager(&FileManager::instance())
+    , m_errorHandler(new ErrorHandler(this))
 {
+    // Connect to FileManager signals
+    connect(m_fileManager, &FileManager::fileOpened, this, &Application::onFileOpened);
+    connect(m_fileManager, &FileManager::fileCreated, this, &Application::onFileCreated);
+    connect(m_fileManager, &FileManager::isLoadingChanged, this, &Application::setLoading);
+    connect(m_fileManager, &FileManager::errorMessageChanged, this, &Application::setErrorMessage);
+    
+    // Connect to ErrorHandler signals
+    connect(m_errorHandler, &ErrorHandler::errorOccurred, this, &Application::onFileManagerError);
+}
+
+void Application::openFile()
+{
+    m_fileManager->openFile();
 }
 
 void Application::openFile(const QUrl &fileUrl)
 {
-    if (!fileUrl.isLocalFile()) {
-        setErrorMessage("Only local files are supported");
-        return;
-    }
+    m_fileManager->openFile(fileUrl);
+}
 
-    setLoading(true);
-    setErrorMessage("");
-
-    const QString filePath = fileUrl.toLocalFile();
-    QFile file(filePath);
-    
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        setErrorMessage("Failed to open file: " + file.errorString());
-        setLoading(false);
-        return;
-    }
-
-    QTextStream in(&file);
-    const QString jsonContent = in.readAll();
-    file.close();
-
-    if (jsonContent.isEmpty()) {
-        setErrorMessage("File is empty");
-        setLoading(false);
-        return;
-    }
-
-    // Validate JSON
-    const std::string jsonStd = jsonContent.toStdString();
-    if (!JSONParser::validate(jsonStd)) {
-        setErrorMessage("Invalid JSON format");
-        setLoading(false);
-        return;
-    }
-
-    setCurrentFile(filePath);
-    emit jsonLoaded(jsonContent);
-    setLoading(false);
+void Application::createNewFile()
+{
+    m_fileManager->createNewFile();
 }
 
 void Application::validateJSON(const QString &jsonText)
@@ -73,6 +54,35 @@ void Application::formatJSON(const QString &jsonText)
     // Placeholder for JSON formatting
     // Will be implemented with proper indentation
     emit jsonLoaded(jsonText);
+}
+
+void Application::clearError()
+{
+    setErrorMessage("");
+    m_errorHandler->clearError();
+}
+
+void Application::onFileOpened(FileInfo* fileInfo)
+{
+    if (fileInfo) {
+        setCurrentFile(fileInfo->url().toLocalFile());
+        emit jsonLoaded(fileInfo->content());
+        emit fileOpened(fileInfo);
+    }
+}
+
+void Application::onFileCreated(FileInfo* fileInfo)
+{
+    if (fileInfo) {
+        setCurrentFile(fileInfo->url().toLocalFile());
+        emit jsonLoaded(fileInfo->content());
+        emit fileOpened(fileInfo);
+    }
+}
+
+void Application::onFileManagerError(const QString& message, ErrorType type)
+{
+    setErrorMessage(message);
 }
 
 void Application::setCurrentFile(const QString &file)

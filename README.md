@@ -1,39 +1,57 @@
 # Treon
 
-Native macOS JSON viewer/formatter and query tool. Two-pane UI (tree + formatted text), jq/JSONPath, history, scripts — with a roadmap for pipelines and AI assists. Baseline inspired by OK JSON ([docs](https://docs.okjson.app/)).
+Pure C++ JSON viewer/formatter and query tool with Qt Quick UI. Two-pane interface (tree + formatted text), jq/JSONPath support, file history, and scripting capabilities. High-performance implementation inspired by OK JSON ([docs](https://docs.okjson.app/)).
 
-## Modules
-- TreonShared: constants, logging, localization
-- TreonCore: parsing/formatting/validation
-- TreonQuery: jq/JSONPath engines (stubs initially)
-- TreonHistory: persistence
-- TreonScripts: script runner
-- TreonIntegrations: macOS Services, QL, AppleScript, URL schemes
-- TreonUI: SwiftUI/AppKit bridges (later)
-- TreonCLI: headless CLI
+## Architecture
+- **Core Library**: C++ JSON parsing, validation, and data models
+- **UI Layer**: Qt Quick for modern, responsive interface
+- **Services**: File management, directory memory, error handling
+- **Testing**: Comprehensive unit tests and BDD scenarios
 
-## Build
-- SwiftPM; macOS 12+
-- Universal builds by default; Apple Silicon–only builds supported
- - C++ core (optional): CMake 3.20+, Xcode 15+, AppleClang 16+
+## Features
+- ✅ Two-pane JSON viewer (tree + text)
+- ✅ File validation and error handling
+- ✅ Recent files management
+- ✅ Cross-platform Qt Quick UI
+- ✅ High-performance C++ core
+- ✅ TDD/BDD development approach
+- 🔄 jq/JSONPath query support (planned)
+- 🔄 Scripting capabilities (planned)
+- 🔄 CLI interface (planned)
 
-## CLI
+## Build Requirements
+- **Qt 6.5+**: Modern Qt Quick framework
+- **CMake 3.20+**: Build system
+- **C++20**: Modern C++ features
+- **Platforms**: macOS, Linux, Windows
+
+## Quick Start
 ```bash
-echo '{"a":1}' | treon format
-echo '{
-  "a": 1
-}' | treon minify
+# Install dependencies (macOS)
+brew install qt6 cmake
+
+# Build and run
+make build
+make run-app
+
+# Run tests
+make test
 ```
 
-## Alfred Workflow (spec summary)
-- Keywords: `tj`, `tjq`, `tjo`, `tprev`, `ttreon`
-- Quick format: `pbpaste | treon format | pbcopy`
-- Run jq: `jq "$query" "$1" | tee /tmp/treon_result.json`
+## Development
+```bash
+# Setup development environment
+make dev-setup
 
-## Branding
-- Bundle root: club.cycleruncode
-- Website: https://cycleruncode.club
-- Support: support@cycleruncode.club
+# Build application
+make build
+
+# Run tests
+make test
+
+# Clean build artifacts
+make clean
+```
 
 ## Known Issues
 

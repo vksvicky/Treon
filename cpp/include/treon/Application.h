@@ -6,6 +6,8 @@
 #include <memory>
 
 #include "treon/JSONViewModel.h"
+#include "treon/FileManager.h"
+#include "treon/ErrorHandler.h"
 
 namespace treon {
 
@@ -25,9 +27,12 @@ public:
     QString errorMessage() const { return m_errorMessage; }
 
 public slots:
+    void openFile();
     void openFile(const QUrl &fileUrl);
+    void createNewFile();
     void validateJSON(const QString &jsonText);
     void formatJSON(const QString &jsonText);
+    void clearError();
 
 signals:
     void currentFileChanged();
@@ -35,6 +40,12 @@ signals:
     void errorMessageChanged();
     void jsonLoaded(const QString &formattedJson);
     void jsonValidated(bool isValid);
+    void fileOpened(FileInfo* fileInfo);
+
+private slots:
+    void onFileOpened(FileInfo* fileInfo);
+    void onFileCreated(FileInfo* fileInfo);
+    void onFileManagerError(const QString& message, ErrorType type);
 
 private:
     void setCurrentFile(const QString &file);
@@ -45,6 +56,8 @@ private:
     bool m_isLoading = false;
     QString m_errorMessage;
     std::unique_ptr<JSONViewModel> m_jsonViewModel;
+    FileManager* m_fileManager;
+    ErrorHandler* m_errorHandler;
 };
 
 } // namespace treon

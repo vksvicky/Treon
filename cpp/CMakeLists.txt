@@ -19,6 +19,10 @@ add_library(treon_core
     src/JSONNode.cpp
     src/JSONParser.cpp
     src/JSONViewModel.cpp
+    src/ErrorHandler.cpp
+    src/DirectoryManager.cpp
+    src/FileInfo.cpp
+    src/FileManager.cpp
 )
 
 target_include_directories(treon_core
