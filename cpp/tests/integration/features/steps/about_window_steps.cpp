@@ -7,6 +7,23 @@
 
 #include "treon/AboutWindow.hpp"
 
+// Simple integration test class
+class IntegrationTest : public QObject
+{
+    Q_OBJECT
+
+private slots:
+    void testAboutWindowIntegration()
+    {
+        // Test that AboutWindow can be created and basic functionality works
+        treon::AboutWindow aboutWindow;
+        QVERIFY(!aboutWindow.licenseFilePath().isEmpty());
+    }
+};
+
+QTEST_MAIN(IntegrationTest)
+#include "about_window_steps.moc"
+
 // Step definitions for About Window BDD tests
 
 void GivenTheApplicationIsRunning()

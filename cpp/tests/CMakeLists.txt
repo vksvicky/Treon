@@ -1,43 +1,38 @@
-# Tests CMakeLists.txt
+# Tests CMakeLists.txt - Refactored Structure
 
 # Find Qt6 Test component
 find_package(Qt6 REQUIRED COMPONENTS Test)
 
-# Automatically discover all C++ source files
-file(GLOB ALL_CPP_SOURCES "*.cpp")
+# =============================================================================
+# COMMON TEST UTILITIES
+# =============================================================================
 
-# Separate test files from benchmark runner files
-set(TEST_SOURCES "")
-set(BENCHMARK_SOURCES "")
+# Common test helpers
+set(COMMON_SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/common/test_helpers.cpp
+)
 
-foreach(SOURCE_FILE ${ALL_CPP_SOURCES})
-    get_filename_component(FILENAME ${SOURCE_FILE} NAME)
+set(COMMON_HEADERS
+    common/test_helpers.hpp
+)
+
+# =============================================================================
+# UNIT TESTS
+# =============================================================================
+
+# Discover unit test sources
+file(GLOB UNIT_TEST_SOURCES "unit/*.cpp")
+
+# Create individual unit test executables
+foreach(UNIT_TEST_SOURCE ${UNIT_TEST_SOURCES})
+    get_filename_component(TEST_NAME ${UNIT_TEST_SOURCE} NAME_WE)
     
-    # Benchmark runner files (only the main runner)
-    if(FILENAME MATCHES "^run_json_benchmark\\.cpp$")
-        list(APPEND BENCHMARK_SOURCES ${SOURCE_FILE})
-    # Shared files (needed by both test and benchmark)
-    elseif(FILENAME MATCHES "^(json_data_generator|json_benchmark_suite|json_test_config)\\.cpp$")
-        list(APPEND BENCHMARK_SOURCES ${SOURCE_FILE})
-    # Exclude everything else for now - focus on benchmark runner
-    endif()
-endforeach()
-
-# Debug output
-message(STATUS "Discovered test sources: ${TEST_SOURCES}")
-message(STATUS "Discovered benchmark sources: ${BENCHMARK_SOURCES}")
-
-# Create test executable with discovered test files (only if we have sources)
-if(TEST_SOURCES)
-    add_executable(treon_tests ${TEST_SOURCES})
-endif()
-
-# Create standalone benchmark runner
-add_executable(json_benchmark_runner ${BENCHMARK_SOURCES})
-
-# Link with Qt6 Test and our libraries (only if target exists)
-if(TEST_SOURCES)
-    target_link_libraries(treon_tests
+    add_executable(${TEST_NAME} 
+        ${UNIT_TEST_SOURCE}
+        ${COMMON_SOURCES}
+    )
+    
+    target_link_libraries(${TEST_NAME}
         PRIVATE
             Qt6::Test
             Qt6::Core
@@ -46,9 +41,49 @@ if(TEST_SOURCES)
             Qt6::QuickDialogs2
             treon_app_lib
     )
-endif()
+    
+    target_include_directories(${TEST_NAME} PRIVATE 
+        ${CMAKE_SOURCE_DIR}/include
+        ${CMAKE_SOURCE_DIR}/src
+        ${CMAKE_CURRENT_SOURCE_DIR}/common
+    )
+    
+    set_target_properties(${TEST_NAME} PROPERTIES
+        AUTOMOC ON
+        AUTORCC ON
+        AUTOUIC ON
+    )
+    
+    # Add to CTest
+    add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME})
+    set_tests_properties(${TEST_NAME} PROPERTIES
+        TIMEOUT 300
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+    )
+endforeach()
 
-# Link benchmark runner
+# =============================================================================
+# BENCHMARK TESTS
+# =============================================================================
+
+# JSON Benchmark sources
+set(JSON_BENCHMARK_SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/benchmark/json/json_benchmark_suite.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/benchmark/json/json_data_generator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/benchmark/json/json_test_config.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/benchmark/json/run_json_benchmark.cpp
+    ${COMMON_SOURCES}
+)
+
+set(JSON_BENCHMARK_HEADERS
+    benchmark/json/json_benchmark_suite.hpp
+    benchmark/json/json_data_generator.hpp
+    benchmark/json/json_test_config.hpp
+)
+
+# Create JSON benchmark runner
+add_executable(json_benchmark_runner ${JSON_BENCHMARK_SOURCES})
+
 target_link_libraries(json_benchmark_runner
     PRIVATE
         Qt6::Core
@@ -57,27 +92,11 @@ target_link_libraries(json_benchmark_runner
         treon_app_lib
 )
 
-# Include directories (only if target exists)
-if(TEST_SOURCES)
-    target_include_directories(treon_tests PRIVATE 
-        ${CMAKE_SOURCE_DIR}/include
-        ${CMAKE_SOURCE_DIR}/src
-    )
-endif()
-
 target_include_directories(json_benchmark_runner PRIVATE 
     ${CMAKE_SOURCE_DIR}/include
     ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/common
 )
-
-# Enable Qt's meta-object compiler for tests (only if target exists)
-if(TEST_SOURCES)
-    set_target_properties(treon_tests PROPERTIES
-        AUTOMOC ON
-        AUTORCC ON
-        AUTOUIC ON
-    )
-endif()
 
 set_target_properties(json_benchmark_runner PROPERTIES
     AUTOMOC ON
@@ -85,16 +104,59 @@ set_target_properties(json_benchmark_runner PROPERTIES
     AUTOUIC ON
 )
 
-# Add test to CTest (only if target exists)
-if(TEST_SOURCES)
-    add_test(NAME treon_tests COMMAND treon_tests)
+# Add JSON benchmark to CTest
+add_test(NAME json_benchmark COMMAND json_benchmark_runner)
+set_tests_properties(json_benchmark PROPERTIES
+    TIMEOUT 1800  # 30 minutes for large file tests
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+)
+
+# =============================================================================
+# INTEGRATION TESTS
+# =============================================================================
+
+# Integration test sources (BDD-style)
+file(GLOB INTEGRATION_TEST_SOURCES "integration/features/steps/*.cpp")
+
+# Create integration test executable
+if(INTEGRATION_TEST_SOURCES)
+    add_executable(treon_integration_tests 
+        ${INTEGRATION_TEST_SOURCES}
+    )
     
-    # Set test properties
-    set_tests_properties(treon_tests PROPERTIES
-        TIMEOUT 300
+    target_link_libraries(treon_integration_tests
+        PRIVATE
+            Qt6::Test
+            Qt6::Core
+            Qt6::Widgets
+            Qt6::Quick
+            Qt6::QuickDialogs2
+            treon_app_lib
+    )
+    
+    target_include_directories(treon_integration_tests PRIVATE 
+        ${CMAKE_SOURCE_DIR}/include
+        ${CMAKE_SOURCE_DIR}/src
+        ${CMAKE_CURRENT_SOURCE_DIR}/common
+    )
+    
+    set_target_properties(treon_integration_tests PROPERTIES
+        AUTOMOC ON
+        AUTORCC ON
+        AUTOUIC ON
+    )
+    
+    # Add to CTest
+    add_test(NAME integration_tests COMMAND treon_integration_tests)
+    set_tests_properties(integration_tests PROPERTIES
+        TIMEOUT 600
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
     )
 endif()
+
+# =============================================================================
+# COVERAGE REPORTS
+# =============================================================================
 
 # Add custom target for running tests with coverage
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -110,8 +172,19 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
             COMMAND ${GENHTML_PATH} -o coverage coverage.info.cleaned
             COMMAND ${CMAKE_COMMAND} -E echo "Coverage report generated in coverage/index.html"
             WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-            DEPENDS json_benchmark_runner
-            COMMENT "Running tests and generating coverage report"
+            DEPENDS treon_unit_tests json_benchmark_runner treon_integration_tests
+            COMMENT "Running all tests and generating coverage report"
         )
     endif()
 endif()
+
+# =============================================================================
+# DEBUG OUTPUT
+# =============================================================================
+
+message(STATUS "=== Test Structure ===")
+message(STATUS "Unit test sources: ${UNIT_TEST_SOURCES}")
+message(STATUS "Integration test sources: ${INTEGRATION_TEST_SOURCES}")
+message(STATUS "JSON benchmark sources: ${JSON_BENCHMARK_SOURCES}")
+message(STATUS "Common sources: ${COMMON_SOURCES}")
+message(STATUS "======================")

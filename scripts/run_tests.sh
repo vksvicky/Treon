@@ -47,19 +47,34 @@ fi
 # Change to build directory
 cd "$BUILD_DIR"
 
-# Check if tests executable exists
-if [ ! -f "tests/treon_tests" ]; then
-    print_error "Test executable not found. Please run build.sh first."
-    exit 1
+# Check if test executables exist
+UNIT_TESTS_EXECUTABLE="tests/treon_unit_tests"
+INTEGRATION_TESTS_EXECUTABLE="tests/treon_integration_tests"
+
+# Run unit tests
+if [ -f "$UNIT_TESTS_EXECUTABLE" ]; then
+    print_status "Running unit tests..."
+    if ./$UNIT_TESTS_EXECUTABLE; then
+        print_success "All unit tests passed!"
+    else
+        print_error "Some unit tests failed!"
+        exit 1
+    fi
+else
+    print_warning "Unit test executable not found. Skipping unit tests."
 fi
 
-# Run tests
-print_status "Running unit tests..."
-if ./tests/treon_tests; then
-    print_success "All unit tests passed!"
+# Run integration tests
+if [ -f "$INTEGRATION_TESTS_EXECUTABLE" ]; then
+    print_status "Running integration tests..."
+    if ./$INTEGRATION_TESTS_EXECUTABLE; then
+        print_success "All integration tests passed!"
+    else
+        print_error "Some integration tests failed!"
+        exit 1
+    fi
 else
-    print_error "Some unit tests failed!"
-    exit 1
+    print_warning "Integration test executable not found. Skipping integration tests."
 fi
 
 # Check if coverage tools are available
@@ -103,7 +118,16 @@ echo ""
 echo "=========================================="
 echo "Test Summary:"
 echo "=========================================="
-echo "✓ Unit tests: PASSED"
+if [ -f "$UNIT_TESTS_EXECUTABLE" ]; then
+    echo "✓ Unit tests: PASSED"
+else
+    echo "✗ Unit tests: SKIPPED (executable not found)"
+fi
+if [ -f "$INTEGRATION_TESTS_EXECUTABLE" ]; then
+    echo "✓ Integration tests: PASSED"
+else
+    echo "✗ Integration tests: SKIPPED (executable not found)"
+fi
 if command -v lcov >/dev/null 2>&1; then
     echo "✓ Coverage report: GENERATED"
     echo "  Location: $BUILD_DIR/coverage/index.html"

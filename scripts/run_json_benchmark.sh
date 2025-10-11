@@ -30,6 +30,7 @@ if [ ! -f "$BENCHMARK_EXECUTABLE" ]; then
     exit 1
 fi
 
+
 echo "✅ Benchmark executable built successfully"
 echo ""
 
