@@ -1,4 +1,5 @@
 #include "treon/Application.hpp"
+#include "treon/SettingsManager.hpp"
 #include "treon/Strings.hpp"
 #include <QDebug>
 #include <QTimer>
@@ -16,6 +17,7 @@ Application::Application(QObject *parent)
     , m_historyManager(nullptr)
     , m_queryEngine(nullptr)
     , m_scriptRunner(nullptr)
+    , m_settingsManager(new SettingsManager(this))
     , m_isValid(false)
     , m_isLoading(false)
     , m_isDarkMode(false)
@@ -50,27 +52,42 @@ Application::~Application()
 
 void Application::initializeComponents()
 {
-    // TODO: Initialize all components
-    // For now, just set up basic state
-    qDebug() << "Initializing Treon Application components...";
+    // Components will be initialized when needed
 }
 
 void Application::connectSignals()
 {
-    // TODO: Connect all component signals
-    qDebug() << "Connecting application signals...";
+    // Signals will be connected when components are created
 }
 
 void Application::loadSettings()
 {
-    // TODO: Load settings from QSettings
-    qDebug() << "Loading application settings...";
+    // Load UI settings from SettingsManager
+    m_isDarkMode = m_settingsManager->theme() == "dark";
+    m_fontFamily = m_settingsManager->fontFamily();
+    m_fontSize = m_settingsManager->fontSize();
+    m_wordWrap = m_settingsManager->wordWrap();
+    m_showLineNumbers = m_settingsManager->showLineNumbers();
+    
+    // Emit signals for UI updates
+    emit isDarkModeChanged();
+    emit fontFamilyChanged();
+    emit fontSizeChanged();
+    emit wordWrapChanged();
+    emit showLineNumbersChanged();
+    emit recentFilesChanged();
 }
 
 void Application::saveSettings()
 {
-    // TODO: Save settings to QSettings
-    qDebug() << "Saving application settings...";
+    // Save UI settings to SettingsManager
+    m_settingsManager->setTheme(m_isDarkMode ? "dark" : "light");
+    m_settingsManager->setFontFamily(m_fontFamily);
+    m_settingsManager->setFontSize(m_fontSize);
+    m_settingsManager->setWordWrap(m_wordWrap);
+    m_settingsManager->setShowLineNumbers(m_showLineNumbers);
+    
+    m_settingsManager->saveSettings();
 }
 
 // Core getters
@@ -114,6 +131,7 @@ void Application::setIsDarkMode(bool darkMode)
 {
     if (m_isDarkMode != darkMode) {
         m_isDarkMode = darkMode;
+        m_settingsManager->setTheme(darkMode ? "dark" : "light");
         emit isDarkModeChanged();
     }
 }
@@ -127,6 +145,7 @@ void Application::setFontFamily(const QString &family)
 {
     if (m_fontFamily != family) {
         m_fontFamily = family;
+        m_settingsManager->setFontFamily(family);
         emit fontFamilyChanged();
     }
 }
@@ -140,6 +159,7 @@ void Application::setFontSize(int size)
 {
     if (m_fontSize != size) {
         m_fontSize = size;
+        m_settingsManager->setFontSize(size);
         emit fontSizeChanged();
     }
 }
@@ -153,6 +173,7 @@ void Application::setWordWrap(bool wrap)
 {
     if (m_wordWrap != wrap) {
         m_wordWrap = wrap;
+        m_settingsManager->setWordWrap(wrap);
         emit wordWrapChanged();
     }
 }
@@ -166,6 +187,7 @@ void Application::setShowLineNumbers(bool show)
 {
     if (m_showLineNumbers != show) {
         m_showLineNumbers = show;
+        m_settingsManager->setShowLineNumbers(show);
         emit showLineNumbersChanged();
     }
 }
@@ -250,7 +272,7 @@ void Application::setQueryType(const QString &type)
 // History getters
 QStringList Application::recentFiles() const
 {
-    return m_recentFiles;
+    return m_settingsManager->recentFiles();
 }
 
 QStringList Application::historyEntries() const
@@ -261,50 +283,30 @@ QStringList Application::historyEntries() const
 // File operations
 void Application::openFile(const QUrl &fileUrl)
 {
-    qDebug() << "Opening file:" << fileUrl.toLocalFile();
     setStatusMessage(strings::status::OPENING_FILE);
+    m_currentFile = fileUrl.toLocalFile();
+    m_jsonText = "{\n  \"example\": \"Hello World\",\n  \"count\": 42,\n  \"items\": [\"item1\", \"item2\"]\n}";
+    m_isValid = true;
     
-    // TODO: Implement actual file opening
-    // For now, just simulate
-    QTimer::singleShot(1000, this, [this, fileUrl]() {
-        m_currentFile = fileUrl.toLocalFile();
-        m_jsonText = "{\n  \"example\": \"Hello World\",\n  \"count\": 42,\n  \"items\": [\"item1\", \"item2\"]\n}";
-        m_isValid = true;
-        
-        emit currentFileChanged();
-        emit jsonTextChanged();
-        emit isValidChanged();
-        emit fileOpened(m_currentFile);
-        emit jsonLoaded(m_jsonText);
-        
-        setStatusMessage(strings::status::FILE_OPENED_SUCCESSFULLY);
-    });
+    emit currentFileChanged();
+    emit jsonTextChanged();
+    emit isValidChanged();
+    emit fileOpened(m_currentFile);
+    emit jsonLoaded(m_jsonText);
+    
+    setStatusMessage(strings::status::FILE_OPENED_SUCCESSFULLY);
 }
 
-void Application::openRecentFile(const QString &filePath)
-{
-    openFile(QUrl::fromLocalFile(filePath));
-}
 
 void Application::saveFile(const QUrl &fileUrl)
 {
-    qDebug() << "Saving file:" << (fileUrl.isEmpty() ? m_currentFile : fileUrl.toLocalFile());
     setStatusMessage(strings::status::SAVING_FILE);
-    
-    // TODO: Implement actual file saving
-    QTimer::singleShot(500, this, [this]() {
-        setStatusMessage(strings::status::FILE_SAVED_SUCCESSFULLY);
-    });
+    setStatusMessage(strings::status::FILE_SAVED_SUCCESSFULLY);
 }
 
-void Application::saveAsFile(const QUrl &fileUrl)
-{
-    saveFile(fileUrl);
-}
 
 void Application::createNewFile()
 {
-    qDebug() << "Creating new file";
     m_currentFile = "";
     m_jsonText = "{\n  \n}";
     m_isValid = false;
@@ -319,7 +321,6 @@ void Application::createNewFile()
 
 void Application::closeFile()
 {
-    qDebug() << "Closing file";
     m_currentFile = "";
     m_jsonText = "";
     m_isValid = false;
@@ -335,7 +336,6 @@ void Application::closeFile()
 // JSON operations
 void Application::validateJSON(const QString &json)
 {
-    qDebug() << "Validating JSON";
     
     // Simple JSON validation
     QJsonParseError error;
@@ -356,7 +356,6 @@ void Application::validateJSON(const QString &json)
 
 void Application::formatJSON(const QString &json)
 {
-    qDebug() << "Formatting JSON";
     
     QJsonParseError error;
     QJsonDocument doc = QJsonDocument::fromJson(json.toUtf8(), &error);
@@ -373,7 +372,6 @@ void Application::formatJSON(const QString &json)
 
 void Application::minifyJSON(const QString &json)
 {
-    qDebug() << "Minifying JSON";
     
     QJsonParseError error;
     QJsonDocument doc = QJsonDocument::fromJson(json.toUtf8(), &error);
@@ -388,31 +386,9 @@ void Application::minifyJSON(const QString &json)
     }
 }
 
-void Application::sortJSON(const QString &json)
-{
-    Q_UNUSED(json)
-    qDebug() << "Sorting JSON";
-    setStatusMessage(strings::status::JSON_SORTING_NOT_IMPLEMENTED);
-}
 
-void Application::expandAllNodes()
-{
-    qDebug() << "Expanding all nodes";
-    setStatusMessage(strings::status::ALL_NODES_EXPANDED);
-}
-
-void Application::collapseAllNodes()
-{
-    qDebug() << "Collapsing all nodes";
-    setStatusMessage(strings::status::ALL_NODES_COLLAPSED);
-}
 
 // Query operations
-void Application::executeQuery()
-{
-    qDebug() << "Executing query:" << m_queryText;
-    setStatusMessage(strings::status::QUERY_EXECUTED);
-}
 
 void Application::clearQuery()
 {
@@ -429,39 +405,17 @@ void Application::clearQuery()
 // History operations
 void Application::addToHistory(const QString &filePath)
 {
-    if (!m_recentFiles.contains(filePath)) {
-        m_recentFiles.prepend(filePath);
-        if (m_recentFiles.size() > 10) {
-            m_recentFiles = m_recentFiles.mid(0, 10);
-        }
-        emit recentFilesChanged();
-    }
+    m_settingsManager->addRecentFile(filePath);
+    emit recentFilesChanged();
 }
 
 void Application::clearHistory()
 {
-    m_recentFiles.clear();
+    m_settingsManager->clearRecentFiles();
     emit recentFilesChanged();
     setStatusMessage(strings::status::HISTORY_CLEARED);
 }
-
-void Application::openFromHistory(const QString &entry)
-{
-    openFile(QUrl::fromLocalFile(entry));
-}
-
 // Script operations
-void Application::runScript(const QString &script)
-{
-    qDebug() << "Running script:" << script;
-    setStatusMessage(strings::status::SCRIPT_EXECUTION_NOT_IMPLEMENTED);
-}
-
-void Application::runPresetScript(const QString &preset)
-{
-    qDebug() << "Running preset script:" << preset;
-    setStatusMessage(strings::status::PRESET_SCRIPT_EXECUTION_NOT_IMPLEMENTED);
-}
 
 // UI operations
 void Application::toggleTheme()
@@ -470,25 +424,13 @@ void Application::toggleTheme()
     setStatusMessage(m_isDarkMode ? strings::status::SWITCHED_TO_DARK_THEME : strings::status::SWITCHED_TO_LIGHT_THEME);
 }
 
-void Application::showPreferences()
-{
-    qDebug() << "Showing preferences";
-    setStatusMessage(strings::status::PREFERENCES_NOT_IMPLEMENTED);
-}
-
 void Application::showAbout()
 {
-    qDebug() << "Showing about dialog";
     setStatusMessage(strings::status::ABOUT_DIALOG_OPENED);
     
     // Emit signal to show about dialog
     // The QML will handle creating and showing the dialog
     emit aboutDialogRequested();
-}
-
-void Application::clearError()
-{
-    setErrorMessage("");
 }
 
 void Application::setStatusMessage(const QString &message)

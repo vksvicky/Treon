@@ -20,6 +20,7 @@ class ErrorHandler;
 class HistoryManager;
 class QueryEngine;
 class ScriptRunner;
+class SettingsManager;
 
 class Application : public QObject
 {
@@ -102,9 +103,7 @@ public:
 public slots:
     // File operations
     void openFile(const QUrl &fileUrl);
-    void openRecentFile(const QString &filePath);
     void saveFile(const QUrl &fileUrl = QUrl());
-    void saveAsFile(const QUrl &fileUrl);
     void createNewFile();
     void closeFile();
     
@@ -112,22 +111,15 @@ public slots:
     void validateJSON(const QString &json);
     void formatJSON(const QString &json);
     void minifyJSON(const QString &json);
-    void sortJSON(const QString &json);
-    void expandAllNodes();
-    void collapseAllNodes();
     
     // Query operations
-    void executeQuery();
     void clearQuery();
     
     // History operations
     void addToHistory(const QString &filePath);
     void clearHistory();
-    void openFromHistory(const QString &entry);
     
     // Script operations
-    void runScript(const QString &script);
-    void runPresetScript(const QString &preset);
     
     // Edit operations
     void undo();
@@ -179,9 +171,7 @@ public slots:
 
     // UI operations
     void toggleTheme();
-    void showPreferences();
     void showAbout();
-    void clearError();
     void setStatusMessage(const QString &message);
     void setErrorMessage(const QString &message);
 
@@ -249,6 +239,7 @@ private:
     HistoryManager *m_historyManager;
     QueryEngine *m_queryEngine;
     ScriptRunner *m_scriptRunner;
+    SettingsManager *m_settingsManager;
     
     // State
     QString m_currentFile;
@@ -277,7 +268,6 @@ private:
     QString m_queryType;
     
     // History state
-    QStringList m_recentFiles;
     QStringList m_historyEntries;
     
     // Async operations
