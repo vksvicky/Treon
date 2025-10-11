@@ -247,9 +247,11 @@ void AboutWindow::openDocumentation()
 
 void AboutWindow::openSupport()
 {
-    QString url = QString("https://%1/support").arg(m_organizationDomain);
-    emit supportRequested(url);
-    QDesktopServices::openUrl(QUrl(url));
+    QString email = QString("support@%1").arg(m_organizationDomain);
+    QString subject = "Treon Support";
+    QString mailtoUrl = QString("mailto:%1?subject=%2").arg(email, subject);
+    emit supportRequested(mailtoUrl);
+    QDesktopServices::openUrl(QUrl(mailtoUrl));
 }
 
 void AboutWindow::openLicense()

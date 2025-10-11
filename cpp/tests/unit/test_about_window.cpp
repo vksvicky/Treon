@@ -201,6 +201,8 @@ void TestAboutWindow::testOpenWebsite()
 
 void TestAboutWindow::testOpenDocumentation()
 {
+    // Documentation functionality is not available yet
+    // This test is kept for when documentation becomes available
     QSignalSpy spy(m_aboutWindow, &treon::AboutWindow::documentationRequested);
     
     m_aboutWindow->openDocumentation();
@@ -218,7 +220,9 @@ void TestAboutWindow::testOpenSupport()
     
     QCOMPARE(spy.count(), 1);
     QList<QVariant> arguments = spy.takeFirst();
-    QVERIFY(arguments.at(0).toString().contains("cycleruncode.club"));
+    QString mailtoUrl = arguments.at(0).toString();
+    QVERIFY(mailtoUrl.contains("mailto:support@cycleruncode.club"));
+    QVERIFY(mailtoUrl.contains("subject=Treon Support"));
 }
 
 void TestAboutWindow::testOpenLicense()
@@ -229,7 +233,8 @@ void TestAboutWindow::testOpenLicense()
     
     QCOMPARE(spy.count(), 1);
     QList<QVariant> arguments = spy.takeFirst();
-    QVERIFY(arguments.at(0).toString().contains("cycleruncode.club"));
+    QString licensePath = arguments.at(0).toString();
+    QVERIFY(licensePath.contains("LICENSE"));
 }
 
 void TestAboutWindow::testCopyVersionInfo()

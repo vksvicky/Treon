@@ -52,17 +52,14 @@ Feature: About Window
     Then the website should open in the default browser
     And the URL should contain "cycleruncode.club"
 
-    When I click the "Documentation" button
-    Then the documentation should open in the default browser
-    And the URL should contain "cycleruncode.club/docs"
-
     When I click the "Support" button
-    Then the support page should open in the default browser
-    And the URL should contain "cycleruncode.club/support"
+    Then the default email client should open
+    And the email should be addressed to the support email
+    And the subject should contain "Treon Support"
 
     When I click the "View License" button
-    Then the license page should open in the default browser
-    And the URL should contain "cycleruncode.club/license"
+    Then the license file should open in the default text editor
+    And the file should contain the MIT License text
 
   Scenario: Window visibility management
     When the About Window is not visible

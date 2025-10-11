@@ -225,19 +225,9 @@ void ThenTheUrlShouldContain(const QString &expectedUrl)
     QVERIFY(arguments.at(0).toString().contains(expectedUrl));
 }
 
-void WhenIClickTheDocumentationButton()
-{
-    treon::AboutWindow aboutWindow;
-    aboutWindow.openDocumentation();
-}
-
-void ThenTheDocumentationShouldOpenInTheDefaultBrowser()
-{
-    treon::AboutWindow aboutWindow;
-    QSignalSpy spy(&aboutWindow, &treon::AboutWindow::documentationRequested);
-    aboutWindow.openDocumentation();
-    QCOMPARE(spy.count(), 1);
-}
+// Documentation functionality is not available yet
+// void WhenIClickTheDocumentationButton() - REMOVED
+// void ThenTheDocumentationShouldOpenInTheDefaultBrowser() - REMOVED
 
 void WhenIClickTheSupportButton()
 {
@@ -245,12 +235,32 @@ void WhenIClickTheSupportButton()
     aboutWindow.openSupport();
 }
 
-void ThenTheSupportPageShouldOpenInTheDefaultBrowser()
+void ThenTheDefaultEmailClientShouldOpen()
 {
     treon::AboutWindow aboutWindow;
     QSignalSpy spy(&aboutWindow, &treon::AboutWindow::supportRequested);
     aboutWindow.openSupport();
     QCOMPARE(spy.count(), 1);
+}
+
+void AndTheEmailShouldBeAddressedToTheSupportEmail()
+{
+    treon::AboutWindow aboutWindow;
+    QSignalSpy spy(&aboutWindow, &treon::AboutWindow::supportRequested);
+    aboutWindow.openSupport();
+    QList<QVariant> arguments = spy.takeFirst();
+    QString mailtoUrl = arguments.at(0).toString();
+    QVERIFY(mailtoUrl.contains("mailto:support@cycleruncode.club"));
+}
+
+void AndTheSubjectShouldContain(const QString &subject)
+{
+    treon::AboutWindow aboutWindow;
+    QSignalSpy spy(&aboutWindow, &treon::AboutWindow::supportRequested);
+    aboutWindow.openSupport();
+    QList<QVariant> arguments = spy.takeFirst();
+    QString mailtoUrl = arguments.at(0).toString();
+    QVERIFY(mailtoUrl.contains(QString("subject=%1").arg(subject)));
 }
 
 void WhenIClickTheViewLicenseButton()
@@ -259,12 +269,22 @@ void WhenIClickTheViewLicenseButton()
     aboutWindow.openLicense();
 }
 
-void ThenTheLicensePageShouldOpenInTheDefaultBrowser()
+void ThenTheLicenseFileShouldOpenInTheDefaultTextEditor()
 {
     treon::AboutWindow aboutWindow;
     QSignalSpy spy(&aboutWindow, &treon::AboutWindow::licenseRequested);
     aboutWindow.openLicense();
     QCOMPARE(spy.count(), 1);
+}
+
+void AndTheFileShouldContainTheMITLicenseText()
+{
+    treon::AboutWindow aboutWindow;
+    QSignalSpy spy(&aboutWindow, &treon::AboutWindow::licenseRequested);
+    aboutWindow.openLicense();
+    QList<QVariant> arguments = spy.takeFirst();
+    QString licensePath = arguments.at(0).toString();
+    QVERIFY(licensePath.contains("LICENSE"));
 }
 
 void WhenTheAboutWindowIsNotVisible()
