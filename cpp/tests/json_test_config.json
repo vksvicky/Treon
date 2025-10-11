@@ -28,32 +28,27 @@
     "25mb": {
       "label": "25MB",
       "sizeBytes": 26214400,
-      "enabled": false,
-      "comment": "Disabled by default due to long execution time"
+      "enabled": true
     },
     "50mb": {
       "label": "50MB",
       "sizeBytes": 52428800,
-      "enabled": false,
-      "comment": "Disabled by default due to long execution time"
+      "enabled": true
     },
     "100mb": {
       "label": "100MB",
       "sizeBytes": 104857600,
-      "enabled": false,
-      "comment": "Disabled by default due to very long execution time"
+      "enabled": true
     },
     "500mb": {
       "label": "500MB",
       "sizeBytes": 524288000,
-      "enabled": false,
-      "comment": "Disabled by default due to long execution time"
+      "enabled": true
     },
     "1gb": {
       "label": "1GB",
       "sizeBytes": 1073741824,
-      "enabled": false,
-      "comment": "Disabled by default due to very long execution time"
+      "enabled": true
     }
   },
   "performanceThresholds": {

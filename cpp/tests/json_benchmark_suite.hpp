@@ -52,16 +52,24 @@ public:
     
     // Run the complete benchmark suite
     void runFullBenchmark();
+    
+    // Run dedicated reading performance tests
+    void runReadingPerformanceTests();
 
 private:
     // Run benchmark for a specific file size
     BenchmarkResult runBenchmarkForSize(const QString &sizeLabel, qint64 targetSize, const QString &testDir);
     
+    // Run reading performance test for a specific file
+    BenchmarkResult runReadingTestForFile(const QString &filePath, const QString &sizeLabel);
+    
     // Utility methods
     double calculateThroughput(qint64 sizeBytes, qint64 timeMs);
     QString getSystemInfo();
     QString getReportPath();
+    QString getReadingReportPath();
     void generateReport(const BenchmarkResults &results);
+    void generateReadingReport(const BenchmarkResults &results);
     QString formatBytes(qint64 bytes);
     
     JSONDataGenerator *m_dataGenerator;

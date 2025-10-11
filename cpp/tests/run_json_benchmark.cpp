@@ -15,7 +15,16 @@ int main(int argc, char *argv[])
     
     // Run benchmark in a single shot
     QTimer::singleShot(0, [&benchmarkSuite]() {
+        // Run full benchmark suite
         benchmarkSuite.runFullBenchmark();
+        
+        qDebug() << "";
+        qDebug() << "========================================";
+        qDebug() << "";
+        
+        // Run dedicated reading performance tests
+        benchmarkSuite.runReadingPerformanceTests();
+        
         QCoreApplication::quit();
     });
     
