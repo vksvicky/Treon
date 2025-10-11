@@ -128,3 +128,6 @@ set_target_properties(Treon PROPERTIES
 # Copy icon to bundle
 set_source_files_properties(resources/icon.png PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
 set_source_files_properties(resources/icon.icns PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
+
+# Include tests subdirectory
+add_subdirectory(tests)

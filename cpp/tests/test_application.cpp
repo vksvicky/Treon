@@ -66,17 +66,3 @@ void TestApplication::testJSONValidation()
 }
 
 #include "test_application.moc"
-
-// Main function for running tests
-int main(int argc, char *argv[])
-{
-    QApplication app(argc, argv);
-    
-    int result = 0;
-    
-    // Run Application tests
-    TestApplication testApp;
-    result |= QTest::qExec(&testApp, argc, argv);
-    
-    return result;
-}

@@ -1,0 +1,72 @@
+{
+  "testSizes": {
+    "10kb": {
+      "label": "10KB",
+      "sizeBytes": 10240,
+      "enabled": true
+    },
+    "35kb": {
+      "label": "35KB", 
+      "sizeBytes": 35840,
+      "enabled": true
+    },
+    "50kb": {
+      "label": "50KB",
+      "sizeBytes": 51200,
+      "enabled": true
+    },
+    "1mb": {
+      "label": "1MB",
+      "sizeBytes": 1048576,
+      "enabled": true
+    },
+    "5mb": {
+      "label": "5MB",
+      "sizeBytes": 5242880,
+      "enabled": true
+    },
+    "25mb": {
+      "label": "25MB",
+      "sizeBytes": 26214400,
+      "enabled": true
+    },
+    "50mb": {
+      "label": "50MB",
+      "sizeBytes": 52428800,
+      "enabled": true
+    },
+    "100mb": {
+      "label": "100MB",
+      "sizeBytes": 104857600,
+      "enabled": true
+    },
+    "500mb": {
+      "label": "500MB",
+      "sizeBytes": 524288000,
+      "enabled": false,
+      "comment": "Disabled by default due to long execution time"
+    },
+    "1gb": {
+      "label": "1GB",
+      "sizeBytes": 1073741824,
+      "enabled": false,
+      "comment": "Disabled by default due to very long execution time"
+    }
+  },
+  "performanceThresholds": {
+    "generation": 10000,
+    "write": 5000,
+    "read": 2000,
+    "parse": 10000,
+    "validation": 5000
+  },
+  "testDataDirectory": "",
+  "customTestSizes": [
+    {
+      "name": "2mb",
+      "label": "2MB",
+      "sizeBytes": 2097152,
+      "enabled": true
+    }
+  ]
+}
