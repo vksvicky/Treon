@@ -257,7 +257,7 @@ void AboutWindow::openSupport()
 void AboutWindow::openLicense()
 {
     // Open the local LICENSE file from resources
-    QString licensePath = "qrc:/LICENSE";
+    QString licensePath = "qrc:/LICENSE.txt";
     qDebug() << "Attempting to open license file:" << licensePath;
     emit licenseRequested(licensePath);
     
