@@ -37,6 +37,10 @@ case "${1:-debug}" in
         echo "🧪 Running tests..."
         make test
         ;;
+    test-coverage)
+        echo "🧪 Running tests with coverage..."
+        make test-coverage
+        ;;
     clean)
         echo "🧹 Cleaning build artifacts..."
         make clean
@@ -55,6 +59,7 @@ case "${1:-debug}" in
         echo "  profile    Run with profiling"
         echo "  build      Build the application"
         echo "  test       Run tests"
+        echo "  test-coverage  Run tests with coverage report"
         echo "  clean      Clean build artifacts"
         echo "  help       Show this help"
         echo ""

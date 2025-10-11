@@ -1,7 +1,11 @@
 <RCC>
     <qresource prefix="/">
-        <file>../qml/main.qml</file>
-        <file>../qml/TwoPaneLayout.qml</file>
-        <file>../qml/JSONViewer.qml</file>
+        <file>icon.png</file>
+        <file>LICENSE.txt</file>
+    </qresource>
+    <qresource prefix="/qml">
+        <file>main.qml</file>
+        <file>TwoPaneLayout.qml</file>
+        <file>AboutWindow.qml</file>
     </qresource>
 </RCC>

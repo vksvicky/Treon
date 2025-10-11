@@ -7,7 +7,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 BUILD_DIR="$PROJECT_ROOT/cpp/build"
-APP_NAME="treon_app"
+APP_NAME="Treon.app/Contents/MacOS/Treon"
 
 # Colors for output
 RED='\033[0;31m'
@@ -139,8 +139,13 @@ check_app_exists() {
 setup_environment() {
     local build_mode="$1"
     
-    # Set Qt environment variables
-    export QT_LOGGING_RULES="*.debug=true;qt.qpa.*=false"
+    # Set Qt environment variables - minimal logging for normal operation
+    if [ "$VERBOSE" = true ]; then
+        export QT_LOGGING_RULES="*.debug=true;*.info=true;*.warning=true;*.critical=true"
+        print_status "Verbose logging enabled"
+    else
+        export QT_LOGGING_RULES="*.debug=false;*.info=false;*.warning=true;*.critical=true"
+    fi
     
     # Platform-specific setup
     case "$(uname -s)" in
@@ -161,7 +166,7 @@ setup_environment() {
     # Debug-specific environment
     if [ "$build_mode" = "Debug" ]; then
         export QML_DISABLE_OPTIMIZER=1
-        export QT_LOGGING_RULES="*.debug=true;*.info=true"
+        # Don't override logging rules here - let the verbose flag control it
     fi
     
     print_status "Environment configured for $build_mode mode"
@@ -222,7 +227,6 @@ run_with_profiling() {
     local app_path="$BUILD_DIR/$APP_NAME"
     
     print_status "Starting Treon with Qt profiling enabled..."
-    export QT_LOGGING_RULES="*.debug=true;qt.qpa.*=false"
     export QML_DISABLE_OPTIMIZER=1
     
     cd "$BUILD_DIR"

@@ -20,13 +20,18 @@ setup-deps:
 # Build the C++ application
 build: setup-deps
 	@echo "Building Treon C++ application..."
-	cd cpp && bash build.sh
+	./scripts/build.sh
 	@$(MAKE) install-hooks
 
 # Run tests
 test: build
 	@echo "Running tests..."
 	cd cpp/build && ctest -C Debug --output-on-failure
+
+# Run tests with coverage
+test-coverage:
+	@echo "Running tests with coverage..."
+	./scripts/run_tests_with_coverage.sh
 
 # Run the application
 run-app: build

@@ -1,6 +1,5 @@
 #include <QtTest>
 #include <QSignalSpy>
-#include <QApplication>
 #include "treon/Application.hpp"
 
 class TestApplication : public QObject
@@ -65,18 +64,3 @@ void TestApplication::testJSONValidation()
     QVERIFY(!m_app->errorMessage().isEmpty());
 }
 
-#include "test_application.moc"
-
-// Main function for running tests
-int main(int argc, char *argv[])
-{
-    QApplication app(argc, argv);
-    
-    int result = 0;
-    
-    // Run Application tests
-    TestApplication testApp;
-    result |= QTest::qExec(&testApp, argc, argv);
-    
-    return result;
-}

@@ -80,7 +80,7 @@ dev_build() {
     # Build
     if [ "$fast_build" = "true" ]; then
         print_status "Fast build (skipping tests)..."
-        cmake --build . --config Debug --target treon_app
+        cmake --build . --config Debug --target Treon
     else
         print_status "Full build with tests..."
         cmake --build . --config Debug
@@ -128,11 +128,16 @@ run_app() {
     cd "$PROJECT_ROOT/cpp/build"
     
     # Set development environment
-    export QT_LOGGING_RULES="*.debug=true;*.info=true"
+    if [ "$VERBOSE" = true ]; then
+        export QT_LOGGING_RULES="*.debug=true;*.info=true;*.warning=true;*.critical=true"
+        print_status "Verbose logging enabled"
+    else
+        export QT_LOGGING_RULES="*.debug=false;*.info=false;*.warning=true;*.critical=true"
+    fi
     export QML_DISABLE_OPTIMIZER=1
     export QT_QPA_PLATFORM="cocoa"  # macOS default
     
-    ./treon_app
+    ./Treon.app/Contents/MacOS/Treon
 }
 
 # Function to watch for changes
@@ -173,15 +178,20 @@ debug_mode() {
     cd "$PROJECT_ROOT/cpp/build"
     
     # Set debug environment
-    export QT_LOGGING_RULES="*.debug=true;*.info=true"
+    if [ "$VERBOSE" = true ]; then
+        export QT_LOGGING_RULES="*.debug=true;*.info=true;*.warning=true;*.critical=true"
+        print_status "Verbose logging enabled"
+    else
+        export QT_LOGGING_RULES="*.debug=false;*.info=false;*.warning=true;*.critical=true"
+    fi
     export QML_DISABLE_OPTIMIZER=1
     
     if command -v lldb &> /dev/null; then
         print_status "Using LLDB debugger..."
-        lldb ./treon_app
+        lldb ./Treon.app/Contents/MacOS/Treon
     elif command -v gdb &> /dev/null; then
         print_status "Using GDB debugger..."
-        gdb ./treon_app
+        gdb ./Treon.app/Contents/MacOS/Treon
     else
         print_error "No debugger found. Please install:"
         echo "  macOS: Xcode Command Line Tools"
@@ -199,12 +209,17 @@ profile_mode() {
     cd "$PROJECT_ROOT/cpp/build"
     
     # Set profiling environment
-    export QT_LOGGING_RULES="*.debug=true;*.info=true"
+    if [ "$VERBOSE" = true ]; then
+        export QT_LOGGING_RULES="*.debug=true;*.info=true;*.warning=true;*.critical=true"
+        print_status "Verbose logging enabled"
+    else
+        export QT_LOGGING_RULES="*.debug=false;*.info=false;*.warning=true;*.critical=true"
+    fi
     export QML_DISABLE_OPTIMIZER=1
     export QT_PROFILER_TYPE=1
     
     print_status "Profiling enabled. Check Qt Creator or use QML profiler."
-    ./treon_app
+    ./Treon.app/Contents/MacOS/Treon
 }
 
 # Parse command line arguments
