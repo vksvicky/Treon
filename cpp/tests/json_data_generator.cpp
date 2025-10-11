@@ -17,6 +17,14 @@ JSONDataGenerator::JSONDataGenerator()
 
 QString JSONDataGenerator::generateTestJSON(qint64 targetSize, const QString &outputPath)
 {
+    qDebug() << "Generating JSON file of target size:" << targetSize << "bytes";
+    
+    // For large files (>5MB), use the efficient streaming approach
+    if (targetSize > 5 * 1024 * 1024) {
+        return generateLargeJSON(targetSize, outputPath);
+    }
+    
+    // For smaller files, use the original approach
     QJsonObject root;
     QJsonArray items;
     
@@ -28,7 +36,6 @@ QString JSONDataGenerator::generateTestJSON(qint64 targetSize, const QString &ou
     QJsonDocument baseDoc(baseStructure);
     qint64 baseSize = baseDoc.toJson().size();
     
-    qDebug() << "Generating JSON file of target size:" << targetSize << "bytes";
     qDebug() << "Base structure size:" << baseSize << "bytes";
     
     while (currentSize < targetSize) {
@@ -78,6 +85,68 @@ QString JSONDataGenerator::generateTestJSON(qint64 targetSize, const QString &ou
     }
     
     return jsonString;
+}
+
+QString JSONDataGenerator::generateLargeJSON(qint64 targetSize, const QString &outputPath)
+{
+    qDebug() << "Using efficient streaming approach for large JSON file";
+    
+    QFile file(outputPath);
+    if (!file.open(QIODevice::WriteOnly)) {
+        qWarning() << "Failed to open file for writing:" << outputPath;
+        return QString();
+    }
+    
+    // Write JSON header
+    file.write("{\n");
+    file.write("  \"metadata\": {\n");
+    file.write("    \"generatedAt\": \"" + QDateTime::currentDateTime().toString(Qt::ISODate).toUtf8() + "\",\n");
+    file.write("    \"targetSize\": " + QByteArray::number(targetSize) + ",\n");
+    file.write("    \"description\": \"Large JSON test file\"\n");
+    file.write("  },\n");
+    file.write("  \"items\": [\n");
+    
+    qint64 currentSize = file.size();
+    int itemCount = 0;
+    
+    // Estimate item size for better progress tracking
+    QJsonObject sampleItem = generateRandomItem(0);
+    QJsonDocument sampleDoc(sampleItem);
+    qint64 estimatedItemSize = sampleDoc.toJson().size() + 2; // +2 for comma and newline
+    
+    qint64 targetItems = (targetSize - currentSize) / estimatedItemSize;
+    
+    qDebug() << "Estimated items needed:" << targetItems;
+    
+    while (currentSize < targetSize && itemCount < targetItems * 1.2) { // 20% buffer
+        QJsonObject item = generateRandomItem(itemCount);
+        QJsonDocument itemDoc(item);
+        QByteArray itemJson = itemDoc.toJson();
+        
+        if (itemCount > 0) {
+            file.write(",\n");
+        }
+        file.write("    " + itemJson);
+        
+        currentSize = file.size();
+        itemCount++;
+        
+        // Progress reporting
+        if (itemCount % 10000 == 0) {
+            qDebug() << "Generated" << itemCount << "items, current size:" << currentSize << "bytes";
+        }
+    }
+    
+    // Write JSON footer
+    file.write("\n  ]\n");
+    file.write("}\n");
+    file.close();
+    
+    qDebug() << "Large JSON file generated successfully:" << outputPath;
+    qDebug() << "Final size:" << file.size() << "bytes";
+    qDebug() << "Total items:" << itemCount;
+    
+    return QString(); // For large files, we don't return the content
 }
 
 QJsonObject JSONDataGenerator::createBaseStructure()

@@ -16,6 +16,9 @@ public:
     // Generate JSON data of specified size
     QString generateTestJSON(qint64 targetSize, const QString &outputPath = QString());
     
+    // Generate large JSON files efficiently (streaming approach)
+    QString generateLargeJSON(qint64 targetSize, const QString &outputPath);
+    
     // Generate all test files for performance testing
     void generateAllTestFiles();
     
