@@ -61,7 +61,8 @@ void Application::initializeComponents()
 
 void Application::connectSignals()
 {
-    // Signals will be connected when components are created
+    // Connect SettingsManager signals
+    connect(m_settingsManager, &SettingsManager::recentFilesChanged, this, &Application::recentFilesChanged);
 }
 
 void Application::loadSettings()
@@ -113,9 +114,21 @@ QObject* Application::jsonModel() const
 QVariantList Application::getJSONFlatList() const
 {
     if (m_jsonModel) {
-        return m_jsonModel->getFlatList();
+        // Read maxDepth from settings; null/invalid => unlimited
+        QVariant depthVar = m_settingsManager ? QVariant::fromValue(m_settingsManager->jsonMaxDepth()) : QVariant();
+        int maxDepth = -1;
+        if (depthVar.isValid()) {
+            QVariant v = depthVar;
+            if (v.canConvert<int>()) maxDepth = v.toInt();
+        }
+        return m_jsonModel->getFlatListWithExpansion(maxDepth);
     }
     return QVariantList();
+}
+
+void Application::showPreferences()
+{
+    emit openPreferencesRequested();
 }
 
 void Application::setItemExpanded(int index, bool expanded)
@@ -326,6 +339,9 @@ void Application::openFile(const QUrl &fileUrl)
         m_currentFile = filePath;
         m_jsonText = m_jsonFileManager->getCurrentJSONString();
         m_isValid = m_jsonFileManager->isValidJSON();
+        
+        // Add to recent files
+        m_settingsManager->addRecentFile(filePath);
         
         // Load JSON into the model
         if (m_isValid) {

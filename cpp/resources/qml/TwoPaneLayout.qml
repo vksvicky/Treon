@@ -98,6 +98,8 @@ Item {
                         }
                         
                         Item { Layout.fillWidth: true }
+
+                        // (Removed preferences button per design guidance)
                         
                         // Pin/Unpin button (matching Swift implementation)
                         Text {
@@ -358,6 +360,9 @@ Item {
         }
     }
     
+    // Preferences dialog
+    // Preferences dialog moved to main.qml
+
     // Tree model is now handled inside JSONTreeView
     
     // Function to populate the ListModel from JSON data

@@ -257,10 +257,10 @@ void JSONModel::collapseAll()
 
 QVariantList JSONModel::getFlatList() const
 {
-    return getFlatListWithExpansion();
+    return getFlatListWithExpansion(-1);
 }
 
-QVariantList JSONModel::getFlatListWithExpansion() const
+QVariantList JSONModel::getFlatListWithExpansion(int maxDepth) const
 {
     QVariantList flatList;
     
@@ -301,6 +301,7 @@ QVariantList JSONModel::getFlatListWithExpansion() const
     // Second pass: build flat list respecting expansion states
     std::function<void(JSONItem*, int)> flattenItems = [&](JSONItem *item, int depth) {
         if (!item) return;
+        if (maxDepth >= 0 && depth > maxDepth) return; // respect depth cap
         
         int itemIndex = itemToIndex[item];
         

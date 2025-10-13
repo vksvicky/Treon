@@ -30,6 +30,9 @@ class SettingsManager : public QObject
     Q_PROPERTY(bool rememberWindowGeometry READ rememberWindowGeometry WRITE setRememberWindowGeometry NOTIFY rememberWindowGeometryChanged)
     Q_PROPERTY(QByteArray windowGeometry READ windowGeometry WRITE setWindowGeometry NOTIFY windowGeometryChanged)
     Q_PROPERTY(QByteArray windowState READ windowState WRITE setWindowState NOTIFY windowStateChanged)
+    // JSON viewer preferences
+    // null (QVariant::Invalid) means unlimited depth
+    Q_PROPERTY(QVariant jsonMaxDepth READ jsonMaxDepth WRITE setJsonMaxDepth NOTIFY jsonMaxDepthChanged)
 
 public:
     explicit SettingsManager(QObject *parent = nullptr);
@@ -51,6 +54,7 @@ public:
     bool rememberWindowGeometry() const;
     QByteArray windowGeometry() const;
     QByteArray windowState() const;
+    QVariant jsonMaxDepth() const; // null => unlimited
 
     // Setters
     void setLanguage(const QString &language);
@@ -68,6 +72,7 @@ public:
     void setRememberWindowGeometry(bool remember);
     void setWindowGeometry(const QByteArray &geometry);
     void setWindowState(const QByteArray &state);
+    void setJsonMaxDepth(const QVariant &depth); // set invalid QVariant for unlimited
 
     // Utility methods
     void addRecentFile(const QString &filePath);
@@ -102,6 +107,7 @@ signals:
     void rememberWindowGeometryChanged();
     void windowGeometryChanged();
     void windowStateChanged();
+    void jsonMaxDepthChanged();
     void settingsLoaded();
     void settingsSaved();
     void settingsReset();

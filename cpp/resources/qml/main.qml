@@ -48,6 +48,32 @@ ApplicationWindow {
             }
         }
     }
+
+    // Shared SettingsManager for PreferencesView
+    SettingsManager { id: settingsManager }
+
+    // Preferences dialog (centralized)
+    Window {
+        id: prefsDialog
+        modality: Qt.ApplicationModal
+        title: qsTr("Preferences")
+        flags: Qt.Window | Qt.WindowTitleHint | Qt.WindowCloseButtonHint | Qt.CustomizeWindowHint
+        width: 420
+        height: 220
+        visible: false
+        onClosing: twoPane.updateJSONModel()
+
+        PreferencesView { 
+            anchors.fill: parent
+            settingsManager: settingsManager
+            onPreferencesSaved: {
+                twoPane.updateJSONModel()
+            }
+            onCloseRequested: {
+                prefsDialog.visible = false
+            }
+        }
+    }
     
     // Menu Bar - matches original Swift app structure
     menuBar: MenuBar {
@@ -60,7 +86,7 @@ ApplicationWindow {
             Action {
                 text: qsTr("Preferences...")
                 shortcut: "Ctrl+,"
-                onTriggered: app.showPreferences()
+                onTriggered: prefsDialog.visible = true
             }
             MenuSeparator {}
             Action {
@@ -351,12 +377,12 @@ ApplicationWindow {
         
         ColumnLayout {
             anchors.centerIn: parent
-            spacing: 60
+            spacing: 80
             
             // Header with icon and title
             ColumnLayout {
                 Layout.alignment: Qt.AlignHCenter
-                spacing: 12
+                spacing: 20
                 
                 // App icon with base64 embedded image
                 Item {
@@ -420,19 +446,23 @@ ApplicationWindow {
             
             // Two-column layout: Actions on left, Recent Files on right
             RowLayout {
+                id: middleSection
                 Layout.alignment: Qt.AlignHCenter
-                spacing: 60
-                Layout.maximumWidth: 800
+                spacing: 84
+                Layout.preferredWidth: 720
+                Layout.maximumWidth: 720
                 
                 // Left column - Action buttons
                 ColumnLayout {
-                    Layout.alignment: Qt.AlignHCenter
-                    spacing: 16
+                    Layout.alignment: Qt.AlignTop | Qt.AlignLeft
+                    Layout.preferredWidth: 340
+                    Layout.maximumWidth: 340
+                    spacing: 20
                     
                     // Primary actions
                     RowLayout {
                         Layout.alignment: Qt.AlignHCenter
-                        spacing: 12
+                        spacing: 16
                         
                             Button {
                                 text: qsTr("Open File")
@@ -486,7 +516,7 @@ ApplicationWindow {
                     // Secondary actions
                     RowLayout {
                         Layout.alignment: Qt.AlignHCenter
-                        spacing: 12
+                        spacing: 16
                         
                             Button {
                                 text: qsTr("From Pasteboard")
@@ -570,74 +600,104 @@ ApplicationWindow {
                     }
                 }
                 
+                // Spacer to push recent files to the right edge
+                Item { Layout.fillWidth: true }
+
                 // Right column - Recent files
                 ColumnLayout {
-                    Layout.alignment: Qt.AlignTop
-                    Layout.maximumWidth: 300
-                    spacing: 12
+                    Layout.alignment: Qt.AlignTop | Qt.AlignRight
+                    Layout.preferredWidth: 340
+                    Layout.maximumWidth: 340
+                    spacing: 16
                     
-                        Button {
+                    // Recent Files header
+                    RowLayout {
+                        Layout.alignment: Qt.AlignLeft
+                        spacing: 8
+                        
+                        Text {
                             text: qsTr("Recent Files")
                             font.pointSize: 14
                             font.weight: Font.Medium
-                            Layout.alignment: Qt.AlignHCenter
-                            onClicked: recentFilesExpanded = !recentFilesExpanded
-                        
-                        background: Rectangle {
-                            color: "transparent"
+                            color: constants.colorPrimary
                         }
                         
-                        contentItem: RowLayout {
-                            Text {
-                                text: parent.parent.text
-                                font: parent.parent.font
-                                color: constants.colorPrimary
-                            }
-                            Text {
-                                text: recentFilesExpanded ? "▲" : "▼"
-                                font.pointSize: 10
-                                color: constants.colorPrimary
+                        Text {
+                            text: recentFilesExpanded ? "▲" : "▼"
+                            font.pointSize: 10
+                            color: constants.colorPrimary
+                            
+                            MouseArea {
+                                anchors.fill: parent
+                                onClicked: recentFilesExpanded = !recentFilesExpanded
                             }
                         }
                     }
                     
+                    // Recent Files tree structure
                     ColumnLayout {
-                        Layout.alignment: Qt.AlignHCenter
-                        spacing: 6
+                        Layout.alignment: Qt.AlignLeft
+                        Layout.leftMargin: 20
+                        spacing: 4
                         visible: recentFilesExpanded
                         
                         Repeater {
-                            model: app.historyEntries
-                            delegate: Button {
-                                text: modelData.split('/').pop()
-                                font.pointSize: 12
-                                Layout.preferredWidth: 280
-                                Layout.alignment: Qt.AlignHCenter
-                                onClicked: app.openFromHistory(modelData)
+                            model: app.recentFiles
+                            delegate: RowLayout {
+                                Layout.alignment: Qt.AlignLeft
+                                spacing: 8
                                 
-                                background: Rectangle {
-                                    color: parent.pressed ? "#f0f0f0" : "transparent"
-                                    radius: 4
+                                // Tree connector
+                                Text {
+                                    text: "├─"
+                                    font.pointSize: 10
+                                    color: constants.colorSecondary
+                                    Layout.preferredWidth: 20
                                 }
                                 
-                                contentItem: Text {
-                                    text: parent.text
-                                    font: parent.font
-                                    color: constants.colorPrimary
-                                    horizontalAlignment: Text.AlignLeft
-                                    verticalAlignment: Text.AlignVCenter
-                                    elide: Text.ElideRight
+                                // File button
+                                Button {
+                                    text: modelData.split('/').pop()
+                                    font.pointSize: 12
+                                    Layout.fillWidth: true
+                                    onClicked: app.openFile(Qt.resolvedUrl("file://" + modelData))
+                                    
+                                    background: Rectangle {
+                                        color: parent.pressed ? "#f0f0f0" : "transparent"
+                                        radius: 4
+                                    }
+                                    
+                                    contentItem: Text {
+                                        text: parent.text
+                                        font: parent.font
+                                        color: constants.colorPrimary
+                                        horizontalAlignment: Text.AlignLeft
+                                        verticalAlignment: Text.AlignVCenter
+                                        elide: Text.ElideRight
+                                    }
                                 }
                             }
                         }
                         
+                        // No recent files message
+                        RowLayout {
+                            Layout.alignment: Qt.AlignLeft
+                            spacing: 8
+                            visible: app.recentFiles.length === 0
+                            
+                            Text {
+                                text: "├─"
+                                font.pointSize: 10
+                                color: constants.colorSecondary
+                                Layout.preferredWidth: 20
+                            }
+                            
                             Text {
                                 text: qsTr("No recent files")
                                 font.pointSize: 12
                                 color: constants.colorSecondary
-                                Layout.alignment: Qt.AlignHCenter
-                                visible: app.historyEntries.length === 0
                             }
+                        }
                     }
                 }
             }
@@ -645,8 +705,8 @@ ApplicationWindow {
             // Drag and drop hint
             Rectangle {
                 Layout.alignment: Qt.AlignHCenter
-                Layout.preferredWidth: 400
-                Layout.preferredHeight: 80
+                Layout.preferredWidth: middleSection.width
+                Layout.preferredHeight: 150
                 color: "transparent"
                 border.color: constants.colorTertiary
                 border.width: 2
@@ -705,6 +765,7 @@ ApplicationWindow {
             
             // Main content area
             TwoPaneLayout {
+                id: twoPane
                 Layout.fillWidth: true
                 Layout.fillHeight: true
             }

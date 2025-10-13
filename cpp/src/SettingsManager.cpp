@@ -21,6 +21,7 @@ const int SettingsManager::DEFAULT_AUTO_SAVE_INTERVAL = 300; // 5 minutes
 const bool SettingsManager::DEFAULT_CHECK_FOR_UPDATES = true;
 const int SettingsManager::DEFAULT_MAX_RECENT_FILES = 10;
 const bool SettingsManager::DEFAULT_REMEMBER_WINDOW_GEOMETRY = true;
+// JSON: default max depth is unlimited => store as invalid QVariant
 
 SettingsManager::SettingsManager(QObject *parent)
     : QObject(parent)
@@ -85,6 +86,10 @@ void SettingsManager::initializeDefaults()
     }
     if (!m_settings->contains("rememberWindowGeometry")) {
         m_settings->setValue("rememberWindowGeometry", DEFAULT_REMEMBER_WINDOW_GEOMETRY);
+    }
+    if (!m_settings->contains("jsonMaxDepth")) {
+        // Store as empty to indicate unlimited depth
+        m_settings->setValue("jsonMaxDepth", QVariant());
     }
 }
 
@@ -162,6 +167,15 @@ QByteArray SettingsManager::windowGeometry() const
 QByteArray SettingsManager::windowState() const
 {
     return m_settings->value("windowState", QByteArray()).toByteArray();
+}
+
+QVariant SettingsManager::jsonMaxDepth() const
+{
+    QVariant v = m_settings->value("jsonMaxDepth");
+    if (!v.isValid() || v.toString().isEmpty()) {
+        return QVariant(); // unlimited
+    }
+    return v;
 }
 
 // Setters
@@ -282,6 +296,17 @@ void SettingsManager::setWindowState(const QByteArray &state)
     if (this->windowState() != state) {
         m_settings->setValue("windowState", state);
         emit windowStateChanged();
+    }
+}
+
+void SettingsManager::setJsonMaxDepth(const QVariant &depth)
+{
+    QVariant current = m_settings->value("jsonMaxDepth");
+    // Consider both invalid/empty as equal
+    bool same = (!current.isValid() && !depth.isValid()) || (current == depth);
+    if (!same) {
+        m_settings->setValue("jsonMaxDepth", depth);
+        emit jsonMaxDepthChanged();
     }
 }
 

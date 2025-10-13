@@ -47,7 +47,8 @@ public:
     
     // Flat list for ListView
     QVariantList getFlatList() const;
-    QVariantList getFlatListWithExpansion() const;
+    // maxDepth < 0 => unlimited
+    QVariantList getFlatListWithExpansion(int maxDepth = -1) const;
     
     // Tree expansion management
     void setItemExpanded(int index, bool expanded);

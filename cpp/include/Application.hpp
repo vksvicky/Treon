@@ -108,9 +108,11 @@ public:
     Q_INVOKABLE QVariantList getJSONFlatList() const;
     Q_INVOKABLE void setItemExpanded(int index, bool expanded);
     Q_INVOKABLE bool isItemExpanded(int index) const;
+    Q_INVOKABLE void showPreferences();
 
 signals:
     void jsonModelUpdated();
+    void openPreferencesRequested();
 
 public slots:
     // File operations

@@ -66,6 +66,8 @@ QtObject {
     readonly property int buttonHeightMedium: 32 // Standard buttons
     readonly property int buttonHeightSmall: 28  // Small buttons
     readonly property int buttonHeightTiny: 24   // Tiny buttons
+    // Common input widths
+    readonly property int inputWidthSmall: 80
     
     // Header dimensions
     readonly property int headerHeightLarge: 48  // Large headers
