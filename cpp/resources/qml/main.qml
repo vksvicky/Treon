@@ -35,7 +35,7 @@ ApplicationWindow {
     
     Application {
         id: app
-        onErrorOccurred: {
+        onErrorOccurred: function(error) {
             errorDialog.text = error
             errorDialog.open()
         }
@@ -925,16 +925,28 @@ ApplicationWindow {
         }
     }
     
-    // Error dialog
-    Popup {
+    // Error dialog - proper modal alert
+    Dialog {
         id: errorDialog
+        title: "JSON Error"
         modal: true
-        focus: true
+        anchors.centerIn: parent
+        width: Math.min(400, parent.width * 0.8)
+        height: Math.min(200, parent.height * 0.6)
+        
         property alias text: errorText.text
         
-        Text {
-            id: errorText
-            wrapMode: Text.WordWrap
+        standardButtons: Dialog.Ok
+        
+        ScrollView {
+            anchors.fill: parent
+            Text {
+                id: errorText
+                wrapMode: Text.WordWrap
+                font.family: constants.fontFamily
+                font.pixelSize: 12
+                color: constants.colorPrimary
+            }
         }
     }
     

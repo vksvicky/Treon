@@ -229,6 +229,8 @@ signals:
     void jsonLoaded(const QString &json);
     void jsonFormatted(const QString &json);
     void jsonModelChanged();
+    // Validation result: ok, message, errorOffset (-1 if none)
+    void jsonValidationResult(bool ok, const QString &message, int errorOffset);
     void queryExecuted(const QString &result);
     void errorOccurred(const QString &error);
     void aboutDialogRequested();

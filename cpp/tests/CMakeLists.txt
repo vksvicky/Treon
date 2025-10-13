@@ -115,16 +115,19 @@ set_tests_properties(json_benchmark PROPERTIES
 # INTEGRATION TESTS
 # =============================================================================
 
-# Integration test sources (BDD-style)
-file(GLOB INTEGRATION_TEST_SOURCES "integration/features/steps/*.cpp")
+# Integration test sources (BDD-style and functional tests)
+file(GLOB INTEGRATION_FUNCTIONAL_SOURCES "integration/*.cpp")
 
-# Create integration test executable
-if(INTEGRATION_TEST_SOURCES)
-    add_executable(treon_integration_tests 
-        ${INTEGRATION_TEST_SOURCES}
+# Create individual integration test executables
+foreach(INTEGRATION_TEST_SOURCE ${INTEGRATION_FUNCTIONAL_SOURCES})
+    get_filename_component(TEST_NAME ${INTEGRATION_TEST_SOURCE} NAME_WE)
+    
+    add_executable(${TEST_NAME} 
+        ${INTEGRATION_TEST_SOURCE}
+        ${COMMON_SOURCES}
     )
     
-    target_link_libraries(treon_integration_tests
+    target_link_libraries(${TEST_NAME}
         PRIVATE
             Qt6::Test
             Qt6::Core
@@ -134,25 +137,67 @@ if(INTEGRATION_TEST_SOURCES)
             treon_app_lib
     )
     
-    target_include_directories(treon_integration_tests PRIVATE 
+    target_include_directories(${TEST_NAME} PRIVATE 
         ${CMAKE_SOURCE_DIR}/include
         ${CMAKE_SOURCE_DIR}/src
         ${CMAKE_CURRENT_SOURCE_DIR}/common
     )
     
-    set_target_properties(treon_integration_tests PROPERTIES
+    set_target_properties(${TEST_NAME} PROPERTIES
         AUTOMOC ON
         AUTORCC ON
         AUTOUIC ON
     )
     
     # Add to CTest
-    add_test(NAME integration_tests COMMAND treon_integration_tests)
-    set_tests_properties(integration_tests PROPERTIES
+    add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME})
+    set_tests_properties(${TEST_NAME} PROPERTIES
         TIMEOUT 600
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
     )
-endif()
+endforeach()
+
+# BDD-style integration tests (step definitions)
+file(GLOB BDD_STEP_SOURCES "integration/features/steps/*.cpp")
+
+# Create individual BDD test executables
+foreach(BDD_TEST_SOURCE ${BDD_STEP_SOURCES})
+    get_filename_component(TEST_NAME ${BDD_TEST_SOURCE} NAME_WE)
+    
+    add_executable(${TEST_NAME} 
+        ${BDD_TEST_SOURCE}
+        ${COMMON_SOURCES}
+    )
+    
+    target_link_libraries(${TEST_NAME}
+        PRIVATE
+            Qt6::Test
+            Qt6::Core
+            Qt6::Widgets
+            Qt6::Quick
+            Qt6::QuickDialogs2
+            treon_app_lib
+    )
+    
+    target_include_directories(${TEST_NAME} PRIVATE 
+        ${CMAKE_SOURCE_DIR}/include
+        ${CMAKE_SOURCE_DIR}/src
+        ${CMAKE_CURRENT_SOURCE_DIR}/common
+    )
+    
+    set_target_properties(${TEST_NAME} PROPERTIES
+        AUTOMOC ON
+        AUTORCC ON
+        AUTOUIC ON
+    )
+    
+    # Add to CTest
+    add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME})
+    set_tests_properties(${TEST_NAME} PROPERTIES
+        TIMEOUT 600
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+    )
+endforeach()
 
 # =============================================================================
 # COVERAGE REPORTS

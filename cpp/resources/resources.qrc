@@ -11,6 +11,7 @@
         <file>qml/JSONTextView.qml</file>
         <file>qml/Constants.qml</file>
         <file>qml/PreferencesView.qml</file>
+        <file>qml/NotificationDialog.qml</file>
         <file>qml/qmldir</file>
     </qresource>
 </RCC>

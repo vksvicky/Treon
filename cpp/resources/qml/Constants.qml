@@ -60,6 +60,11 @@ QtObject {
     readonly property color colorPressed: "#e9ecef"         // Pressed state
     readonly property color colorSelection: "#e3f2fd"       // Selection background (light blue)
     readonly property color colorSelectionText: "#1976d2"   // Selection text (blue)
+    readonly property color colorAccent: "#007aff"          // Accent color (blue)
+    readonly property color colorHighlight: "#0056b3"       // Highlight color (darker blue)
+    readonly property color colorSuccess: "#34c759"         // Success color (green)
+    readonly property color colorError: "#ff3b30"           // Error color (red)
+    readonly property color colorWarning: "#ff9500"         // Warning color (orange)
     
     // Button dimensions
     readonly property int buttonHeightLarge: 36  // Large buttons

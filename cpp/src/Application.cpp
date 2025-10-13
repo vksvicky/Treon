@@ -332,13 +332,13 @@ QStringList Application::historyEntries() const
 // File operations
 void Application::openFile(const QUrl &fileUrl)
 {
-    setStatusMessage(strings::status::OPENING_FILE);
-    
     QString filePath = fileUrl.toLocalFile();
     if (m_jsonFileManager->openFile(filePath)) {
         m_currentFile = filePath;
         m_jsonText = m_jsonFileManager->getCurrentJSONString();
         m_isValid = m_jsonFileManager->isValidJSON();
+        
+        qDebug() << "File opened, JSON valid:" << m_isValid;
         
         // Add to recent files
         m_settingsManager->addRecentFile(filePath);
@@ -356,9 +356,8 @@ void Application::openFile(const QUrl &fileUrl)
         emit fileOpened(m_currentFile);
         emit jsonLoaded(m_jsonText);
         
-        setStatusMessage(strings::status::FILE_OPENED_SUCCESSFULLY);
     } else {
-        setStatusMessage(m_jsonFileManager->getErrorMessage());
+        qDebug() << "File open failed:" << m_jsonFileManager->getErrorMessage();
         emit errorOccurred(m_jsonFileManager->getErrorMessage());
     }
 }
@@ -379,7 +378,6 @@ void Application::saveFile(const QUrl &fileUrl)
         m_currentFile = filePath;
         emit currentFileChanged();
         emit fileSaved(m_currentFile);
-        setStatusMessage(strings::status::FILE_SAVED_SUCCESSFULLY);
     } else {
         setStatusMessage(m_jsonFileManager->getErrorMessage());
         emit errorOccurred(m_jsonFileManager->getErrorMessage());
@@ -403,7 +401,6 @@ void Application::createNewFile()
     emit jsonModelChanged();
     emit jsonLoaded(m_jsonText);
     
-    setStatusMessage(strings::status::NEW_FILE_CREATED);
 }
 
 void Application::closeFile()
@@ -422,17 +419,20 @@ void Application::closeFile()
     emit jsonModelChanged();
     emit fileClosed();
     
-    setStatusMessage(strings::status::FILE_CLOSED);
 }
 
 // JSON operations
 void Application::validateJSON(const QString &json)
 {
+    qDebug() << "validateJSON called with JSON length:" << json.length();
+    
     // Simple JSON validation
     QJsonParseError error;
     QJsonDocument doc = QJsonDocument::fromJson(json.toUtf8(), &error);
     
     bool valid = (error.error == QJsonParseError::NoError);
+    qDebug() << "JSON parse result - valid:" << valid << "error:" << error.errorString() << "offset:" << error.offset;
+    
     if (m_isValid != valid) {
         m_isValid = valid;
         emit isValidChanged();
@@ -443,8 +443,13 @@ void Application::validateJSON(const QString &json)
         m_jsonModel->loadJSON(doc);
         emit jsonModelChanged();
         setErrorMessage("");
+        emit jsonValidationResult(true, QStringLiteral("JSON is valid"), -1);
+        qDebug() << "JSON validation successful";
     } else {
-        setErrorMessage(strings::errors::JSON_ERROR.arg(error.errorString()));
+        const QString msg = strings::errors::JSON_ERROR.arg(error.errorString());
+        qDebug() << "JSON validation failed:" << msg;
+        setErrorMessage(msg);
+        emit jsonValidationResult(false, msg, static_cast<int>(error.offset));
     }
 }
 

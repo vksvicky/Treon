@@ -61,6 +61,7 @@ public:
     QString getErrorMessage() const;
     int getTotalItems() const;
     int getMaxDepth() const;
+    int getMaxDepth(const QJsonDocument &doc) const;
 
 signals:
     void jsonLoaded();

@@ -445,6 +445,34 @@ int JSONModel::getMaxDepth() const
     return maxDepth;
 }
 
+int JSONModel::getMaxDepth(const QJsonDocument &doc) const
+{
+    int maxDepth = 0;
+    std::function<void(const QJsonValue&, int)> findDepth = [&](const QJsonValue &value, int depth) {
+        maxDepth = qMax(maxDepth, depth);
+        
+        if (value.isObject()) {
+            QJsonObject obj = value.toObject();
+            for (auto it = obj.begin(); it != obj.end(); ++it) {
+                findDepth(it.value(), depth + 1);
+            }
+        } else if (value.isArray()) {
+            QJsonArray arr = value.toArray();
+            for (const QJsonValue &item : arr) {
+                findDepth(item, depth + 1);
+            }
+        }
+    };
+    
+    if (doc.isObject()) {
+        findDepth(doc.object(), 0);
+    } else if (doc.isArray()) {
+        findDepth(doc.array(), 0);
+    }
+    
+    return maxDepth;
+}
+
 void JSONModel::setupModelData(const QJsonValue &value, JSONItem *parent)
 {
     if (value.isObject()) {

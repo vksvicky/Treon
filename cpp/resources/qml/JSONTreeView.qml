@@ -148,7 +148,7 @@ ScrollView {
         return treeView.currentIndex
     }
 
-    // Tree view using ListView with Dadroit-style delegate
+    // Tree view using ListView with -style delegate
     ListView {
         id: treeView
         anchors.fill: parent
@@ -166,13 +166,14 @@ ScrollView {
             
             RowLayout {
                 anchors.fill: parent
-                anchors.leftMargin: 8 + (model.depth * 16) // Proper indentation
+                anchors.leftMargin: 8 + ((typeof model !== 'undefined' && model.depth !== undefined) ? model.depth * 16 : 0)
                 anchors.rightMargin: 8
                 spacing: 6
                 
                 // Indentation guides
                 Repeater {
-                    model: model.depth
+                    property int itemDepth: (typeof model !== 'undefined' && model.depth !== undefined) ? model.depth : 0
+                    model: itemDepth
                     delegate: Rectangle {
                         width: 16
                         height: parent.height
@@ -182,7 +183,7 @@ ScrollView {
                             x: 7
                             width: 1
                             height: parent.height
-                            color: "#3a3d4a"
+                            color: constants.colorBorder
                         }
                     }
                 }
@@ -193,7 +194,7 @@ ScrollView {
                     height: 12
                     text: model.hasChildren ? (model.expanded ? "▼" : "▶") : ""
                     font.pixelSize: 10
-                    color: "#8be9fd" // Cyan color for visibility
+                    color: constants.colorAccent // Cyan color for visibility
                     verticalAlignment: Text.AlignVCenter
                     horizontalAlignment: Text.AlignHCenter
                     
@@ -211,7 +212,7 @@ ScrollView {
                 Text {
                     text: model.key.startsWith("Array[") ? "≡" : getTypeIcon(model.type)
                     font.pixelSize: 10
-                    color: model.key.startsWith("Array[") ? "#8be9fd" : getTypeIconColor(model.type)
+                    color: model.key.startsWith("Array[") ? constants.colorAccent : getTypeIconColor(model.type)
                     width: 12
                     verticalAlignment: Text.AlignVCenter
                     horizontalAlignment: Text.AlignHCenter
@@ -224,7 +225,7 @@ ScrollView {
                     text: model.key
                     font.family: constants.fontFamily
                     font.pixelSize: 13
-                    color: model.key.startsWith("Array[") ? "#f8f8f2" : "#8be9fd" // White for root array, cyan for others
+                    color: model.key.startsWith("Array[") ? constants.colorPrimary : constants.colorAccent // White for root array, cyan for others
                     font.weight: model.key.startsWith("Array[") ? Font.Bold : Font.Normal // Bold for root
                     elide: Text.ElideRight
                     wrapMode: Text.NoWrap
@@ -238,7 +239,7 @@ ScrollView {
                     text: model.key.startsWith("Array[") ? "" : (model.hasChildren && !model.expanded ? getCollapsedPreview(model.type) : getFormattedValue(model.type, model.value, model.hasChildren))
                     font.family: constants.fontFamily
                     font.pixelSize: 13
-                    color: "#8be9fd" // Force cyan color for visibility
+                    color: constants.colorAccent // Force cyan color for visibility
                     elide: Text.ElideRight
                     wrapMode: Text.NoWrap
                     maximumLineCount: 1
@@ -282,7 +283,7 @@ ScrollView {
         }
     }
     
-    // Helper functions matching Dadroit's exact color scheme
+    // Helper functions matching 's exact color scheme
     function getTypeIcon(type) {
         switch (type) {
         case 0: return "N" // Null
@@ -298,11 +299,11 @@ ScrollView {
     function getTypeIconColor(type) {
         switch (type) {
         case 0: return "#6272a4" // Null - comment color
-        case 1: return "#8be9fd" // Bool - cyan (same as others)
-        case 2: return "#8be9fd" // Number - cyan (same as others)
-        case 3: return "#8be9fd" // String - cyan
-        case 4: return "#8be9fd" // Object - cyan
-        case 5: return "#8be9fd" // Array - cyan
+        case 1: return constants.colorAccent // Bool - cyan (same as others)
+        case 2: return constants.colorAccent // Number - cyan (same as others)
+        case 3: return constants.colorAccent // String - cyan
+        case 4: return constants.colorAccent // Object - cyan
+        case 5: return constants.colorAccent // Array - cyan
         default: return "#6272a4"
         }
     }
@@ -310,12 +311,12 @@ ScrollView {
     function getValueColor(type) {
         switch (type) {
         case 0: return "#6272a4" // Null - comment color
-        case 1: return "#8be9fd" // Bool - cyan (same as strings)
-        case 2: return "#8be9fd" // Number - cyan (same as strings)
-        case 3: return "#8be9fd" // String - cyan
-        case 4: return "#8be9fd" // Object - cyan
-        case 5: return "#8be9fd" // Array - cyan
-        default: return "#f8f8f2" // Default text color
+        case 1: return constants.colorAccent // Bool - cyan (same as strings)
+        case 2: return constants.colorAccent // Number - cyan (same as strings)
+        case 3: return constants.colorAccent // String - cyan
+        case 4: return constants.colorAccent // Object - cyan
+        case 5: return constants.colorAccent // Array - cyan
+        default: return constants.colorPrimary // Default text color
         }
     }
     

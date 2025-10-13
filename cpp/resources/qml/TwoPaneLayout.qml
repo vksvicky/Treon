@@ -39,16 +39,16 @@ Item {
         spacing: 0
         
                // Left pane - JSON Tree Navigator (matching Swift implementation)
-               Rectangle {
-                   id: leftPane
-                   Layout.fillHeight: true
-                   Layout.preferredWidth: root.isNavigatorCollapsed ? constants.collapsedNavigatorWidth : Math.max(root.minNavigatorWidth, Math.min(root.maxNavigatorWidth, root.navigatorWidth))
-                   Layout.minimumWidth: root.isNavigatorCollapsed ? constants.collapsedNavigatorWidth : root.minNavigatorWidth
-                   Layout.maximumWidth: root.isNavigatorCollapsed ? constants.collapsedNavigatorWidth : root.maxNavigatorWidth
-                   color: "#282a36" // Dadroit dark background
-                   border.color: "#44475a" // Dadroit border color
-                   border.width: constants.borderNormal
-                   visible: !root.isNavigatorCollapsed
+        Rectangle {
+            id: leftPane
+            Layout.fillHeight: true
+            Layout.preferredWidth: root.isNavigatorCollapsed ? constants.collapsedNavigatorWidth : Math.max(root.minNavigatorWidth, Math.min(root.maxNavigatorWidth, root.navigatorWidth))
+            Layout.minimumWidth: root.isNavigatorCollapsed ? constants.collapsedNavigatorWidth : root.minNavigatorWidth
+            Layout.maximumWidth: root.isNavigatorCollapsed ? constants.collapsedNavigatorWidth : root.maxNavigatorWidth
+            color: constants.colorBackground
+            border.color: constants.colorBorder
+            border.width: constants.borderNormal
+            visible: !root.isNavigatorCollapsed
             
             ColumnLayout {
                 anchors.fill: parent
@@ -59,8 +59,8 @@ Item {
                 Rectangle {
                     Layout.fillWidth: true
                     Layout.preferredHeight: 32
-                    color: "#44475a" // Dadroit header background
-                    border.color: "#6272a4" // Dadroit border
+                    color: constants.colorSurface
+                    border.color: constants.colorSecondary
                     border.width: constants.borderNormal
                     
                     RowLayout {
@@ -74,7 +74,7 @@ Item {
                             text: root.isNavigatorCollapsed ? "▶" : "◀"
                             font.family: constants.fontFamily
                             font.pixelSize: 12
-                            color: root.isNavigatorPinned ? "#6272a4" : "#8be9fd"
+                            color: root.isNavigatorPinned ? constants.colorSecondary : constants.colorAccent
                             Layout.alignment: Qt.AlignVCenter
                             width: 16
                             horizontalAlignment: Text.AlignHCenter
@@ -93,7 +93,7 @@ Item {
                             font.family: constants.fontFamily
                             font.pixelSize: 14
                             font.weight: Font.Medium
-                            color: "#f8f8f2" // Dadroit foreground
+                            color: constants.colorPrimary
                             Layout.alignment: Qt.AlignVCenter
                         }
                         
@@ -105,7 +105,7 @@ Item {
                         Text {
                             text: root.isNavigatorPinned ? "🔒" : "🔓"
                             font.pixelSize: 12
-                            color: root.isNavigatorPinned ? "#8be9fd" : "#6272a4"
+                            color: root.isNavigatorPinned ? constants.colorAccent : constants.colorSecondary
                             Layout.alignment: Qt.AlignVCenter
                             width: 16
                             horizontalAlignment: Text.AlignHCenter
@@ -118,21 +118,20 @@ Item {
                             }
                         }
                         
-                        // Dadroit-style buttons
+                        // Action buttons
                         Text {
                             text: "Expand All"
                             font.family: constants.fontFamily
                             font.pixelSize: 12
-                            color: "#8be9fd" // Dadroit cyan
+                            color: constants.colorAccent                            
                             Layout.alignment: Qt.AlignVCenter
                             
                             MouseArea {
                                 anchors.fill: parent
                                 hoverEnabled: true
-                                onClicked: app.expandAllNodes()
-                                
-                                onEntered: parent.color = "#50fa7b" // Dadroit green
-                                onExited: parent.color = "#8be9fd" // Dadroit cyan
+                                onClicked: app.expandAllNodes()                                
+                                onEntered: parent.color = constants.colorSuccess                                
+                                onExited: parent.color = constants.colorAccent
                             }
                         }
                         
@@ -140,7 +139,7 @@ Item {
                             text: "Collapse All"
                             font.family: constants.fontFamily
                             font.pixelSize: 12
-                            color: "#8be9fd" // Dadroit cyan
+                            color: constants.colorAccent                            
                             Layout.alignment: Qt.AlignVCenter
                             
                             MouseArea {
@@ -148,8 +147,8 @@ Item {
                                 hoverEnabled: true
                                 onClicked: app.collapseAllNodes()
                                 
-                                onEntered: parent.color = "#50fa7b" // Dadroit green
-                                onExited: parent.color = "#8be9fd" // Dadroit cyan
+                                onEntered: parent.color = constants.colorSuccess                                
+                                onExited: parent.color = constants.colorAccent
                             }
                         }
                     }
@@ -179,8 +178,8 @@ Item {
             id: collapsedNavigatorIndicator
             Layout.fillHeight: true
             Layout.preferredWidth: constants.collapsedNavigatorWidth
-            color: "#282a36"
-            border.color: "#44475a"
+            color: constants.colorBackground
+            border.color: constants.colorSurface
             border.width: constants.borderNormal
             visible: root.isNavigatorCollapsed
             
@@ -194,10 +193,10 @@ Item {
                     text: "▶"
                     font.family: constants.fontFamily
                     font.pixelSize: 10
-                    color: root.isNavigatorPinned ? "#6272a4" : "#8be9fd"
+                    color: root.isNavigatorPinned ? constants.colorSecondary : constants.colorAccent
                     Layout.alignment: Qt.AlignHCenter
                     horizontalAlignment: Text.AlignHCenter
-                    
+                            
                     MouseArea {
                         anchors.fill: parent
                         enabled: !root.isNavigatorPinned
@@ -216,7 +215,7 @@ Item {
             id: resizeHandle
             width: 1
             Layout.fillHeight: true
-            color: "#6272a4"
+            color: constants.colorSecondary
             visible: !root.isNavigatorCollapsed && !root.isNavigatorPinned
             
             MouseArea {
@@ -249,8 +248,8 @@ Item {
             id: rightPane
             Layout.fillHeight: true
             Layout.fillWidth: true
-                   color: "#282a36" // Dadroit dark background
-                   border.color: "#44475a" // Dadroit border color
+                   color: constants.colorBackground
+                   border.color: constants.colorSurface
                    border.width: constants.borderNormal
             
             ColumnLayout {
@@ -262,9 +261,9 @@ Item {
                 Rectangle {
                     Layout.fillWidth: true
                     Layout.preferredHeight: 32
-                           color: "#44475a" // Dadroit header background
-                           border.color: "#6272a4" // Dadroit border
-                           border.width: constants.borderNormal
+                    color: constants.colorSurface
+                    border.color: constants.colorSecondary
+                    border.width: constants.borderNormal
                     
                     RowLayout {
                         anchors.fill: parent
@@ -276,21 +275,21 @@ Item {
                         
                         Text {
                             text: "JSON Editor"
-                                   font.family: constants.fontFamily
-                                   font.pixelSize: 14
+                            font.family: constants.fontFamily
+                            font.pixelSize: 14
                             font.weight: Font.Medium
-                                   color: "#f8f8f2" // Dadroit foreground
-                                   Layout.alignment: Qt.AlignVCenter
+                            color: constants.colorPrimary
+                            Layout.alignment: Qt.AlignVCenter
                         }
                         
                         Item { Layout.fillWidth: true }
                         
-                        // Dadroit-style buttons
+                        // Action buttons
                         Text {
                             text: "Format"
                             font.family: constants.fontFamily
                             font.pixelSize: 12
-                            color: "#8be9fd" // Dadroit cyan
+                            color: constants.colorAccent
                             Layout.alignment: Qt.AlignVCenter
                             
                             MouseArea {
@@ -298,8 +297,8 @@ Item {
                                 hoverEnabled: true
                                 onClicked: app.formatJSON(textArea.text)
                                 
-                                onEntered: parent.color = "#50fa7b" // Dadroit green
-                                onExited: parent.color = "#8be9fd" // Dadroit cyan
+                                onEntered: parent.color = constants.colorSuccess
+                                onExited: parent.color = constants.colorAccent
                             }
                         }
                         
@@ -307,7 +306,7 @@ Item {
                             text: "Minify"
                             font.family: constants.fontFamily
                             font.pixelSize: 12
-                            color: "#8be9fd" // Dadroit cyan
+                            color: constants.colorAccent
                             Layout.alignment: Qt.AlignVCenter
                             
                             MouseArea {
@@ -315,25 +314,28 @@ Item {
                                 hoverEnabled: true
                                 onClicked: app.minifyJSON(textArea.text)
                                 
-                                onEntered: parent.color = "#50fa7b" // Dadroit green
-                                onExited: parent.color = "#8be9fd" // Dadroit cyan
+                                onEntered: parent.color = constants.colorSuccess
+                                onExited: parent.color = constants.colorAccent
                             }
                         }
                         
                         Text {
                             text: "Validate"
                             font.family: constants.fontFamily
-                            font.pixelSize: 12
-                            color: "#8be9fd" // Dadroit cyan
+                            font.pixelSize: constants.fontSizeSmall
+                            color: constants.colorAccent
                             Layout.alignment: Qt.AlignVCenter
                             
                             MouseArea {
                                 anchors.fill: parent
                                 hoverEnabled: true
-                                onClicked: app.validateJSON(textArea.text)
+                                onClicked: {
+                                    console.log("Validate button clicked manually")
+                                    app.validateJSON(textArea.content)
+                                }
                                 
-                                onEntered: parent.color = "#50fa7b" // Dadroit green
-                                onExited: parent.color = "#8be9fd" // Dadroit cyan
+                                onEntered: parent.color = constants.colorHighlight
+                                onExited: parent.color = constants.colorAccent
                             }
                         }
                     }
@@ -353,6 +355,34 @@ Item {
                         onTextChanged: {
                             // Update the JSON model when text changes
                             app.validateJSON(content)
+                        }
+
+                        // Highlight parse error position when signaled
+                        Connections {
+                            target: app
+                            function onJsonValidationResult(ok, message, errorOffset) {
+                                if (ok) {
+                                    // Success - clear any error highlighting and show notification
+                                    textArea.clearError()
+                                    // Show success notification dialog
+                                    notificationDialog.showSuccess("JSON Validation", "JSON is valid!")
+                                } else {
+                                    // Error - highlight only the specific problematic line
+                                    if (errorOffset >= 0 && errorOffset <= textArea.content.length) {
+                                        // Convert offset to line/column
+                                        var pos = textArea.offsetToLineColumn(errorOffset)
+                                        textArea.setError(pos.line, pos.column, message)
+                                        
+                                        // Move cursor to error position
+                                        textArea.cursorPosition = errorOffset
+                                    } else {
+                                        // No specific offset, just show error message
+                                        textArea.setError(-1, -1, message)
+                                    }
+                                    // Show error notification dialog
+                                    notificationDialog.showError("JSON Validation Error", message)
+                                }
+                            }
                         }
                     }
                 }
@@ -421,5 +451,10 @@ Item {
             console.log("JsonModel changed signal received from app, updating JSON model")
             updateJSONModel()
         }
+    }
+    
+    // Reusable notification dialog
+    NotificationDialog {
+        id: notificationDialog
     }
 }
