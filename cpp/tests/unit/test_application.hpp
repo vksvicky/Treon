@@ -15,6 +15,8 @@ private slots:
     void testApplicationCreation();
     void testFileOperations();
     void testJSONValidation();
+    void testJSONFormatting();
+    void testJSONMinification();
 
 private:
     treon::Application *m_app;

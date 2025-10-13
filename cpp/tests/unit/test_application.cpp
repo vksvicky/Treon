@@ -47,5 +47,69 @@ void TestApplication::testJSONValidation()
     QVERIFY(!m_app->errorMessage().isEmpty());
 }
 
+void TestApplication::testJSONFormatting()
+{
+    // Test formatting valid JSON
+    QString compactJson = "{\"test\":123,\"array\":[1,2,3]}";
+    
+    // First validate the JSON to set it in the application
+    m_app->validateJSON(compactJson);
+    QVERIFY(m_app->isValid());
+    
+    // Spy on signals
+    QSignalSpy jsonTextChangedSpy(m_app, &treon::Application::jsonTextChanged);
+    QSignalSpy jsonModelChangedSpy(m_app, &treon::Application::jsonModelChanged);
+    QSignalSpy jsonFormattedSpy(m_app, &treon::Application::jsonFormatted);
+    
+    m_app->formatJSON(compactJson);
+    
+    // Verify signals were emitted
+    QCOMPARE(jsonTextChangedSpy.count(), 1);
+    QCOMPARE(jsonModelChangedSpy.count(), 1);
+    QCOMPARE(jsonFormattedSpy.count(), 1);
+    
+    // Verify JSON was formatted (should be indented)
+    QString formattedJson = m_app->jsonText();
+    QVERIFY(formattedJson.contains('\n'));
+    QVERIFY(formattedJson.contains("  ")); // Should have indentation
+    
+    // Test formatting invalid JSON
+    QString invalidJson = "invalid json";
+    m_app->formatJSON(invalidJson);
+    QVERIFY(!m_app->errorMessage().isEmpty());
+}
+
+void TestApplication::testJSONMinification()
+{
+    // Test minifying valid JSON
+    QString formattedJson = "{\n  \"test\": 123,\n  \"array\": [1, 2, 3]\n}";
+    
+    // First validate the JSON to set it in the application
+    m_app->validateJSON(formattedJson);
+    QVERIFY(m_app->isValid());
+    
+    // Spy on signals
+    QSignalSpy jsonTextChangedSpy(m_app, &treon::Application::jsonTextChanged);
+    QSignalSpy jsonModelChangedSpy(m_app, &treon::Application::jsonModelChanged);
+    QSignalSpy jsonFormattedSpy(m_app, &treon::Application::jsonFormatted);
+    
+    m_app->minifyJSON(formattedJson);
+    
+    // Verify signals were emitted
+    QCOMPARE(jsonTextChangedSpy.count(), 1);
+    QCOMPARE(jsonModelChangedSpy.count(), 1);
+    QCOMPARE(jsonFormattedSpy.count(), 1);
+    
+    // Verify JSON was minified (should be compact)
+    QString minifiedJson = m_app->jsonText();
+    QVERIFY(!minifiedJson.contains('\n'));
+    QVERIFY(!minifiedJson.contains("  ")); // Should not have indentation
+    
+    // Test minifying invalid JSON
+    QString invalidJson = "invalid json";
+    m_app->minifyJSON(invalidJson);
+    QVERIFY(!m_app->errorMessage().isEmpty());
+}
+
 QTEST_MAIN(TestApplication)
 #include "test_application.moc"
