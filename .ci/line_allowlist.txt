@@ -1,0 +1,4 @@
+# Temporarily allow long files while refactoring
+cpp/src/Application.cpp
+cpp/src/JSONModel.cpp
+cpp/tests/benchmark/json/json_benchmark_suite.cpp

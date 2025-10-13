@@ -1,4 +1,4 @@
-#include "treon/Strings.hpp"
+#include "Strings.hpp"
 #include <QObject>
 
 namespace treon {

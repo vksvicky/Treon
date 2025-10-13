@@ -71,6 +71,7 @@ private:
     void generateReport(const BenchmarkResults &results);
     void generateReadingReport(const BenchmarkResults &results);
     QString formatBytes(qint64 bytes);
+    qint64 parseLargeJSONStreaming(const QString &filePath);
     
     JSONDataGenerator *m_dataGenerator;
 };

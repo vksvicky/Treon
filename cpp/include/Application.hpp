@@ -15,6 +15,8 @@ namespace treon {
 
 class JSONParser;
 class JSONViewModel;
+class JSONModel;
+class JSONFileManager;
 class FileManager;
 class ErrorHandler;
 class HistoryManager;
@@ -29,6 +31,7 @@ class Application : public QObject
     // Core properties
     Q_PROPERTY(QString currentFile READ currentFile NOTIFY currentFileChanged)
     Q_PROPERTY(QString jsonText READ jsonText NOTIFY jsonTextChanged)
+    Q_PROPERTY(QObject* jsonModel READ jsonModel NOTIFY jsonModelChanged)
     Q_PROPERTY(bool isValid READ isValid NOTIFY isValidChanged)
     Q_PROPERTY(bool isLoading READ isLoading NOTIFY isLoadingChanged)
     Q_PROPERTY(QString errorMessage READ errorMessage NOTIFY errorMessageChanged)
@@ -99,6 +102,15 @@ public:
     // History getters
     QStringList recentFiles() const;
     QStringList historyEntries() const;
+    
+    // JSON model getter
+    QObject* jsonModel() const;
+    Q_INVOKABLE QVariantList getJSONFlatList() const;
+    Q_INVOKABLE void setItemExpanded(int index, bool expanded);
+    Q_INVOKABLE bool isItemExpanded(int index) const;
+
+signals:
+    void jsonModelUpdated();
 
 public slots:
     // File operations
@@ -111,6 +123,8 @@ public slots:
     void validateJSON(const QString &json);
     void formatJSON(const QString &json);
     void minifyJSON(const QString &json);
+    void expandAllNodes();
+    void collapseAllNodes();
     
     // Query operations
     void clearQuery();
@@ -212,6 +226,7 @@ signals:
     void fileClosed();
     void jsonLoaded(const QString &json);
     void jsonFormatted(const QString &json);
+    void jsonModelChanged();
     void queryExecuted(const QString &result);
     void errorOccurred(const QString &error);
     void aboutDialogRequested();
@@ -234,6 +249,8 @@ private:
     // Core components
     JSONParser *m_parser;
     JSONViewModel *m_viewModel;
+    JSONModel *m_jsonModel;
+    JSONFileManager *m_jsonFileManager;
     FileManager *m_fileManager;
     ErrorHandler *m_errorHandler;
     HistoryManager *m_historyManager;

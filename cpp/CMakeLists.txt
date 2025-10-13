@@ -27,15 +27,15 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
 # Automatically discover source files
-file(GLOB_RECURSE CORE_HEADERS "include/treon/*.hpp")
+file(GLOB_RECURSE CORE_HEADERS "include/*.hpp")
 file(GLOB_RECURSE CORE_SOURCES "src/*.cpp")
 # Remove main.cpp, Application.cpp, and AboutWindow.cpp from core sources as they belong to the app
 list(REMOVE_ITEM CORE_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp")
 list(REMOVE_ITEM CORE_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/Application.cpp")
 list(REMOVE_ITEM CORE_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/AboutWindow.cpp")
 # Remove Application.hpp and AboutWindow.hpp from core headers as they belong to the app
-list(REMOVE_ITEM CORE_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/include/treon/Application.hpp")
-list(REMOVE_ITEM CORE_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/include/treon/AboutWindow.hpp")
+list(REMOVE_ITEM CORE_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/include/Application.hpp")
+list(REMOVE_ITEM CORE_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/include/AboutWindow.hpp")
 
 # Core library
 add_library(treon_core
@@ -55,16 +55,10 @@ target_link_libraries(treon_core
 
 # Application library (for sharing between main app and tests)
 add_library(treon_app_lib
-    include/treon/Application.hpp
-    include/treon/AboutWindow.hpp
-    include/treon/SettingsManager.hpp
-    include/treon/I18nManager.hpp
-    include/treon/Strings.hpp
+    include/Application.hpp
+    include/AboutWindow.hpp
     src/Application.cpp
     src/AboutWindow.cpp
-    src/SettingsManager.cpp
-    src/I18nManager.cpp
-    src/Strings.cpp
 )
 
 target_include_directories(treon_app_lib PUBLIC include)

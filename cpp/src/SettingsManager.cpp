@@ -1,4 +1,4 @@
-#include "treon/SettingsManager.hpp"
+#include "SettingsManager.hpp"
 #include <QDebug>
 #include <QApplication>
 #include <QFontDatabase>

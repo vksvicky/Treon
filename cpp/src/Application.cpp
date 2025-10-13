@@ -1,6 +1,8 @@
-#include "treon/Application.hpp"
-#include "treon/SettingsManager.hpp"
-#include "treon/Strings.hpp"
+#include "Application.hpp"
+#include "SettingsManager.hpp"
+#include "Strings.hpp"
+#include "JSONModel.hpp"
+#include "JSONFileManager.hpp"
 #include <QDebug>
 #include <QTimer>
 #include <QStandardPaths>
@@ -12,6 +14,8 @@ Application::Application(QObject *parent)
     : QObject(parent)
     , m_parser(nullptr)
     , m_viewModel(nullptr)
+    , m_jsonModel(new JSONModel(this))
+    , m_jsonFileManager(new JSONFileManager(this))
     , m_fileManager(nullptr)
     , m_errorHandler(nullptr)
     , m_historyManager(nullptr)
@@ -99,6 +103,38 @@ QString Application::currentFile() const
 QString Application::jsonText() const
 {
     return m_jsonText;
+}
+
+QObject* Application::jsonModel() const
+{
+    return m_jsonModel;
+}
+
+QVariantList Application::getJSONFlatList() const
+{
+    if (m_jsonModel) {
+        return m_jsonModel->getFlatList();
+    }
+    return QVariantList();
+}
+
+void Application::setItemExpanded(int index, bool expanded)
+{
+    qDebug() << "Application::setItemExpanded called with index:" << index << "expanded:" << expanded;
+    if (m_jsonModel) {
+        m_jsonModel->setItemExpanded(index, expanded);
+        emit jsonModelUpdated(); // Emit signal to trigger UI update
+    } else {
+        qWarning() << "JSON model is null!";
+    }
+}
+
+bool Application::isItemExpanded(int index) const
+{
+    if (m_jsonModel) {
+        return m_jsonModel->isItemExpanded(index);
+    }
+    return false;
 }
 
 bool Application::isValid() const
@@ -284,24 +320,54 @@ QStringList Application::historyEntries() const
 void Application::openFile(const QUrl &fileUrl)
 {
     setStatusMessage(strings::status::OPENING_FILE);
-    m_currentFile = fileUrl.toLocalFile();
-    m_jsonText = "{\n  \"example\": \"Hello World\",\n  \"count\": 42,\n  \"items\": [\"item1\", \"item2\"]\n}";
-    m_isValid = true;
     
-    emit currentFileChanged();
-    emit jsonTextChanged();
-    emit isValidChanged();
-    emit fileOpened(m_currentFile);
-    emit jsonLoaded(m_jsonText);
-    
-    setStatusMessage(strings::status::FILE_OPENED_SUCCESSFULLY);
+    QString filePath = fileUrl.toLocalFile();
+    if (m_jsonFileManager->openFile(filePath)) {
+        m_currentFile = filePath;
+        m_jsonText = m_jsonFileManager->getCurrentJSONString();
+        m_isValid = m_jsonFileManager->isValidJSON();
+        
+        // Load JSON into the model
+        if (m_isValid) {
+            m_jsonModel->loadJSON(m_jsonFileManager->getCurrentDocument());
+            qDebug() << "Application: JSON loaded into model, emitting signals";
+        }
+        
+        emit currentFileChanged();
+        emit jsonTextChanged();
+        emit isValidChanged();
+        emit jsonModelChanged();
+        emit fileOpened(m_currentFile);
+        emit jsonLoaded(m_jsonText);
+        
+        setStatusMessage(strings::status::FILE_OPENED_SUCCESSFULLY);
+    } else {
+        setStatusMessage(m_jsonFileManager->getErrorMessage());
+        emit errorOccurred(m_jsonFileManager->getErrorMessage());
+    }
 }
 
 
 void Application::saveFile(const QUrl &fileUrl)
 {
     setStatusMessage(strings::status::SAVING_FILE);
-    setStatusMessage(strings::status::FILE_SAVED_SUCCESSFULLY);
+    
+    QString filePath = fileUrl.isValid() ? fileUrl.toLocalFile() : m_currentFile;
+    if (filePath.isEmpty()) {
+        setStatusMessage("No file to save");
+        emit errorOccurred("No file to save");
+        return;
+    }
+    
+    if (m_jsonFileManager->saveFile(filePath, m_jsonText)) {
+        m_currentFile = filePath;
+        emit currentFileChanged();
+        emit fileSaved(m_currentFile);
+        setStatusMessage(strings::status::FILE_SAVED_SUCCESSFULLY);
+    } else {
+        setStatusMessage(m_jsonFileManager->getErrorMessage());
+        emit errorOccurred(m_jsonFileManager->getErrorMessage());
+    }
 }
 
 
@@ -311,9 +377,14 @@ void Application::createNewFile()
     m_jsonText = "{\n  \n}";
     m_isValid = false;
     
+    // Clear the JSON model
+    m_jsonModel->clear();
+    m_jsonFileManager->closeFile();
+    
     emit currentFileChanged();
     emit jsonTextChanged();
     emit isValidChanged();
+    emit jsonModelChanged();
     emit jsonLoaded(m_jsonText);
     
     setStatusMessage(strings::status::NEW_FILE_CREATED);
@@ -325,9 +396,14 @@ void Application::closeFile()
     m_jsonText = "";
     m_isValid = false;
     
+    // Clear the JSON model and file manager
+    m_jsonModel->clear();
+    m_jsonFileManager->closeFile();
+    
     emit currentFileChanged();
     emit jsonTextChanged();
     emit isValidChanged();
+    emit jsonModelChanged();
     emit fileClosed();
     
     setStatusMessage(strings::status::FILE_CLOSED);
@@ -336,10 +412,9 @@ void Application::closeFile()
 // JSON operations
 void Application::validateJSON(const QString &json)
 {
-    
     // Simple JSON validation
     QJsonParseError error;
-    QJsonDocument::fromJson(json.toUtf8(), &error);
+    QJsonDocument doc = QJsonDocument::fromJson(json.toUtf8(), &error);
     
     bool valid = (error.error == QJsonParseError::NoError);
     if (m_isValid != valid) {
@@ -347,22 +422,29 @@ void Application::validateJSON(const QString &json)
         emit isValidChanged();
     }
     
-    if (!valid) {
-        setErrorMessage(strings::errors::JSON_ERROR.arg(error.errorString()));
-    } else {
+    if (valid) {
+        // Update the JSON model with the new document
+        m_jsonModel->loadJSON(doc);
+        emit jsonModelChanged();
         setErrorMessage("");
+    } else {
+        setErrorMessage(strings::errors::JSON_ERROR.arg(error.errorString()));
     }
 }
 
 void Application::formatJSON(const QString &json)
 {
-    
     QJsonParseError error;
     QJsonDocument doc = QJsonDocument::fromJson(json.toUtf8(), &error);
     
     if (error.error == QJsonParseError::NoError) {
         m_jsonText = doc.toJson(QJsonDocument::Indented);
+        
+        // Update the JSON model
+        m_jsonModel->loadJSON(doc);
+        
         emit jsonTextChanged();
+        emit jsonModelChanged();
         emit jsonFormatted(m_jsonText);
         setStatusMessage(strings::status::JSON_FORMATTED);
     } else {
@@ -372,13 +454,17 @@ void Application::formatJSON(const QString &json)
 
 void Application::minifyJSON(const QString &json)
 {
-    
     QJsonParseError error;
     QJsonDocument doc = QJsonDocument::fromJson(json.toUtf8(), &error);
     
     if (error.error == QJsonParseError::NoError) {
         m_jsonText = doc.toJson(QJsonDocument::Compact);
+        
+        // Update the JSON model
+        m_jsonModel->loadJSON(doc);
+        
         emit jsonTextChanged();
+        emit jsonModelChanged();
         emit jsonFormatted(m_jsonText);
         setStatusMessage(strings::status::JSON_MINIFIED);
     } else {
@@ -386,7 +472,21 @@ void Application::minifyJSON(const QString &json)
     }
 }
 
+void Application::expandAllNodes()
+{
+    if (m_jsonModel) {
+        m_jsonModel->expandAll();
+        setStatusMessage("All nodes expanded");
+    }
+}
 
+void Application::collapseAllNodes()
+{
+    if (m_jsonModel) {
+        m_jsonModel->collapseAll();
+        setStatusMessage("All nodes collapsed");
+    }
+}
 
 // Query operations
 

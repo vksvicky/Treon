@@ -1,4 +1,4 @@
-#include "treon/I18nManager.hpp"
+#include "I18nManager.hpp"
 #include <QDebug>
 #include <QDir>
 #include <QStandardPaths>

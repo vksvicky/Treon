@@ -7,28 +7,31 @@ import Treon 1.0
 
 ApplicationWindow {
     id: window
-    width: 1200
-    height: 800
-    minimumWidth: 800
-    minimumHeight: 600
+    width: constants.defaultWindowWidth
+    height: constants.defaultWindowHeight
+    minimumWidth: constants.minimumWindowWidth
+    minimumHeight: constants.minimumWindowHeight
+    maximumWidth: constants.maximumWindowWidth
+    maximumHeight: constants.maximumWindowHeight
     visible: true
     title: qsTr("Treon")
     
-    // Font constants for consistent typography
-    readonly property int fontSizeXLarge: 48     // Large headers
-    readonly property int fontSizeLarge: 36      // Main titles
-    readonly property int fontSizeMedium: 16     // Section headers
-    readonly property int fontSizeRegular: 14    // Body text
-    readonly property int fontSizeSmall: 12      // Labels, details
-    readonly property int fontSizeXSmall: 10     // Small text
-    readonly property string fontFamily: "Helvetica"
+    Constants {
+        id: constants
+    }
+    
+    // Using global constants for consistent typography
     
     // Proper macOS window properties
     flags: Qt.Window | Qt.WindowTitleHint | Qt.WindowSystemMenuHint | 
            Qt.WindowMinMaxButtonsHint | Qt.WindowCloseButtonHint | Qt.WindowFullscreenButtonHint
     
     // Force light theme initially
-    color: "#f5f5f7"
+    color: constants.colorSurface
+    
+    Component.onCompleted: {
+        console.log("ApplicationWindow initialized with dimensions:", width, "x", height, "min:", minimumWidth, "x", minimumHeight)
+    }
     
     Application {
         id: app
@@ -341,7 +344,7 @@ ApplicationWindow {
     Rectangle {
         id: landingScreen
         anchors.fill: parent
-        color: "#f5f5f7"
+        color: constants.colorSurface
         visible: !app.currentFile
         
         // Drag and drop support removed from global area - now only in designated area
@@ -391,7 +394,7 @@ ApplicationWindow {
                     Text {
                         text: "📄"
                         font.pointSize: 48
-                        color: "#666666"
+                        color: constants.colorSecondary
                         anchors.centerIn: parent
                         visible: appIcon.status !== Image.Ready
                     }
@@ -402,7 +405,7 @@ ApplicationWindow {
                         font.family: "Helvetica"
                         font.pointSize: 36
                         font.weight: Font.Light
-                        color: "#1a1a1a"
+                        color: constants.colorPrimary
                         Layout.alignment: Qt.AlignHCenter
                     }
                 
@@ -410,7 +413,7 @@ ApplicationWindow {
                         text: qsTr("JSON Formatter & Viewer")
                         font.family: "Helvetica"
                         font.pointSize: 16
-                        color: "#666666"
+                        color: constants.colorSecondary
                         Layout.alignment: Qt.AlignHCenter
                     }
             }
@@ -440,7 +443,7 @@ ApplicationWindow {
                                 onClicked: fileDialog.open()
                             
                             background: Rectangle {
-                                color: parent.pressed ? "#0056CC" : "#007AFF"
+                                color: parent.pressed ? "#0056CC" : constants.colorPrimary
                                 radius: 8
                                 border.color: "#0056CC"
                                 border.width: 1
@@ -464,16 +467,16 @@ ApplicationWindow {
                                 onClicked: app.createNewFile()
                             
                             background: Rectangle {
-                                color: parent.pressed ? "#e0e0e0" : "#ffffff"
+                                color: parent.pressed ? constants.colorPressed : constants.colorBackground
                                 radius: 8
-                                border.color: "#d1d1d6"
+                                border.color: constants.colorTertiary
                                 border.width: 1
                             }
                             
                             contentItem: Text {
                                 text: parent.text
                                 font: parent.font
-                                color: "#007AFF"
+                                color: constants.colorPrimary
                                 horizontalAlignment: Text.AlignHCenter
                                 verticalAlignment: Text.AlignVCenter
                             }
@@ -493,7 +496,7 @@ ApplicationWindow {
                                 onClicked: app.newFromPasteboard()
                             
                             background: Rectangle {
-                                color: parent.pressed ? "#e0e0e0" : "#ffffff"
+                                color: parent.pressed ? constants.colorPressed : constants.colorBackground
                                 radius: 6
                                 border.color: "#34C759"
                                 border.width: 1
@@ -516,7 +519,7 @@ ApplicationWindow {
                                 onClicked: urlInputDialog.open()
                             
                             background: Rectangle {
-                                color: parent.pressed ? "#e0e0e0" : "#ffffff"
+                                color: parent.pressed ? constants.colorPressed : constants.colorBackground
                                 radius: 6
                                 border.color: "#FF9500"
                                 border.width: 1
@@ -545,7 +548,7 @@ ApplicationWindow {
                                 onClicked: curlInputDialog.open()
                             
                             background: Rectangle {
-                                color: parent.pressed ? "#e0e0e0" : "#ffffff"
+                                color: parent.pressed ? constants.colorPressed : constants.colorBackground
                                 radius: 6
                                 border.color: "#AF52DE"
                                 border.width: 1
@@ -588,12 +591,12 @@ ApplicationWindow {
                             Text {
                                 text: parent.parent.text
                                 font: parent.parent.font
-                                color: "#007AFF"
+                                color: constants.colorPrimary
                             }
                             Text {
                                 text: recentFilesExpanded ? "▲" : "▼"
                                 font.pointSize: 10
-                                color: "#007AFF"
+                                color: constants.colorPrimary
                             }
                         }
                     }
@@ -620,7 +623,7 @@ ApplicationWindow {
                                 contentItem: Text {
                                     text: parent.text
                                     font: parent.font
-                                    color: "#1a1a1a"
+                                    color: constants.colorPrimary
                                     horizontalAlignment: Text.AlignLeft
                                     verticalAlignment: Text.AlignVCenter
                                     elide: Text.ElideRight
@@ -631,7 +634,7 @@ ApplicationWindow {
                             Text {
                                 text: qsTr("No recent files")
                                 font.pointSize: 12
-                                color: "#666666"
+                                color: constants.colorSecondary
                                 Layout.alignment: Qt.AlignHCenter
                                 visible: app.historyEntries.length === 0
                             }
@@ -645,7 +648,7 @@ ApplicationWindow {
                 Layout.preferredWidth: 400
                 Layout.preferredHeight: 80
                 color: "transparent"
-                border.color: "#d1d1d6"
+                border.color: constants.colorTertiary
                 border.width: 2
                 radius: 12
                 
@@ -659,11 +662,11 @@ ApplicationWindow {
                     }
                     onEntered: function(drag) {
                         parent.color = "#f0f8ff"
-                        parent.border.color = "#007AFF"
+                        parent.border.color = constants.colorPrimary
                     }
                     onExited: function(drag) {
                         parent.color = "transparent"
-                        parent.border.color = "#d1d1d6"
+                        parent.border.color = constants.colorTertiary
                     }
                 }
                 
@@ -674,14 +677,14 @@ ApplicationWindow {
                     Text {
                         text: "↓"
                         font.pointSize: 16
-                        color: "#666666"
+                        color: constants.colorSecondary
                     }
                     
                         Text {
                             text: qsTr("Drag and drop a JSON file here")
                             font.pointSize: 16
                             font.weight: Font.Medium
-                            color: "#666666"
+                            color: constants.colorSecondary
                         }
                 }
             }
@@ -692,7 +695,7 @@ ApplicationWindow {
     Rectangle {
         id: mainInterface
         anchors.fill: parent
-        color: "#f5f5f7"
+        color: constants.colorSurface
         visible: app.currentFile
         
         ColumnLayout {
@@ -711,7 +714,7 @@ ApplicationWindow {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 30
                 color: "#e9ecef"
-                border.color: "#d1d1d6"
+                border.color: constants.colorTertiary
                 border.width: 1
                 
                 RowLayout {
@@ -722,14 +725,14 @@ ApplicationWindow {
                         Text {
                             text: app.currentFile || qsTr("No file loaded")
                             font.italic: true
-                            color: "#1a1a1a"
+                            color: constants.colorPrimary
                             Layout.fillWidth: true
                             elide: Text.ElideLeft
                         }
                     
                     Text {
                         text: app.statusMessage
-                        color: "#007AFF"
+                        color: constants.colorPrimary
                         visible: app.statusMessage.length > 0
                     }
                     
@@ -748,22 +751,29 @@ ApplicationWindow {
             id: fileDialog
             title: qsTr("Open JSON File")
             nameFilters: [qsTr("JSON files (*.json)"), qsTr("All files (*)")]
-            onAccepted: app.openFile(fileUrl)
+            onAccepted: {
+                console.log("File selected:", selectedFile)
+                app.openFile(selectedFile)
+            }
         }
     
         FileDialog {
             id: saveDialog
             title: qsTr("Save JSON File")
             nameFilters: [qsTr("JSON files (*.json)"), qsTr("All files (*)")]
-            onAccepted: app.saveFile(fileUrl, app.jsonText)
+            onAccepted: {
+                console.log("Save file selected:", selectedFile)
+                app.saveFile(selectedFile, app.jsonText)
+            }
         }
     
     // URL input dialog
-        Dialog {
+        Popup {
             id: urlInputDialog
-            title: qsTr("Load from URL")
             width: 400
             height: 200
+            modal: true
+            focus: true
         
         property alias urlText: urlInput.text
         
@@ -804,11 +814,12 @@ ApplicationWindow {
     }
     
     // cURL input dialog
-        Dialog {
+        Popup {
             id: curlInputDialog
-            title: qsTr("Execute cURL Command")
             width: 500
             height: 300
+            modal: true
+            focus: true
         
         property alias curlText: curlInput.text
         
@@ -854,9 +865,10 @@ ApplicationWindow {
     }
     
     // Error dialog
-    Dialog {
+    Popup {
         id: errorDialog
-        title: qsTr("Error")
+        modal: true
+        focus: true
         property alias text: errorText.text
         
         Text {

@@ -29,10 +29,14 @@ private:
     // JSON structure generation
     QJsonObject createBaseStructure();
     QJsonObject generateRandomItem(int index);
+    QString generateRandomItemAsString(int index);
     QString generateRandomDescription();
     QJsonArray generateRandomTags();
+    QString generateRandomTagsAsString();
     QJsonArray generateRandomSubItems();
+    QString generateRandomSubItemsAsString();
     QJsonObject generateRandomData();
+    QString generateRandomDataAsString();
     
     // Random number generator
     std::mt19937 m_randomGenerator;

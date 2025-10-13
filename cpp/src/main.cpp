@@ -5,10 +5,10 @@
 #include <QIcon>
 #include <QStyleFactory>
 
-#include "treon/Application.hpp"
-#include "treon/AboutWindow.hpp"
-#include "treon/SettingsManager.hpp"
-#include "treon/I18nManager.hpp"
+#include "Application.hpp"
+#include "AboutWindow.hpp"
+#include "SettingsManager.hpp"
+#include "I18nManager.hpp"
 
 int main(int argc, char *argv[])
 {
@@ -32,6 +32,9 @@ int main(int argc, char *argv[])
     app.setAttribute(Qt::AA_DontUseNativeMenuBar, false);
     
     QQmlApplicationEngine engine;
+    
+    // Add QML import path for our custom modules
+    engine.addImportPath("qrc:/qml");
     
     // Initialize managers
     treon::SettingsManager settingsManager;

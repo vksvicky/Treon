@@ -119,14 +119,13 @@ QString JSONDataGenerator::generateLargeJSON(qint64 targetSize, const QString &o
     qDebug() << "Estimated items needed:" << targetItems;
     
     while (currentSize < targetSize && itemCount < targetItems * 1.2) { // 20% buffer
-        QJsonObject item = generateRandomItem(itemCount);
-        QJsonDocument itemDoc(item);
-        QByteArray itemJson = itemDoc.toJson();
+        // Generate JSON item directly as string to avoid memory overhead
+        QString itemJson = generateRandomItemAsString(itemCount);
         
         if (itemCount > 0) {
             file.write(",\n");
         }
-        file.write("    " + itemJson);
+        file.write("    " + itemJson.toUtf8());
         
         currentSize = file.size();
         itemCount++;
@@ -189,6 +188,43 @@ QJsonObject JSONDataGenerator::generateRandomItem(int index)
     item["data"] = generateRandomData();
     
     return item;
+}
+
+QString JSONDataGenerator::generateRandomItemAsString(int index)
+{
+    // Generate JSON directly as string to avoid memory overhead
+    QString description = generateRandomDescription();
+    QString tags = generateRandomTagsAsString();
+    QString subItems = generateRandomSubItemsAsString();
+    QString data = generateRandomDataAsString();
+    
+    return QString(R"({
+  "id": %1,
+  "name": "Item_%1",
+  "value": %2,
+  "timestamp": "%3",
+  "description": "%4",
+  "metadata": {
+    "category": "category_%5",
+    "priority": %6,
+    "active": %7,
+    "score": %8,
+    "tags": %9
+  },
+  "subItems": %10,
+  "data": %11
+})")
+    .arg(index)
+    .arg(static_cast<int>(m_randomGenerator() % 10000))
+    .arg(QDateTime::currentDateTime().toString(Qt::ISODate))
+    .arg(description)
+    .arg(index % 20)
+    .arg(index % 10)
+    .arg(index % 2 == 0 ? "true" : "false")
+    .arg(static_cast<int>(m_randomGenerator() % 1000))
+    .arg(tags)
+    .arg(subItems)
+    .arg(data);
 }
 
 QString JSONDataGenerator::generateRandomDescription()
@@ -263,6 +299,50 @@ QJsonObject JSONDataGenerator::generateRandomData()
     };
     
     return data;
+}
+
+QString JSONDataGenerator::generateRandomTagsAsString()
+{
+    int tagCount = 2 + (m_randomGenerator() % 5); // 2-6 tags
+    QStringList tags;
+    
+    for (int i = 0; i < tagCount; ++i) {
+        tags.append(QString("\"tag_%1\"").arg(m_randomGenerator() % 100));
+    }
+    
+    return "[" + tags.join(", ") + "]";
+}
+
+QString JSONDataGenerator::generateRandomSubItemsAsString()
+{
+    int subItemCount = 1 + (m_randomGenerator() % 3); // 1-3 sub-items
+    QStringList subItems;
+    
+    for (int i = 0; i < subItemCount; ++i) {
+        subItems.append(QString(R"({
+    "id": %1,
+    "name": "SubItem_%1",
+    "value": %2
+  })")
+        .arg(i)
+        .arg(static_cast<int>(m_randomGenerator() % 1000)));
+    }
+    
+    return "[" + subItems.join(", ") + "]";
+}
+
+QString JSONDataGenerator::generateRandomDataAsString()
+{
+    return QString(R"({
+    "field1": "value_%1",
+    "field2": %2,
+    "field3": %3,
+    "field4": "data_%4"
+  })")
+    .arg(m_randomGenerator() % 1000)
+    .arg(static_cast<int>(m_randomGenerator() % 100))
+    .arg(m_randomGenerator() % 2 == 0 ? "true" : "false")
+    .arg(m_randomGenerator() % 500);
 }
 
 QString JSONDataGenerator::createTestDataDirectory()

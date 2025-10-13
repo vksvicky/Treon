@@ -3,7 +3,7 @@
 
 #include <QtTest>
 #include <QSignalSpy>
-#include "treon/Application.hpp"
+#include "Application.hpp"
 
 class TestApplication : public QObject
 {

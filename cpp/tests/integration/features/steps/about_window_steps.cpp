@@ -5,7 +5,7 @@
 #include <QDesktopServices>
 #include <QUrl>
 
-#include "treon/AboutWindow.hpp"
+#include "AboutWindow.hpp"
 
 // Simple integration test class
 class IntegrationTest : public QObject

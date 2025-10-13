@@ -1,5 +1,5 @@
-#include "treon/AboutWindow.hpp"
-#include "treon/Strings.hpp"
+#include "AboutWindow.hpp"
+#include "Strings.hpp"
 #include <QApplication>
 #include <QClipboard>
 #include <QDebug>

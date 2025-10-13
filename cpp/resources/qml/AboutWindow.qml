@@ -8,33 +8,22 @@ Window {
     id: aboutDialog
     title: qsTr("About %1").arg(aboutWindow.applicationName)
     width: 500
-    height: 650
+    height: 675
     minimumWidth: 500
     maximumWidth: 500
-    minimumHeight: 650
-    maximumHeight: 650
+    minimumHeight: 675
+    maximumHeight: 675
     modality: Qt.WindowModal
     flags: Qt.Window | Qt.WindowTitleHint | Qt.WindowStaysOnTopHint
     
+    Constants {
+        id: constants
+    }
+    
     // Force light theme
-    color: "#ffffff"
+    color: constants.colorBackground
     
-    // Font constants for consistent typography
-    readonly property int fontSizeLarge: 24      // App name
-    readonly property int fontSizeMedium: 14     // Version, section titles
-    readonly property int fontSizeRegular: 12    // Body text, labels, values
-    readonly property int fontSizeSmall: 11      // Small text
-    readonly property string fontFamily: "Helvetica"
-    
-    // Simplified spacing system for visual consistency
-    readonly property int spacingLarge: 16       // Major section spacing
-    readonly property int spacingMedium: 12      // Standard spacing for most elements
-    readonly property int spacingSmall: 8        // Tight spacing for related items
-    readonly property int spacingTight: 0        // Very tight spacing (title to content)
-    
-    // Margin constants
-    readonly property int marginLarge: 20        // Window margins
-    readonly property int marginMedium: 12       // GroupBox title padding
+    // Using global constants for consistent typography and spacing
     
     property alias aboutWindow: aboutWindowInstance
     
@@ -62,20 +51,20 @@ Window {
     
     ScrollView {
         anchors.fill: parent
-        anchors.margins: marginLarge
-        anchors.rightMargin: marginMedium  // Reduce right margin to give more space for content
+                anchors.margins: constants.marginLarge
+        anchors.rightMargin: constants.marginMedium  // Reduce right margin to give more space for content
         contentWidth: width - 20  // Account for scrollbar width
         ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
         ScrollBar.vertical.policy: ScrollBar.AsNeeded
         
         ColumnLayout {
             width: parent.width
-            spacing: spacingLarge
+            spacing: constants.spacingLarge
             
             // Header with app icon and name
             RowLayout {
                 Layout.fillWidth: true
-                spacing: spacingMedium
+                spacing: constants.spacingMedium
                 
                 // App icon
                 Image {
@@ -97,22 +86,22 @@ Window {
                 
                 // App name and version
                 ColumnLayout {
-                    spacing: spacingSmall
+                    spacing: constants.spacingSmall
                     
                     Text {
                         text: aboutWindow.applicationName
-                        font.family: fontFamily
-                        font.pointSize: fontSizeLarge
+                        font.family: constants.fontFamily
+                        font.pointSize: constants.fontSizeLarge
                         font.weight: Font.Light
-                        color: "#1a1a1a"
+                        color: constants.colorPrimary
                         Layout.alignment: Qt.AlignHCenter
                     }
                                         
                     Text {
                         text: aboutWindow.copyright
-                        font.family: fontFamily
-                        font.pointSize: fontSizeRegular
-                        color: "#999999"
+                        font.family: constants.fontFamily
+                        font.pointSize: constants.fontSizeRegular
+                        color: constants.colorSecondary
                         Layout.alignment: Qt.AlignHCenter
                     }
                 }
@@ -124,9 +113,9 @@ Window {
                           "Treon provides a modern, native experience for working with JSON data " +
                           "on macOS with advanced features like syntax highlighting, validation, " +
                           "and querying capabilities.")
-                font.family: fontFamily
+                font.family: constants.fontFamily
                 font.pointSize: 12
-                color: "#333333"
+                color: constants.colorPrimary
                 wrapMode: Text.WordWrap
                 Layout.fillWidth: true
                 horizontalAlignment: Text.AlignJustify
@@ -135,8 +124,8 @@ Window {
             // Action buttons
             RowLayout {
                 Layout.alignment: Qt.AlignHCenter
-                Layout.topMargin: spacingMedium
-                spacing: spacingMedium
+                Layout.topMargin: constants.spacingMedium
+                spacing: constants.spacingMedium
                 
                 Button {
                     text: qsTr("Website")
@@ -145,18 +134,18 @@ Window {
                     Layout.preferredHeight: 32
                     
                     background: Rectangle {
-                        color: parent.pressed ? "#e0e0e0" : "#ffffff"
+                        color: parent.pressed ? constants.colorPressed : constants.colorBackground
                         radius: 8
-                        border.color: "#d1d1d6"
+                        border.color: constants.colorTertiary
                         border.width: 1
                     }
                     
                     contentItem: Text {
                         text: parent.text
-                        font.family: fontFamily
-                        font.pointSize: fontSizeRegular
+                        font.family: constants.fontFamily
+                        font.pointSize: constants.fontSizeRegular
                         font.weight: Font.Medium
-                        color: "#007AFF"
+                        color: constants.colorPrimary
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
                     }
@@ -170,18 +159,18 @@ Window {
                     Layout.preferredHeight: 32
                     
                     background: Rectangle {
-                        color: parent.enabled ? (parent.pressed ? "#e0e0e0" : "#ffffff") : "#f5f5f5"
+                        color: parent.enabled ? (parent.pressed ? constants.colorPressed : constants.colorBackground) : constants.colorSurface
                         radius: 8
-                        border.color: parent.enabled ? "#d1d1d6" : "#e0e0e0"
+                        border.color: parent.enabled ? constants.colorTertiary : constants.colorPressed
                         border.width: 1
                     }
                     
                     contentItem: Text {
                         text: parent.text
-                        font.family: fontFamily
-                        font.pointSize: fontSizeRegular
+                        font.family: constants.fontFamily
+                        font.pointSize: constants.fontSizeRegular
                         font.weight: Font.Medium
-                        color: parent.enabled ? "#007AFF" : "#999999"
+                        color: parent.enabled ? constants.colorPrimary : constants.colorSecondary
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
                     }
@@ -194,18 +183,18 @@ Window {
                     Layout.preferredHeight: 32
                     
                     background: Rectangle {
-                        color: parent.pressed ? "#e0e0e0" : "#ffffff"
+                        color: parent.pressed ? constants.colorPressed : constants.colorBackground
                         radius: 8
-                        border.color: "#d1d1d6"
+                        border.color: constants.colorTertiary
                         border.width: 1
                     }
                     
                     contentItem: Text {
                         text: parent.text
-                        font.family: fontFamily
-                        font.pointSize: fontSizeRegular
+                        font.family: constants.fontFamily
+                        font.pointSize: constants.fontSizeRegular
                         font.weight: Font.Medium
-                        color: "#007AFF"
+                        color: constants.colorPrimary
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
                     }
@@ -219,26 +208,26 @@ Window {
                 Layout.topMargin: 8
                 
                 background: Rectangle {
-                    color: "#f8f9fa"
-                    border.color: "#e9ecef"
+                    color: constants.colorSurface
+                    border.color: constants.colorBorder
                     border.width: 1
                     radius: 12
                 }
                 
                 label: Text {
                     text: parent.title
-                    color: "#1a1a1a"
-                    font.family: fontFamily
-                    font.pointSize: fontSizeMedium
+                    color: constants.colorPrimary
+                    font.family: constants.fontFamily
+                    font.pointSize: constants.fontSizeMedium
                     font.weight: Font.DemiBold
-                    topPadding: marginMedium
-                    leftPadding: marginMedium
+                    topPadding: constants.marginMedium
+                    leftPadding: constants.marginMedium
                 }
                 
                 ColumnLayout {
                     anchors.fill: parent
-                    anchors.topMargin: spacingTight // Account for GroupBox title space
-                    spacing: spacingMedium
+                    anchors.topMargin: constants.spacingTight // Account for GroupBox title space
+                    spacing: constants.spacingMedium
                     
                     // Version info
                     RowLayout {
@@ -246,15 +235,15 @@ Window {
                         
                         Text {
                             text: qsTr("Version:")
-                            font.pointSize: fontSizeRegular
-                            color: "#666666"
+                            font.pointSize: constants.fontSizeRegular
+                            color: constants.colorSecondary
                             Layout.minimumWidth: 120
                         }
                         
                         Text {
                             text: aboutWindow.applicationVersion
-                            font.pointSize: fontSizeRegular
-                            color: "#1a1a1a"
+                            font.pointSize: constants.fontSizeRegular
+                            color: constants.colorPrimary
                             Layout.fillWidth: true
                         }
                     }
@@ -265,15 +254,15 @@ Window {
                         
                         Text {
                             text: qsTr("Build:")
-                            font.pointSize: fontSizeRegular
-                            color: "#666666"
+                            font.pointSize: constants.fontSizeRegular
+                            color: constants.colorSecondary
                             Layout.minimumWidth: 120
                         }
                         
                         Text {
                             text: aboutWindow.applicationBuild
-                            font.pointSize: fontSizeRegular
-                            color: "#1a1a1a"
+                            font.pointSize: constants.fontSizeRegular
+                            color: constants.colorPrimary
                             Layout.fillWidth: true
                         }
                         
@@ -285,15 +274,15 @@ Window {
                         
                         Text {
                             text: qsTr("Platform:")
-                            font.pointSize: fontSizeRegular
-                            color: "#666666"
+                            font.pointSize: constants.fontSizeRegular
+                            color: constants.colorSecondary
                             Layout.minimumWidth: 120
                         }
                         
                         Text {
                             text: aboutWindow.platformInfo
-                            font.pointSize: fontSizeRegular
-                            color: "#1a1a1a"
+                            font.pointSize: constants.fontSizeRegular
+                            color: constants.colorPrimary
                             wrapMode: Text.WordWrap
                             Layout.fillWidth: true
                         }
@@ -309,26 +298,26 @@ Window {
                 Layout.topMargin: 12
                 
                 background: Rectangle {
-                    color: "#f8f9fa"
-                    border.color: "#e9ecef"
+                    color: constants.colorSurface
+                    border.color: constants.colorBorder
                     border.width: 1
                     radius: 12
                 }
                 
                 label: Text {
                     text: parent.title
-                    color: "#1a1a1a"
-                    font.family: fontFamily
-                    font.pointSize: fontSizeMedium
+                    color: constants.colorPrimary
+                    font.family: constants.fontFamily
+                    font.pointSize: constants.fontSizeMedium
                     font.weight: Font.DemiBold
-                    topPadding: marginMedium
-                    leftPadding: marginMedium
+                    topPadding: constants.marginMedium
+                    leftPadding: constants.marginMedium
                 }
                 
                 ColumnLayout {
                     anchors.fill: parent
-                    anchors.topMargin: spacingTight  // Account for GroupBox title space
-                    spacing: spacingMedium
+                    anchors.topMargin: constants.spacingTight  // Account for GroupBox title space
+                    spacing: constants.spacingMedium
                     
                     // Qt
                     RowLayout {
@@ -336,17 +325,17 @@ Window {
                         
                         Text {
                             text: qsTr("Qt Framework:")
-                            font.family: fontFamily
-                            font.pointSize: fontSizeRegular
-                            color: "#666666"
+                            font.family: constants.fontFamily
+                            font.pointSize: constants.fontSizeRegular
+                            color: constants.colorSecondary
                             Layout.minimumWidth: 120
                         }
                         
                         Text {
                             text: qsTr("6.9.2 - Cross-platform application framework")
-                            font.family: fontFamily
-                            font.pointSize: fontSizeRegular
-                            color: "#1a1a1a"
+                            font.family: constants.fontFamily
+                            font.pointSize: constants.fontSizeRegular
+                            color: constants.colorPrimary
                             Layout.fillWidth: true
                         }
                     }
@@ -357,17 +346,17 @@ Window {
                         
                         Text {
                             text: qsTr("CMake:")
-                            font.family: fontFamily
-                            font.pointSize: fontSizeRegular
-                            color: "#666666"
+                            font.family: constants.fontFamily
+                            font.pointSize: constants.fontSizeRegular
+                            color: constants.colorSecondary
                             Layout.minimumWidth: 120
                         }
                         
                         Text {
                             text: qsTr("Build system")
-                            font.family: fontFamily
-                            font.pointSize: fontSizeRegular
-                            color: "#1a1a1a"
+                            font.family: constants.fontFamily
+                            font.pointSize: constants.fontSizeRegular
+                            color: constants.colorPrimary
                             Layout.fillWidth: true
                         }
                     }
@@ -378,17 +367,17 @@ Window {
                         
                         Text {
                             text: qsTr("Compiler:")
-                            font.family: fontFamily
-                            font.pointSize: fontSizeRegular
-                            color: "#666666"
+                            font.family: constants.fontFamily
+                            font.pointSize: constants.fontSizeRegular
+                            color: constants.colorSecondary
                             Layout.minimumWidth: 120
                         }
                         
                         Text {
                             text: aboutWindow.compilerInfo
-                            font.family: fontFamily
-                            font.pointSize: fontSizeRegular
-                            color: "#1a1a1a"
+                            font.family: constants.fontFamily
+                            font.pointSize: constants.fontSizeRegular
+                            color: constants.colorPrimary
                             Layout.fillWidth: true
                         }
                     }
@@ -399,17 +388,17 @@ Window {
                         
                         Text {
                             text: qsTr("JSON Library:")
-                            font.family: fontFamily
-                            font.pointSize: fontSizeRegular
-                            color: "#666666"
+                            font.family: constants.fontFamily
+                            font.pointSize: constants.fontSizeRegular
+                            color: constants.colorSecondary
                             Layout.minimumWidth: 120
                         }
                         
                         Text {
                             text: qsTr("JSON for Modern C++ - JSON library")
-                            font.family: fontFamily
-                            font.pointSize: fontSizeRegular
-                            color: "#1a1a1a"
+                            font.family: constants.fontFamily
+                            font.pointSize: constants.fontSizeRegular
+                            color: constants.colorPrimary
                             Layout.fillWidth: true
                         }
                     }
@@ -420,17 +409,17 @@ Window {
                         
                         Text {
                             text: qsTr("Catch2:")
-                            font.family: fontFamily
-                            font.pointSize: fontSizeRegular
-                            color: "#666666"
+                            font.family: constants.fontFamily
+                            font.pointSize: constants.fontSizeRegular
+                            color: constants.colorSecondary
                             Layout.minimumWidth: 120
                         }
                         
                         Text {
                             text: qsTr("Testing framework")
-                            font.family: fontFamily
-                            font.pointSize: fontSizeRegular
-                            color: "#1a1a1a"
+                            font.family: constants.fontFamily
+                            font.pointSize: constants.fontSizeRegular
+                            color: constants.colorPrimary
                             Layout.fillWidth: true
                         }
                     }
@@ -441,17 +430,17 @@ Window {
                         
                         Text {
                             text: qsTr("Gherkin:")
-                            font.family: fontFamily
-                            font.pointSize: fontSizeRegular
-                            color: "#666666"
+                            font.family: constants.fontFamily
+                            font.pointSize: constants.fontSizeRegular
+                            color: constants.colorSecondary
                             Layout.minimumWidth: 120
                         }
                         
                         Text {
                             text: qsTr("BDD testing")
-                            font.family: fontFamily
-                            font.pointSize: fontSizeRegular
-                            color: "#1a1a1a"
+                            font.family: constants.fontFamily
+                            font.pointSize: constants.fontSizeRegular
+                            color: constants.colorPrimary
                             Layout.fillWidth: true
                         }
                     }
@@ -465,26 +454,26 @@ Window {
                 Layout.topMargin: 12
                 
                 background: Rectangle {
-                    color: "#f8f9fa"
-                    border.color: "#e9ecef"
+                    color: constants.colorSurface
+                    border.color: constants.colorBorder
                     border.width: 1
                     radius: 8
                 }
                 
                 label: Text {
                     text: parent.title
-                    color: "#1a1a1a"
+                    color: constants.colorPrimary
                     font.pointSize: 12
                     font.bold: true
-                    topPadding: marginMedium
-                    leftPadding: marginMedium
+                    topPadding: constants.marginMedium
+                    leftPadding: constants.marginMedium
                 }
                 
                 Text {
                     text: '<a href="file://' + aboutWindow.licenseFilePath + '">' + aboutWindow.license + '</a>'
                     font.pointSize: 12
-                    color: "#007AFF"
-                    linkColor: "#007AFF"
+                    color: constants.colorPrimary
+                    linkColor: constants.colorPrimary
                     onLinkActivated: function(link) {
                         Qt.openUrlExternally(link)
                     }

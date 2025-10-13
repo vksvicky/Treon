@@ -8,7 +8,7 @@
 #include <QDesktopServices>
 #include <QUrl>
 
-#include "treon/AboutWindow.hpp"
+#include "AboutWindow.hpp"
 
 class TestAboutWindow : public QObject
 {
