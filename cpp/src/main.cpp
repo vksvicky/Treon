@@ -9,9 +9,14 @@
 #include "AboutWindow.hpp"
 #include "SettingsManager.hpp"
 #include "I18nManager.hpp"
+#include "Logger.hpp"
 
 int main(int argc, char *argv[])
 {
+    // Initialize logging first
+    treon::Logger::initialize();
+    LOG_INFO("Starting Treon application");
+    
     QApplication app(argc, argv);
     
     // Set application metadata

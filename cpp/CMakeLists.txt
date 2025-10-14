@@ -9,6 +9,15 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # Enable position independent code
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
+# Add spdlog logging framework
+include(FetchContent)
+FetchContent_Declare(
+    spdlog
+    GIT_REPOSITORY https://github.com/gabime/spdlog.git
+    GIT_TAG v1.16.0
+)
+FetchContent_MakeAvailable(spdlog)
+
 # Find Qt6 components
 find_package(Qt6 REQUIRED COMPONENTS 
     Core 
@@ -51,6 +60,7 @@ target_link_libraries(treon_core
         Qt6::Widgets
         Qt6::Sql
         Qt6::Network
+        spdlog::spdlog
 )
 
 # Application library (for sharing between main app and tests)
@@ -70,6 +80,7 @@ target_link_libraries(treon_app_lib
         Qt6::Quick
         Qt6::QuickDialogs2
         treon_core
+        spdlog::spdlog
 )
 
 # Automatically discover application files
@@ -84,6 +95,7 @@ qt6_add_translations(Treon TS_FILES ${TS_FILES})
 # Main application
 add_executable(Treon
     src/main.cpp
+    src/Logger.cpp
     ${QML_FILES}
     ${RESOURCE_FILES}
     ${ICON_FILES}

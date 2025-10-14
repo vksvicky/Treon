@@ -3,6 +3,7 @@
 #include "Strings.hpp"
 #include "JSONModel.hpp"
 #include "JSONFileManager.hpp"
+#include "Logger.hpp"
 #include <QDebug>
 #include <QTimer>
 #include <QStandardPaths>
@@ -455,40 +456,54 @@ void Application::validateJSON(const QString &json)
 
 void Application::formatJSON(const QString &json)
 {
+    LOG_DEBUG("formatJSON called with JSON length: {}", json.length());
+    
     QJsonParseError error;
     QJsonDocument doc = QJsonDocument::fromJson(json.toUtf8(), &error);
     
     if (error.error == QJsonParseError::NoError) {
         m_jsonText = doc.toJson(QJsonDocument::Indented);
+        LOG_DEBUG("JSON formatted successfully, new length: {}", m_jsonText.length());
         
         // Update the JSON model
         m_jsonModel->loadJSON(doc);
         
+        LOG_DEBUG("Emitting jsonTextChanged signal");
         emit jsonTextChanged();
+        LOG_DEBUG("Emitting jsonModelChanged signal");
         emit jsonModelChanged();
+        LOG_DEBUG("Emitting jsonFormatted signal");
         emit jsonFormatted(m_jsonText);
         setStatusMessage(strings::status::JSON_FORMATTED);
     } else {
+        LOG_ERROR("JSON formatting failed: {}", error.errorString().toStdString());
         setErrorMessage(strings::errors::CANNOT_FORMAT_INVALID_JSON.arg(error.errorString()));
     }
 }
 
 void Application::minifyJSON(const QString &json)
 {
+    LOG_DEBUG("minifyJSON called with JSON length: {}", json.length());
+    
     QJsonParseError error;
     QJsonDocument doc = QJsonDocument::fromJson(json.toUtf8(), &error);
     
     if (error.error == QJsonParseError::NoError) {
         m_jsonText = doc.toJson(QJsonDocument::Compact);
+        LOG_DEBUG("JSON minified successfully, new length: {}", m_jsonText.length());
         
         // Update the JSON model
         m_jsonModel->loadJSON(doc);
         
+        LOG_DEBUG("Emitting jsonTextChanged signal");
         emit jsonTextChanged();
+        LOG_DEBUG("Emitting jsonModelChanged signal");
         emit jsonModelChanged();
+        LOG_DEBUG("Emitting jsonFormatted signal");
         emit jsonFormatted(m_jsonText);
         setStatusMessage(strings::status::JSON_MINIFIED);
     } else {
+        LOG_ERROR("JSON minification failed: {}", error.errorString().toStdString());
         setErrorMessage(strings::errors::CANNOT_MINIFY_INVALID_JSON.arg(error.errorString()));
     }
 }

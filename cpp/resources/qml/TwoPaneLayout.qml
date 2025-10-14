@@ -295,7 +295,7 @@ Item {
                             MouseArea {
                                 anchors.fill: parent
                                 hoverEnabled: true
-                                onClicked: app.formatJSON(textArea.text)
+                                onClicked: app.formatJSON(app.jsonText)
                                 
                                 onEntered: parent.color = constants.colorSuccess
                                 onExited: parent.color = constants.colorAccent
@@ -312,7 +312,7 @@ Item {
                             MouseArea {
                                 anchors.fill: parent
                                 hoverEnabled: true
-                                onClicked: app.minifyJSON(textArea.text)
+                                onClicked: app.minifyJSON(app.jsonText)
                                 
                                 onEntered: parent.color = constants.colorSuccess
                                 onExited: parent.color = constants.colorAccent
@@ -355,6 +355,14 @@ Item {
                         onTextChanged: {
                             // Update the JSON model when text changes
                             app.validateJSON(content)
+                        }
+                        
+                        // Ensure content updates when app.jsonText changes
+                        Connections {
+                            target: app
+                            function onJsonTextChanged() {
+                                textArea.content = app.jsonText
+                            }
                         }
 
                         // Highlight parse error position when signaled
