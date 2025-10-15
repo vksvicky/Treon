@@ -339,5 +339,33 @@
         <source>curl -X GET https://api.example.com/data</source>
         <translation>curl -X GET https://api.example.com/data</translation>
     </message>
+    <message>
+        <source>Depth</source>
+        <translation>Profondeur</translation>
+    </message>
+    <message>
+        <source>JSON Tree Settings</source>
+        <translation>Paramètres de l'Arbre JSON</translation>
+    </message>
+    <message>
+        <source>Language</source>
+        <translation>Langue</translation>
+    </message>
+    <message>
+        <source>Max Depth</source>
+        <translation>Profondeur Max</translation>
+    </message>
+    <message>
+        <source>Preferences</source>
+        <translation>Préférences</translation>
+    </message>
+    <message>
+        <source>Restore Defaults</source>
+        <translation>Restaurer les Valeurs par Défaut</translation>
+    </message>
+    <message>
+        <source>Unlimited</source>
+        <translation>Illimité</translation>
+    </message>
 </context>
 </TS>

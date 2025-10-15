@@ -49,23 +49,19 @@ ApplicationWindow {
         }
     }
 
-    // Shared SettingsManager for PreferencesView
-    SettingsManager { id: settingsManager }
-
     // Preferences dialog (centralized)
     Window {
         id: prefsDialog
         modality: Qt.ApplicationModal
         title: qsTr("Preferences")
         flags: Qt.Window | Qt.WindowTitleHint | Qt.WindowCloseButtonHint | Qt.CustomizeWindowHint
-        width: 420
-        height: 220
+        width: 450
+        height: 350
         visible: false
         onClosing: twoPane.updateJSONModel()
 
         PreferencesView { 
             anchors.fill: parent
-            settingsManager: settingsManager
             onPreferencesSaved: {
                 twoPane.updateJSONModel()
             }

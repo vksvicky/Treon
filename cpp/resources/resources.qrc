@@ -11,7 +11,14 @@
         <file>qml/JSONTextView.qml</file>
         <file>qml/Constants.qml</file>
         <file>qml/PreferencesView.qml</file>
+        <file>qml/LanguageSelector.qml</file>
         <file>qml/NotificationDialog.qml</file>
         <file>qml/qmldir</file>
+    </qresource>
+    <qresource prefix="/">
+        <file alias="en_GB.svg">flags/en_GB.svg</file>
+        <file alias="en_US.svg">flags/en_US.svg</file>
+        <file alias="es.svg">flags/es.svg</file>
+        <file alias="fr.svg">flags/fr.svg</file>
     </qresource>
 </RCC>

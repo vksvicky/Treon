@@ -4,10 +4,14 @@
 #include <QStandardPaths>
 #include <QCoreApplication>
 #include <QLocale>
+#include <QResource>
+#include <QFileInfo>
+#include <QSet>
 
 namespace treon {
 
-const QString I18nManager::DEFAULT_LANGUAGE = "en";
+const QString I18nManager::DEFAULT_LANGUAGE = "en_GB";
+const QStringList I18nManager::SUPPORTED_LANGUAGES = {"en_GB", "en_US", "es", "fr"};
 
 I18nManager::I18nManager(QObject *parent)
     : QObject(parent)
@@ -15,6 +19,8 @@ I18nManager::I18nManager(QObject *parent)
     , m_currentLanguage(DEFAULT_LANGUAGE)
 {
     setupLanguageMap();
+    setupSupportedLanguages();
+    discoverAvailableLanguages();
     initializeTranslations();
 }
 
@@ -28,32 +34,26 @@ I18nManager::~I18nManager()
 
 void I18nManager::setupLanguageMap()
 {
-    m_availableLanguages = QStringList() 
-        << "en" << "es" << "fr" << "de" << "it" << "pt" << "ru" << "ja" << "ko" << "zh";
-    
     // English names
-    m_languageNames["en"] = "English";
+    m_languageNames["en_GB"] = "English (UK)";
+    m_languageNames["en_US"] = "English (US)";
     m_languageNames["es"] = "Spanish";
     m_languageNames["fr"] = "French";
-    m_languageNames["de"] = "German";
-    m_languageNames["it"] = "Italian";
-    m_languageNames["pt"] = "Portuguese";
-    m_languageNames["ru"] = "Russian";
-    m_languageNames["ja"] = "Japanese";
-    m_languageNames["ko"] = "Korean";
-    m_languageNames["zh"] = "Chinese";
     
     // Native names
-    m_languageNativeNames["en"] = "English";
+    m_languageNativeNames["en_GB"] = "English (UK)";
+    m_languageNativeNames["en_US"] = "English (US)";
     m_languageNativeNames["es"] = "Español";
     m_languageNativeNames["fr"] = "Français";
-    m_languageNativeNames["de"] = "Deutsch";
-    m_languageNativeNames["it"] = "Italiano";
-    m_languageNativeNames["pt"] = "Português";
-    m_languageNativeNames["ru"] = "Русский";
-    m_languageNativeNames["ja"] = "日本語";
-    m_languageNativeNames["ko"] = "한국어";
-    m_languageNativeNames["zh"] = "中文";
+}
+
+void I18nManager::setupSupportedLanguages()
+{
+    // Set up flag paths for supported languages
+    m_languageFlagPaths["en_GB"] = "qrc:/en_GB.svg";
+    m_languageFlagPaths["en_US"] = "qrc:/en_US.svg";
+    m_languageFlagPaths["es"] = "qrc:/es.svg";
+    m_languageFlagPaths["fr"] = "qrc:/fr.svg";
 }
 
 void I18nManager::initializeTranslations()
@@ -84,6 +84,15 @@ QStringList I18nManager::availableLanguageNames() const
     QStringList names;
     for (const QString &lang : m_availableLanguages) {
         names << getLanguageName(lang);
+    }
+    return names;
+}
+
+QStringList I18nManager::availableLanguageNativeNames() const
+{
+    QStringList names;
+    for (const QString &lang : m_availableLanguages) {
+        names << getLanguageNativeName(lang);
     }
     return names;
 }
@@ -168,7 +177,15 @@ QString I18nManager::getTranslationFilePath(const QString &language) const
     // System paths
     searchPaths << QStandardPaths::locateAll(QStandardPaths::AppDataLocation, "translations", QStandardPaths::LocateDirectory);
     
-    QString fileName = QString("treon_%1.qm").arg(language);
+    // Map language codes to actual file names
+    QString fileLanguage = language;
+    if (language == "en_GB") {
+        fileLanguage = "en_GB";
+    } else if (language == "en_US") {
+        fileLanguage = "en"; // en_US maps to treon_en.qm
+    }
+    
+    QString fileName = QString("treon_%1.qm").arg(fileLanguage);
     
     for (const QString &path : searchPaths) {
         QString filePath = QDir(path).filePath(fileName);
@@ -201,6 +218,97 @@ bool I18nManager::loadTranslationFile(const QString &language)
         qDebug() << "Failed to load translation file:" << filePath;
         return false;
     }
+}
+
+void I18nManager::discoverAvailableLanguages()
+{
+    m_availableLanguages.clear();
+    QSet<QString> uniqueLanguages; // Use QSet to avoid duplicates
+    
+    // Scan for available translation files
+    QStringList foundFiles = scanForTranslationFiles();
+    
+    // Map found files to language codes
+    for (const QString &file : foundFiles) {
+        QString languageCode = mapLanguageCodeToFile(file);
+        if (!languageCode.isEmpty() && SUPPORTED_LANGUAGES.contains(languageCode) && !uniqueLanguages.contains(languageCode)) {
+            m_availableLanguages << languageCode;
+            uniqueLanguages.insert(languageCode);
+        }
+    }
+    
+    // Always include default language if no translations found
+    if (m_availableLanguages.isEmpty()) {
+        m_availableLanguages << DEFAULT_LANGUAGE;
+    }
+    
+    // Sort languages for consistent ordering
+    m_availableLanguages.sort();
+    
+    qDebug() << "Discovered available languages:" << m_availableLanguages;
+    emit languageDiscoveryCompleted();
+}
+
+bool I18nManager::isLanguageSupported(const QString &language) const
+{
+    return SUPPORTED_LANGUAGES.contains(language);
+}
+
+QString I18nManager::getLanguageFlagPath(const QString &languageCode) const
+{
+    return m_languageFlagPaths.value(languageCode, "");
+}
+
+QStringList I18nManager::scanForTranslationFiles() const
+{
+    QStringList foundFiles;
+    QSet<QString> uniqueFiles; // Use QSet to avoid duplicates
+    
+    // Search paths for translation files
+    QStringList searchPaths;
+    searchPaths << ":/translations";
+    searchPaths << QCoreApplication::applicationDirPath() + "/translations";
+    searchPaths << QCoreApplication::applicationDirPath() + "/../Resources/translations";
+    searchPaths << QStandardPaths::locateAll(QStandardPaths::AppDataLocation, "translations", QStandardPaths::LocateDirectory);
+    
+    for (const QString &path : searchPaths) {
+        QDir dir(path);
+        if (dir.exists()) {
+            QStringList filters;
+            filters << "treon_*.qm";
+            QStringList files = dir.entryList(filters, QDir::Files);
+            
+            for (const QString &file : files) {
+                QString fullPath = dir.absoluteFilePath(file);
+                if (QFileInfo(fullPath).exists() && !uniqueFiles.contains(fullPath)) {
+                    foundFiles << fullPath;
+                    uniqueFiles.insert(fullPath);
+                }
+            }
+        }
+    }
+    
+    return foundFiles;
+}
+
+QString I18nManager::mapLanguageCodeToFile(const QString &filePath) const
+{
+    QFileInfo fileInfo(filePath);
+    QString fileName = fileInfo.baseName();
+    
+    // Extract language code from filename (e.g., "treon_en_GB.qm" -> "en_GB")
+    if (fileName.startsWith("treon_")) {
+        QString languageCode = fileName.mid(6); // Remove "treon_" prefix
+        
+        // Handle special cases
+        if (languageCode == "en") {
+            languageCode = "en_US"; // treon_en.qm maps to en_US
+        }
+        
+        return languageCode;
+    }
+    
+    return QString();
 }
 
 // Global translation functions

@@ -5,11 +5,8 @@ import Treon 1.0
 
 Item {
     id: prefs
-    implicitWidth: 360
-    implicitHeight: 160
-
-    // Injected from caller
-    property var settingsManager
+    implicitWidth: 400
+    implicitHeight: 300
     
     // Internal properties for custom controls
     property bool unlimited: false
@@ -22,241 +19,223 @@ Item {
 
     Constants { id: constants }
 
-    ColumnLayout {
+    ScrollView {
         anchors.fill: parent
         anchors.margins: constants.marginMedium
-        spacing: constants.spacingMedium
-
-
-        // JSON Max Depth group
-        RowLayout {
-            spacing: constants.spacingMedium
-            Layout.alignment: Qt.AlignLeft
+        
+        ColumnLayout {
+            width: prefs.width - 2 * constants.marginMedium
+            spacing: constants.spacingLarge
             
-            Text {
-                text: "JSON Tree Max Depth"
-                font.family: constants.fontFamily
-                font.pixelSize: constants.fontSizeRegular
-                color: constants.colorPrimary
-                Layout.preferredWidth: 140
-            }
-            
-            // Custom styled checkbox
-            Rectangle {
-                width: 16
-                height: 16
-                border.color: unlimited ? constants.colorSelectionText : constants.colorBorder
-                border.width: constants.borderNormal
-                radius: 3
-                color: unlimited ? constants.colorSelectionText : "white"
+            // Language Selection Section
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: constants.spacingSmall
                 
                 Text {
-                    anchors.centerIn: parent
-                    text: "✓"
-                    color: "white"
-                    font.pixelSize: 10
-                    visible: unlimited
+                    text: i18nManager ? i18nManager.tr("Language", "Preferences") : "Language"
+                    font.pointSize: constants.fontSizeMedium
+                    font.weight: Font.Medium
+                    color: "#333333"
                 }
                 
-                MouseArea {
-                    anchors.fill: parent
+                LanguageSelector {
+                    Layout.fillWidth: true
+                    onLanguageChanged: function(language) {
+                        if (settingsManager) {
+                            settingsManager.language = language
+                        }
+                        if (i18nManager) {
+                            i18nManager.switchLanguage(language)
+                        }
+                    }
+                }
+            }
+            
+            // JSON Max Depth Section
+            GroupBox {
+                title: i18nManager ? i18nManager.tr("JSON Tree Settings", "Preferences") : "JSON Tree Settings"
+                font.pointSize: constants.fontSizeMedium
+                font.weight: Font.Medium
+                Layout.fillWidth: true
+                
+                ColumnLayout {
+                    spacing: constants.spacingMedium
+                    
+                    RowLayout {
+                        spacing: constants.spacingMedium
+                        Layout.alignment: Qt.AlignLeft
+                        
+                        Text {
+                            text: i18nManager ? i18nManager.tr("Max Depth", "Preferences") : "Max Depth"
+                            font.family: constants.fontFamily
+                            font.pointSize: constants.fontSizeRegular
+                            color: constants.colorPrimary
+                            Layout.preferredWidth: 100
+                        }
+                        
+                        // Custom styled checkbox
+                        Rectangle {
+                            width: 16
+                            height: 16
+                            border.color: unlimited ? constants.colorSelectionText : constants.colorBorder
+                            border.width: constants.borderNormal
+                            radius: 3
+                            color: unlimited ? constants.colorSelectionText : "transparent"
+                            
+                            MouseArea {
+                                anchors.fill: parent
+                                onClicked: {
+                                    unlimited = !unlimited
+                                    stepperEnabled = !unlimited
+                                    if (unlimited) {
+                                        depthValue = 999
+                                    } else {
+                                        depthValue = 1
+                                    }
+                                }
+                            }
+                            
+                            Text {
+                                text: "✓"
+                                color: "white"
+                                font.pointSize: 10
+                                font.weight: Font.Bold
+                                anchors.centerIn: parent
+                                visible: unlimited
+                            }
+                        }
+                        
+                        Text {
+                            text: i18nManager ? i18nManager.tr("Unlimited", "Preferences") : "Unlimited"
+                            font.family: constants.fontFamily
+                            font.pointSize: constants.fontSizeRegular
+                            color: constants.colorPrimary
+                        }
+                    }
+                    
+                    RowLayout {
+                        spacing: constants.spacingMedium
+                        Layout.alignment: Qt.AlignLeft
+                        visible: !unlimited
+                        
+                        Text {
+                            text: i18nManager ? i18nManager.tr("Depth", "Preferences") : "Depth"
+                            font.family: constants.fontFamily
+                            font.pointSize: constants.fontSizeRegular
+                            color: constants.colorPrimary
+                            Layout.preferredWidth: 100
+                        }
+                        
+                        SpinBox {
+                            id: depthSpinBox
+                            from: 1
+                            to: 20
+                            value: depthValue
+                            enabled: stepperEnabled
+                            
+                            onValueChanged: {
+                                depthValue = value
+                            }
+                            
+                            // Custom styling
+                            background: Rectangle {
+                                border.color: constants.colorBorder
+                                border.width: constants.borderNormal
+                                radius: 4
+                                color: "white"
+                            }
+                            
+                            textFromValue: function(value, locale) {
+                                return value.toString()
+                            }
+                            
+                            valueFromText: function(text, locale) {
+                                return parseInt(text) || 1
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Buttons Section
+            RowLayout {
+                Layout.alignment: Qt.AlignRight
+                spacing: constants.spacingMedium
+                
+                Button {
+                    text: i18nManager ? i18nManager.tr("Restore Defaults", "Preferences") : "Restore Defaults"
                     onClicked: {
-                        unlimited = !unlimited
-                        if (unlimited) {
-                            settingsManager.jsonMaxDepth = undefined
-                        } else {
-                            settingsManager.jsonMaxDepth = depthValue
+                        unlimited = false
+                        depthValue = 1
+                        stepperEnabled = true
+                        if (settingsManager) {
+                            settingsManager.language = "en_GB"
+                        }
+                        if (i18nManager) {
+                            i18nManager.switchLanguage("en_GB")
                         }
                     }
-                }
-            }
-            
-            Text {
-                text: "Unlimited"
-                font.family: constants.fontFamily
-                font.pixelSize: constants.fontSizeRegular
-                color: constants.colorPrimary
-            }
-            
-            Item { Layout.fillWidth: true }
-            
-            // Custom styled stepper
-            Row {
-                spacing: 0
-                
-                // Minus button
-                Rectangle {
-                    width: 24
-                    height: 24
-                    color: stepperEnabled ? (minusMouseArea.pressed ? constants.colorPressed : constants.colorSurface) : constants.colorBackground
-                    border.color: constants.colorBorder
-                    border.width: constants.borderNormal
-                    radius: 4
                     
-                    Text {
-                        anchors.centerIn: parent
-                        text: "−"
-                        font.pixelSize: 14
-                        color: stepperEnabled ? constants.colorPrimary : constants.colorSecondary
+                    background: Rectangle {
+                        border.color: constants.colorBorder
+                        border.width: constants.borderNormal
+                        radius: 4
+                        color: parent.pressed ? constants.colorSurface : "white"
                     }
-                    
-                    MouseArea {
-                        id: minusMouseArea
-                        anchors.fill: parent
-                        enabled: stepperEnabled
-                        onClicked: {
-                            if (depthValue > 1) {
-                                depthValue--
-                                if (!unlimited) {
-                                    settingsManager.jsonMaxDepth = depthValue
-                                }
-                            }
+                }
+                
+                Button {
+                    text: i18nManager ? i18nManager.tr("Save", "Preferences") : "Save"
+                    onClicked: {
+                        if (settingsManager) {
+                            settingsManager.jsonMaxDepth = unlimited ? -1 : depthValue
+                            settingsManager.saveSettings()
                         }
-                    }
-                }
-                
-                // Value display
-                Rectangle {
-                    width: 50
-                    height: 24
-                    color: "white"
-                    border.color: constants.colorBorder
-                    border.width: constants.borderNormal
-                    
-                    Text {
-                        anchors.centerIn: parent
-                        text: depthValue.toString()
-                        font.family: constants.fontFamily
-                        font.pixelSize: constants.fontSizeRegular
-                        color: constants.colorPrimary
-                    }
-                }
-                
-                // Plus button
-                Rectangle {
-                    width: 24
-                    height: 24
-                    color: stepperEnabled ? (plusMouseArea.pressed ? constants.colorPressed : constants.colorSurface) : constants.colorBackground
-                    border.color: constants.colorBorder
-                    border.width: constants.borderNormal
-                    radius: 4
-                    
-                    Text {
-                        anchors.centerIn: parent
-                        text: "+"
-                        font.pixelSize: 14
-                        color: stepperEnabled ? constants.colorPrimary : constants.colorSecondary
+                        preferencesSaved()
                     }
                     
-                    MouseArea {
-                        id: plusMouseArea
-                        anchors.fill: parent
-                        enabled: stepperEnabled
-                        onClicked: {
-                            if (depthValue < 99) {
-                                depthValue++
-                                if (!unlimited) {
-                                    settingsManager.jsonMaxDepth = depthValue
-                                }
-                            }
-                        }
+                    background: Rectangle {
+                        border.color: constants.colorSelectionText
+                        border.width: constants.borderNormal
+                        radius: 4
+                        color: parent.pressed ? constants.colorSelectionText : "white"
+                    }
+                    
+                    contentItem: Text {
+                        text: parent.text
+                        color: constants.colorSelectionText
+                        font.pointSize: constants.fontSizeRegular
+                        font.weight: Font.Medium
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
                     }
                 }
             }
         }
-
-        Item { Layout.fillHeight: true }
-        
-        // Action buttons
-        RowLayout {
-            Layout.alignment: Qt.AlignRight
-            spacing: constants.spacingMedium
-            
-            Button {
-                text: "Restore Defaults"
-                Layout.preferredWidth: 120
-                Layout.preferredHeight: constants.buttonHeightSmall
-                
-                background: Rectangle {
-                    color: parent.pressed ? constants.colorPressed : 
-                           parent.hovered ? constants.colorHover : constants.colorSurface
-                    border.color: parent.hovered ? constants.colorSelectionText : constants.colorBorder
-                    border.width: constants.borderNormal
-                    radius: constants.radiusSmall
-                }
-                
-                contentItem: Text {
-                    text: parent.text
-                    font.family: constants.fontFamily
-                    font.pixelSize: constants.fontSizeRegular
-                    color: parent.hovered ? constants.colorSelectionText : constants.colorPrimary
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
-                }
-                
-                onClicked: {
-                    // Restore default values
-                    unlimited = true
-                    depthValue = 1
-                    settingsManager.jsonMaxDepth = undefined
-                }
-            }
-            
-            Button {
-                text: "Save"
-                Layout.preferredWidth: 80
-                Layout.preferredHeight: constants.buttonHeightSmall
-                
-                background: Rectangle {
-                    color: parent.pressed ? constants.colorPressed : 
-                           parent.hovered ? constants.colorHover : constants.colorSurface
-                    border.color: parent.hovered ? constants.colorSelectionText : constants.colorBorder
-                    border.width: constants.borderNormal
-                    radius: constants.radiusSmall
-                }
-                
-                contentItem: Text {
-                    text: parent.text
-                    font.family: constants.fontFamily
-                    font.pixelSize: constants.fontSizeRegular
-                    color: parent.hovered ? constants.colorSelectionText : constants.colorPrimary
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
-                }
-                
-                onClicked: {
-                    // Save current values
-                    if (unlimited) {
-                        settingsManager.jsonMaxDepth = undefined
-                    } else {
-                        settingsManager.jsonMaxDepth = depthValue
-                    }
-                    // Emit signal to notify that preferences were saved
-                    preferencesSaved()                    
-                }
+    }
+    
+    // Initialize values from settings
+    Component.onCompleted: {
+        if (settingsManager) {
+            var maxDepth = settingsManager.jsonMaxDepth
+            unlimited = (maxDepth === -1 || maxDepth === undefined || maxDepth === null)
+            depthValue = unlimited ? 1 : maxDepth
+            stepperEnabled = !unlimited
+        }
+    }
+    
+    // Update when settings change
+    Connections {
+        target: settingsManager
+        enabled: !!settingsManager
+        function onJsonMaxDepthChanged() {
+            if (settingsManager) {
+                var maxDepth = settingsManager.jsonMaxDepth
+                unlimited = (maxDepth === -1 || maxDepth === undefined || maxDepth === null)
+                depthValue = unlimited ? 1 : maxDepth
+                stepperEnabled = !unlimited
             }
         }
-
-        // Keep UI in sync with stored setting
-        Component.onCompleted: {
-            var d = settingsManager ? settingsManager.jsonMaxDepth : undefined
-            unlimited = (d === undefined || d === null || d === "")
-            if (!unlimited && d !== undefined && d !== null && d !== "") {
-                depthValue = Number(d)
-            }
-        }
-        Connections {
-            target: settingsManager
-            function onJsonMaxDepthChanged() {
-                var d = settingsManager.jsonMaxDepth
-                unlimited = (d === undefined || d === null || d === "")
-                if (!unlimited && d !== undefined && d !== null && d !== "") {
-                    depthValue = Number(d)
-                }
-            }
-        }
-        
     }
 }
-
-

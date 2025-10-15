@@ -13,6 +13,9 @@
 
 int main(int argc, char *argv[])
 {
+    // Increase image allocation limit to handle complex SVG files
+    qputenv("QT_IMAGEIO_MAXALLOC", "512");
+    
     // Initialize logging first
     treon::Logger::initialize();
     LOG_INFO("Starting Treon application");
@@ -45,8 +48,15 @@ int main(int argc, char *argv[])
     treon::SettingsManager settingsManager;
     treon::I18nManager i18nManager;
     
-    // Load language from settings
-    i18nManager.setCurrentLanguage(settingsManager.language());
+    // Load language from settings BEFORE QML is loaded
+    QString savedLanguage = settingsManager.language();
+    if (savedLanguage.isEmpty() || !i18nManager.isLanguageSupported(savedLanguage)) {
+        // Fallback to system language or default
+        i18nManager.loadSystemLanguage();
+        settingsManager.setLanguage(i18nManager.currentLanguage());
+    } else {
+        i18nManager.setCurrentLanguage(savedLanguage);
+    }
     
     // Register C++ types with QML
     qmlRegisterType<treon::Application>("Treon", 1, 0, "Application");
@@ -54,8 +64,29 @@ int main(int argc, char *argv[])
     qmlRegisterType<treon::SettingsManager>("Treon", 1, 0, "SettingsManager");
     qmlRegisterType<treon::I18nManager>("Treon", 1, 0, "I18nManager");
     
+    // Expose managers as context properties
+    engine.rootContext()->setContextProperty("settingsManager", &settingsManager);
+    engine.rootContext()->setContextProperty("i18nManager", &i18nManager);
+    
     // Load main QML file
     const QUrl url(QStringLiteral("qrc:/qml/main.qml"));
+    
+    // Handle language changes
+    QObject::connect(&i18nManager, &treon::I18nManager::translationsLoaded,
+                     [&engine, url, &settingsManager, &i18nManager]() {
+        // Force reload of QML to apply new translations
+        engine.clearComponentCache();
+        
+        // Re-set context properties before reloading
+        engine.rootContext()->setContextProperty("settingsManager", &settingsManager);
+        engine.rootContext()->setContextProperty("i18nManager", &i18nManager);
+        
+        engine.load(url);
+        
+        // Also trigger QML retranslation
+        QCoreApplication::sendEvent(QCoreApplication::instance(), new QEvent(QEvent::LanguageChange));
+    });
+    
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreated,
                      &app, [url](QObject *obj, const QUrl &objUrl) {
         if (!obj && url == objUrl)
