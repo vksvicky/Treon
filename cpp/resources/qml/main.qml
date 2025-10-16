@@ -3,6 +3,7 @@ import QtQuick.Controls 2.15
 import QtQuick.Dialogs
 import QtQuick.Layouts 1.15
 import QtQuick.Window 2.15
+// import Qt.labs.platform 1.1
 import Treon 1.0
 
 ApplicationWindow {
@@ -16,6 +17,9 @@ ApplicationWindow {
     visible: true
     title: qsTr("Treon")
     
+    // Assign the menu bar
+    menuBar: mainMenuBar
+                
     Constants {
         id: constants
     }
@@ -72,290 +76,120 @@ ApplicationWindow {
     }
     
     // Menu Bar - matches original Swift app structure
-    menuBar: MenuBar {
+    MenuBar {
+        id: mainMenuBar
         Menu {
             Action {
-                text: qsTr("About Treon")
+                text: i18nManager ? i18nManager.tr("About Treon", "QObject") : "About Treon"
                 onTriggered: app.showAbout()
             }
             MenuSeparator {}
             Action {
-                text: qsTr("Preferences...")
-                shortcut: "Ctrl+,"
+                text: i18nManager ? i18nManager.tr("Preferences...", "QObject") : "Preferences..."
+                shortcut: StandardKey.Preferences
                 onTriggered: prefsDialog.visible = true
             }
             MenuSeparator {}
             Action {
-                text: qsTr("Hide Treon")
-                shortcut: "Ctrl+H"
+                text: i18nManager ? i18nManager.tr("Hide Treon", "QObject") : "Hide Treon"
+                shortcut: StandardKey.Hide
                 onTriggered: window.hide()
             }
             Action {
-                text: qsTr("Hide Others")
-                shortcut: "Ctrl+Alt+H"
+                text: i18nManager ? i18nManager.tr("Hide Others", "QObject") : "Hide Others"
+                shortcut: StandardKey.HideOthers
                 onTriggered: window.hide()
             }
             Action {
-                text: qsTr("Show All")
+                text: i18nManager ? i18nManager.tr("Show All", "QObject") : "Show All"
                 onTriggered: window.show()
             }
             MenuSeparator {}
             Action {
-                text: qsTr("Quit Treon")
-                shortcut: "Ctrl+Q"
+                text: i18nManager ? i18nManager.tr("Quit Treon", "QObject") : "Quit Treon"
+                shortcut: StandardKey.Quit
                 onTriggered: Qt.quit()
             }
         }
         Menu {
-            title: qsTr("File")
+            title: i18nManager ? i18nManager.tr("File", "QObject") : "File"
             Action {
-                text: qsTr("New")
-                shortcut: "Ctrl+N"
+                text: i18nManager ? i18nManager.tr("New", "QObject") : "New"
+                shortcut: StandardKey.New
                 onTriggered: app.createNewFile()
             }
             Action {
-                text: qsTr("Open...")
-                shortcut: "Ctrl+O"
+                text: i18nManager ? i18nManager.tr("Open...", "QObject") : "Open..."
+                shortcut: StandardKey.Open
                 onTriggered: fileDialog.open()
-            }
+            }           
             Menu {
-                title: qsTr("Open Recent")
+                title: i18nManager ? i18nManager.tr("Open Recent", "QObject") : "Open Recent"
                 id: recentMenu
-                // TODO: Populate with recent files
+                
+                // Populate with recent files
+                Repeater {
+                    model: app.settingsManager ? app.settingsManager.recentFiles : []
+                    Action {
+                        text: {
+                            var fileName = modelData.split('/').pop()
+                            return fileName.length > 30 ? fileName.substring(0, 30) + "..." : fileName
+                        }
+                        onTriggered: app.openFile(modelData)
+                    }
+                }
+                
+                // Show "No recent files" if empty
+                Action {
+                    text: i18nManager ? i18nManager.tr("No recent files", "QObject") : "No recent files"
+                    enabled: false
+                }
+                
+                // Clear recent files option
+                MenuSeparator {}
+                Action {
+                    text: i18nManager ? i18nManager.tr("Clear Recent Files", "QObject") : "Clear Recent Files"
+                    onTriggered: app.clearHistory()
+                }
             }
             MenuSeparator {}
             Action {
-                text: qsTr("Close")
-                shortcut: "Ctrl+W"
+                text: i18nManager ? i18nManager.tr("Close", "QObject") : "Close"
+                shortcut: StandardKey.Close
                 onTriggered: app.closeFile()
                 enabled: app.currentFile.length > 0
             }
             Action {
-                text: qsTr("Save")
-                shortcut: "Ctrl+S"
+                text: i18nManager ? i18nManager.tr("Save", "QObject") : "Save"
+                shortcut: StandardKey.Save
                 onTriggered: app.saveFile()
                 enabled: app.currentFile.length > 0
             }
-            Action {
-                text: qsTr("Save As...")
-                shortcut: "Ctrl+Shift+S"
-                onTriggered: saveDialog.open()
-                enabled: app.currentFile.length > 0
-            }
-            Action {
-                text: qsTr("Revert to Saved")
-                shortcut: "Ctrl+R"
-                onTriggered: app.revertToSaved()
-                enabled: app.currentFile.length > 0
+            Menu {
+                title: i18nManager ? i18nManager.tr("Save As", "QObject") : "Save As"
+                Action {
+                    text: i18nManager ? i18nManager.tr("Save As JSON...", "QObject") : "Save As JSON..."
+                    shortcut: StandardKey.SaveAs
+                    onTriggered: saveDialog.open()
+                    enabled: app.currentFile.length > 0
+                }
             }
             MenuSeparator {}
             Action {
-                text: qsTr("Page Setup...")
+                text: i18nManager ? i18nManager.tr("Page Setup...", "QObject") : "Page Setup..."
                 shortcut: "Ctrl+Shift+P"
                 onTriggered: app.showPageSetup()
             }
             Action {
-                text: qsTr("Print...")
-                shortcut: "Ctrl+P"
+                text: i18nManager ? i18nManager.tr("Print...", "QObject") : "Print..."
+                shortcut: StandardKey.Print
                 onTriggered: app.printDocument()
             }
         }
         Menu {
-            title: qsTr("Edit")
+            title: i18nManager ? i18nManager.tr("Help", "QObject") : "Help"
             Action {
-                text: qsTr("Undo")
-                shortcut: "Ctrl+Z"
-                onTriggered: app.undo()
-            }
-            Action {
-                text: qsTr("Redo")
-                shortcut: "Ctrl+Y"
-                onTriggered: app.redo()
-            }
-            MenuSeparator {}
-            Action {
-                text: qsTr("Cut")
-                shortcut: "Ctrl+X"
-                onTriggered: app.cut()
-            }
-            Action {
-                text: qsTr("Copy")
-                shortcut: "Ctrl+C"
-                onTriggered: app.copy()
-            }
-            Action {
-                text: qsTr("Paste")
-                shortcut: "Ctrl+V"
-                onTriggered: app.paste()
-            }
-            Action {
-                text: qsTr("Paste and Match Style")
-                shortcut: "Ctrl+Alt+V"
-                onTriggered: app.pasteAsPlainText()
-            }
-            Action {
-                text: qsTr("Delete")
-                onTriggered: app.deleteSelection()
-            }
-            Action {
-                text: qsTr("Select All")
-                shortcut: "Ctrl+A"
-                onTriggered: app.selectAll()
-            }
-            MenuSeparator {}
-            Menu {
-                title: qsTr("Find")
-                    Action {
-                        text: qsTr("Find...")
-                        shortcut: "Ctrl+F"
-                        onTriggered: app.showFindDialog()
-                    }
-                    Action {
-                        text: qsTr("Find and Replace...")
-                        shortcut: "Ctrl+Alt+F"
-                        onTriggered: app.showFindReplaceDialog()
-                    }
-                    Action {
-                        text: qsTr("Find Next")
-                        shortcut: "Ctrl+G"
-                        onTriggered: app.findNext()
-                    }
-                    Action {
-                        text: qsTr("Find Previous")
-                        shortcut: "Ctrl+Shift+G"
-                        onTriggered: app.findPrevious()
-                    }
-                    Action {
-                        text: qsTr("Use Selection for Find")
-                        shortcut: "Ctrl+E"
-                        onTriggered: app.useSelectionForFind()
-                    }
-                    Action {
-                        text: qsTr("Jump to Selection")
-                        shortcut: "Ctrl+J"
-                        onTriggered: app.jumpToSelection()
-                    }
-            }
-        }
-        Menu {
-            title: qsTr("Format")
-            Menu {
-                title: qsTr("Font")
-                    Action {
-                        text: qsTr("Show Fonts")
-                        shortcut: "Ctrl+T"
-                        onTriggered: app.showFontPanel()
-                    }
-                    Action {
-                        text: qsTr("Bold")
-                        shortcut: "Ctrl+B"
-                        onTriggered: app.toggleBold()
-                    }
-                    Action {
-                        text: qsTr("Italic")
-                        shortcut: "Ctrl+I"
-                        onTriggered: app.toggleItalic()
-                    }
-                    Action {
-                        text: qsTr("Underline")
-                        shortcut: "Ctrl+U"
-                        onTriggered: app.toggleUnderline()
-                    }
-                MenuSeparator {}
-                    Action {
-                        text: qsTr("Bigger")
-                        shortcut: "Ctrl+Plus"
-                        onTriggered: app.increaseFontSize()
-                    }
-                    Action {
-                        text: qsTr("Smaller")
-                        shortcut: "Ctrl+Minus"
-                        onTriggered: app.decreaseFontSize()
-                    }
-            }
-            Menu {
-                title: qsTr("Text")
-                    Action {
-                        text: qsTr("Align Left")
-                        shortcut: "Ctrl+{"
-                        onTriggered: app.alignLeft()
-                    }
-                    Action {
-                        text: qsTr("Center")
-                        shortcut: "Ctrl+|"
-                        onTriggered: app.alignCenter()
-                    }
-                    Action {
-                        text: qsTr("Justify")
-                        onTriggered: app.alignJustify()
-                    }
-                    Action {
-                        text: qsTr("Align Right")
-                        shortcut: "Ctrl+}"
-                        onTriggered: app.alignRight()
-                    }
-            }
-        }
-        Menu {
-            title: qsTr("View")
-            Action {
-                text: qsTr("Show Toolbar")
-                shortcut: "Ctrl+Alt+T"
-                onTriggered: app.toggleToolbar()
-            }
-            Action {
-                text: qsTr("Customize Toolbar...")
-                onTriggered: app.customizeToolbar()
-            }
-            MenuSeparator {}
-            Action {
-                text: qsTr("Show Sidebar")
-                shortcut: "Ctrl+Alt+S"
-                onTriggered: app.toggleSidebar()
-            }
-            Action {
-                text: qsTr("Enter Full Screen")
-                shortcut: "Ctrl+Alt+F"
-                onTriggered: app.toggleFullScreen()
-            }
-            MenuSeparator {}
-            Action {
-                text: qsTr("Toggle Theme")
-                shortcut: "Ctrl+T"
-                onTriggered: app.toggleTheme()
-            }
-            Action {
-                text: qsTr("Expand All")
-                shortcut: "Ctrl+E"
-                onTriggered: app.expandAllNodes()
-            }
-            Action {
-                text: qsTr("Collapse All")
-                shortcut: "Ctrl+Shift+E"
-                onTriggered: app.collapseAllNodes()
-            }
-        }
-        Menu {
-            title: qsTr("Window")
-            Action {
-                text: qsTr("Minimize")
-                shortcut: "Ctrl+M"
-                onTriggered: window.showMinimized()
-            }
-            Action {
-                text: qsTr("Zoom")
-                onTriggered: window.showMaximized()
-            }
-            MenuSeparator {}
-            Action {
-                text: qsTr("Bring All to Front")
-                onTriggered: app.bringAllToFront()
-            }
-        }
-        Menu {
-            title: qsTr("Help")
-            Action {
-                text: qsTr("Treon Help")
+                text: i18nManager ? i18nManager.tr("Treon Help", "QObject") : "Treon Help"
                 shortcut: "F1"
                 onTriggered: app.showHelp()
             }
@@ -368,9 +202,7 @@ ApplicationWindow {
         anchors.fill: parent
         color: constants.colorSurface
         visible: !app.currentFile
-        
-        // Drag and drop support removed from global area - now only in designated area
-        
+                
         ColumnLayout {
             anchors.centerIn: parent
             spacing: 80
@@ -922,26 +754,42 @@ ApplicationWindow {
     }
     
     // Error dialog - proper modal alert
-    Dialog {
+    Window {
         id: errorDialog
         title: "JSON Error"
-        modal: true
-        anchors.centerIn: parent
-        width: Math.min(400, parent.width * 0.8)
-        height: Math.min(200, parent.height * 0.6)
+        modality: Qt.ApplicationModal
+        flags: Qt.Window | Qt.WindowTitleHint | Qt.WindowCloseButtonHint
+        width: Math.min(400, 400)
+        height: Math.min(200, 200)
+        visible: false
         
         property alias text: errorText.text
         
-        standardButtons: Dialog.Ok
-        
-        ScrollView {
+        ColumnLayout {
             anchors.fill: parent
-            Text {
-                id: errorText
-                wrapMode: Text.WordWrap
-                font.family: constants.fontFamily
-                font.pixelSize: 12
-                color: constants.colorPrimary
+            anchors.margins: 20
+            spacing: 20
+            
+            ScrollView {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                Text {
+                    id: errorText
+                    wrapMode: Text.WordWrap
+                    font.family: constants.fontFamily
+                    font.pixelSize: 12
+                    color: constants.colorPrimary
+                }
+            }
+            
+            RowLayout {
+                Layout.alignment: Qt.AlignRight
+                spacing: 10
+                
+                Button {
+                    text: "OK"
+                    onClicked: errorDialog.visible = false
+                }
             }
         }
     }

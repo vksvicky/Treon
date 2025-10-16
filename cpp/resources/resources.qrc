@@ -21,4 +21,10 @@
         <file alias="es.svg">flags/es.svg</file>
         <file alias="fr.svg">flags/fr.svg</file>
     </qresource>
+    <qresource prefix="/translations">
+        <file alias="treon_en_GB.qm">../translations/treon_en_GB.qm</file>
+        <file alias="treon_en_US.qm">../translations/treon_en_US.qm</file>
+        <file alias="treon_es.qm">../translations/treon_es.qm</file>
+        <file alias="treon_fr.qm">../translations/treon_fr.qm</file>
+    </qresource>
 </RCC>

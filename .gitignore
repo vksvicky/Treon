@@ -36,6 +36,9 @@ Open×
 *.out
 *.app
 
+# Translations
+*.qm
+
 ### Swift ###
 # Xcode
 #
