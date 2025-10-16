@@ -256,32 +256,32 @@
     <message>
         <location filename="../src/Strings.cpp" line="153"/>
         <source>Opening file...</source>
-        <translation type="unfinished"></translation>
+        <translation>Abriendo archivo...</translation>
     </message>
     <message>
         <location filename="../src/Strings.cpp" line="154"/>
         <source>File opened successfully</source>
-        <translation type="unfinished"></translation>
+        <translation>Archivo abierto exitosamente</translation>
     </message>
     <message>
         <location filename="../src/Strings.cpp" line="155"/>
         <source>Saving file...</source>
-        <translation type="unfinished"></translation>
+        <translation>Guardando archivo...</translation>
     </message>
     <message>
         <location filename="../src/Strings.cpp" line="156"/>
         <source>File saved successfully</source>
-        <translation type="unfinished"></translation>
+        <translation>Archivo guardado exitosamente</translation>
     </message>
     <message>
         <location filename="../src/Strings.cpp" line="157"/>
         <source>New file created</source>
-        <translation type="unfinished"></translation>
+        <translation>Nuevo archivo creado</translation>
     </message>
     <message>
         <location filename="../src/Strings.cpp" line="158"/>
         <source>File closed</source>
-        <translation type="unfinished"></translation>
+        <translation>Archivo cerrado</translation>
     </message>
     <message>
         <location filename="../src/Strings.cpp" line="159"/>
@@ -575,6 +575,16 @@
         <location filename="../src/Strings.cpp" line="101"/>
         <source>No recent files</source>
         <translation>No hay archivos recientes</translation>
+    </message>
+    <message>
+        <location filename="../src/Strings.cpp" line="102"/>
+        <source>Clear Recent Files</source>
+        <translation>Limpiar Archivos Recientes</translation>
+    </message>
+    <message>
+        <location filename="../src/Strings.cpp" line="103"/>
+        <source>Save As JSON...</source>
+        <translation>Guardar Como JSON...</translation>
     </message>
     <message>
         <location filename="../src/Strings.cpp" line="102"/>
