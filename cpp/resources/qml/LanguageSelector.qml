@@ -69,7 +69,7 @@ ColumnLayout {
             }
             
             Text {
-                text: i18nManager ? i18nManager.getLanguageNativeName(languageComboBox.currentValue) : languageComboBox.currentValue
+                text: i18nManager && languageComboBox.currentValue ? i18nManager.getLanguageNativeName(languageComboBox.currentValue) : (languageComboBox.currentValue || "")
                 font.pointSize: 13
                 color: "#000000"
                 anchors.verticalCenter: parent.verticalCenter

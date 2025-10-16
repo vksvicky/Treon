@@ -68,6 +68,7 @@ ApplicationWindow {
             anchors.fill: parent
             onPreferencesSaved: {
                 twoPane.updateJSONModel()
+                prefsDialog.visible = false
             }
             onCloseRequested: {
                 prefsDialog.visible = false
