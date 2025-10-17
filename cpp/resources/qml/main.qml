@@ -53,28 +53,7 @@ ApplicationWindow {
         }
     }
 
-    // Preferences dialog (centralized)
-    Window {
-        id: prefsDialog
-        modality: Qt.ApplicationModal
-        title: qsTr("Preferences")
-        flags: Qt.Window | Qt.WindowTitleHint | Qt.WindowCloseButtonHint | Qt.CustomizeWindowHint
-        width: 450
-        height: 350
-        visible: false
-        onClosing: twoPane.updateJSONModel()
-
-        PreferencesView { 
-            anchors.fill: parent
-            onPreferencesSaved: {
-                twoPane.updateJSONModel()
-                prefsDialog.visible = false
-            }
-            onCloseRequested: {
-                prefsDialog.visible = false
-            }
-        }
-    }
+    // Preferences dialog is now handled by C++ code
     
     // Menu Bar - matches original Swift app structure
     MenuBar {
@@ -85,11 +64,7 @@ ApplicationWindow {
                 onTriggered: app.showAbout()
             }
             MenuSeparator {}
-            Action {
-                text: i18nManager ? i18nManager.tr("Preferences...", "QObject") : "Preferences..."
-                shortcut: StandardKey.Preferences
-                onTriggered: prefsDialog.visible = true
-            }
+            // Preferences menu item is handled by C++ native menu
             MenuSeparator {}
             Action {
                 text: i18nManager ? i18nManager.tr("Hide Treon", "QObject") : "Hide Treon"

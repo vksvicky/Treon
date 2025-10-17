@@ -3,6 +3,11 @@
         <file>icon.png</file>
         <file>LICENSE.txt</file>
     </qresource>
+    <qresource prefix="/icons">
+        <file>icons/arrow-down.svg</file>
+        <file>icons/arrow-up.svg</file>
+        <file>icons/arrow-down-small.svg</file>
+    </qresource>
     <qresource prefix="/">
         <file>qml/main.qml</file>
         <file>qml/TwoPaneLayout.qml</file>
@@ -11,6 +16,7 @@
         <file>qml/JSONTextView.qml</file>
         <file>qml/Constants.qml</file>
         <file>qml/PreferencesView.qml</file>
+        <file>qml/PreferencesWindow.qml</file>
         <file>qml/LanguageSelector.qml</file>
         <file>qml/NotificationDialog.qml</file>
         <file>qml/qmldir</file>

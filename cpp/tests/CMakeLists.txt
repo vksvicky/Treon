@@ -117,6 +117,7 @@ set_tests_properties(json_benchmark PROPERTIES
 
 # Integration test sources (BDD-style and functional tests)
 file(GLOB INTEGRATION_FUNCTIONAL_SOURCES "integration/*.cpp")
+file(GLOB INTEGRATION_FEATURE_STEPS "integration/features/steps/*.cpp")
 
 # Create individual integration test executables
 foreach(INTEGRATION_TEST_SOURCE ${INTEGRATION_FUNCTIONAL_SOURCES})
@@ -124,6 +125,27 @@ foreach(INTEGRATION_TEST_SOURCE ${INTEGRATION_FUNCTIONAL_SOURCES})
     
     add_executable(${TEST_NAME} 
         ${INTEGRATION_TEST_SOURCE}
+        ${COMMON_SOURCES}
+    )
+    
+    target_link_libraries(${TEST_NAME}
+        PRIVATE
+            Qt6::Test
+            Qt6::Core
+            Qt6::Widgets
+            Qt6::Quick
+            Qt6::QuickDialogs2
+            treon_app_lib
+    )
+endforeach()
+
+# Create individual feature step test executables
+foreach(FEATURE_STEP_SOURCE ${INTEGRATION_FEATURE_STEPS})
+    get_filename_component(TEST_NAME ${FEATURE_STEP_SOURCE} NAME_WE)
+    set(TEST_NAME "${TEST_NAME}_feature")
+    
+    add_executable(${TEST_NAME} 
+        ${FEATURE_STEP_SOURCE}
         ${COMMON_SOURCES}
     )
     
