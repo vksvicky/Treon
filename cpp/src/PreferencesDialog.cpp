@@ -107,10 +107,7 @@ void PreferencesDialog::setupUI()
         "    color: #1976d2;"
         "}"
     );
-    m_languageCombo->addItem("🇬🇧 English (UK)", "en_GB");
-    m_languageCombo->addItem("🇺🇸 English (US)", "en_US");
-    m_languageCombo->addItem("🇪🇸 Español", "es");
-    m_languageCombo->addItem("🇫🇷 Français", "fr");
+    populateLanguageOptions();
     
     // Create a dropdown button with arrow
     QToolButton *dropdownButton = new QToolButton(this);
@@ -432,6 +429,33 @@ void PreferencesDialog::onSave()
     }
     
     accept();
+}
+
+void PreferencesDialog::populateLanguageOptions()
+{
+    // Clear existing items
+    m_languageCombo->clear();
+    
+    // Define supported languages with their display names and codes
+    // This should ideally come from I18nManager, but for now we'll define them here
+    struct LanguageInfo {
+        QString code;
+        QString displayName;
+        QString flag;
+    };
+    
+    QList<LanguageInfo> languages = {
+        {"en_GB", "English (UK)", "🇬🇧"},
+        {"en_US", "English (US)", "🇺🇸"},
+        {"es", "Español", "🇪🇸"},
+        {"fr", "Français", "🇫🇷"}
+    };
+    
+    // Add each language to the combo box
+    for (const auto &lang : languages) {
+        QString displayText = QString("%1 %2").arg(lang.flag, lang.displayName);
+        m_languageCombo->addItem(displayText, lang.code);
+    }
 }
 
 

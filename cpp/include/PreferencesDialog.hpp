@@ -37,6 +37,7 @@ private:
     void loadSettings();
     void saveSettings();
     void applyLanguage(const QString &language);
+    void populateLanguageOptions();
 
     // UI Components
     QVBoxLayout *m_mainLayout;
