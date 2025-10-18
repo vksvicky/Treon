@@ -69,6 +69,7 @@ int main(int argc, char *argv[])
     
     QAction *preferencesAction = appMenu->addAction("Preferences...");
     preferencesAction->setMenuRole(QAction::PreferencesRole);
+    preferencesAction->setText("Preferences..."); // Force the text after setting the role
     preferencesAction->setShortcut(QKeySequence::Preferences);
     
     appMenu->addSeparator();
