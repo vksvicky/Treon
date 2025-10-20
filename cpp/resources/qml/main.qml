@@ -15,7 +15,12 @@ ApplicationWindow {
     maximumWidth: constants.maximumWindowWidth
     maximumHeight: constants.maximumWindowHeight
     visible: true
-    title: qsTr("Treon")
+    title: tr.tr("Treon")
+    
+    // Translation utilities
+    TranslationUtils {
+        id: tr
+    }
     
     // Assign the menu bar
     menuBar: mainMenuBar
@@ -231,7 +236,7 @@ ApplicationWindow {
                 }
                 
                     Text {
-                        text: qsTr("Treon")
+                        text: tr.tr("Treon")
                         font.family: "Helvetica"
                         font.pointSize: 36
                         font.weight: Font.Light
@@ -240,7 +245,7 @@ ApplicationWindow {
                     }
                 
                     Text {
-                        text: qsTr("JSON Formatter & Viewer")
+                        text: tr.tr("JSON Formatter & Viewer")
                         font.family: "Helvetica"
                         font.pointSize: 16
                         color: constants.colorSecondary
@@ -269,7 +274,7 @@ ApplicationWindow {
                         spacing: 16
                         
                             Button {
-                                text: qsTr("Open File")
+                                text: tr.tr("Open File")
                                 font.pointSize: 14
                                 font.weight: Font.Medium
                                 Layout.preferredWidth: 140
@@ -293,7 +298,7 @@ ApplicationWindow {
                         }
                         
                             Button {
-                                text: qsTr("New File")
+                                text: tr.tr("New File")
                                 font.pointSize: 14
                                 font.weight: Font.Medium
                                 Layout.preferredWidth: 140
@@ -323,7 +328,7 @@ ApplicationWindow {
                         spacing: 16
                         
                             Button {
-                                text: qsTr("From Pasteboard")
+                                text: tr.tr("From Pasteboard")
                                 font.pointSize: 12
                                 Layout.preferredWidth: 140
                                 Layout.preferredHeight: 32
@@ -346,7 +351,7 @@ ApplicationWindow {
                         }
                         
                             Button {
-                                text: qsTr("From URL")
+                                text: tr.tr("From URL")
                                 font.pointSize: 12
                                 Layout.preferredWidth: 140
                                 Layout.preferredHeight: 32
@@ -375,7 +380,7 @@ ApplicationWindow {
                         spacing: 12
                         
                             Button {
-                                text: qsTr("From cURL")
+                                text: tr.tr("From cURL")
                                 font.pointSize: 12
                                 Layout.preferredWidth: 140
                                 Layout.preferredHeight: 32
@@ -420,7 +425,7 @@ ApplicationWindow {
                         spacing: 8
                         
                         Text {
-                            text: qsTr("Recent Files")
+                            text: tr.tr("Recent Files")
                             font.pointSize: 14
                             font.weight: Font.Medium
                             color: constants.colorPrimary
@@ -497,7 +502,7 @@ ApplicationWindow {
                             }
                             
                             Text {
-                                text: qsTr("No recent files")
+                                text: tr.tr("No recent files")
                                 font.pointSize: 12
                                 color: constants.colorSecondary
                             }
@@ -545,7 +550,7 @@ ApplicationWindow {
                     }
                     
                         Text {
-                            text: qsTr("Drag and drop a JSON file here")
+                            text: tr.tr("Drag and drop a JSON file here")
                             font.pointSize: 16
                             font.weight: Font.Medium
                             color: constants.colorSecondary
@@ -588,7 +593,7 @@ ApplicationWindow {
                     spacing: 10
                     
                         Text {
-                            text: app.currentFile || qsTr("No file loaded")
+                            text: app.currentFile || tr.tr("No file loaded")
                             font.italic: true
                             color: constants.colorPrimary
                             Layout.fillWidth: true
@@ -614,8 +619,8 @@ ApplicationWindow {
     // File dialogs
         FileDialog {
             id: fileDialog
-            title: qsTr("Open JSON File")
-            nameFilters: [qsTr("JSON files (*.json)"), qsTr("All files (*)")]
+            title: tr.tr("Open JSON File")
+            nameFilters: [tr.tr("JSON files (*.json)"), tr.tr("All files (*)")]
             onAccepted: {
                 console.log("File selected:", selectedFile)
                 app.openFile(selectedFile)
@@ -624,8 +629,8 @@ ApplicationWindow {
     
         FileDialog {
             id: saveDialog
-            title: qsTr("Save JSON File")
-            nameFilters: [qsTr("JSON files (*.json)"), qsTr("All files (*)")]
+            title: tr.tr("Save JSON File")
+            nameFilters: [tr.tr("JSON files (*.json)"), tr.tr("All files (*)")]
             onAccepted: {
                 console.log("Save file selected:", selectedFile)
                 app.saveFile(selectedFile, app.jsonText)
@@ -647,14 +652,14 @@ ApplicationWindow {
             spacing: 16
             
                 Text {
-                    text: qsTr("Enter URL:")
+                    text: tr.tr("Enter URL:")
                     font.pointSize: 14
                 }
             
                 TextField {
                     id: urlInput
                     Layout.fillWidth: true
-                    placeholderText: qsTr("https://api.example.com/data.json")
+                    placeholderText: tr.tr("https://api.example.com/data.json")
                 }
             
             RowLayout {
@@ -662,12 +667,12 @@ ApplicationWindow {
                 spacing: 8
                 
                     Button {
-                        text: qsTr("Cancel")
+                        text: tr.tr("Cancel")
                         onClicked: urlInputDialog.close()
                     }
                 
                     Button {
-                        text: qsTr("Load")
+                        text: tr.tr("Load")
                         enabled: urlInput.text.length > 0
                         onClicked: {
                             app.loadFromURL(urlInput.text)
@@ -693,7 +698,7 @@ ApplicationWindow {
             spacing: 16
             
                 Text {
-                    text: qsTr("Enter cURL command:")
+                    text: tr.tr("Enter cURL command:")
                     font.pointSize: 14
                 }
             
@@ -703,7 +708,7 @@ ApplicationWindow {
                 
                     TextArea {
                         id: curlInput
-                        placeholderText: qsTr("curl -X GET https://api.example.com/data")
+                        placeholderText: tr.tr("curl -X GET https://api.example.com/data")
                         wrapMode: TextArea.Wrap
                     }
             }
@@ -713,12 +718,12 @@ ApplicationWindow {
                 spacing: 8
                 
                     Button {
-                        text: qsTr("Cancel")
+                        text: tr.tr("Cancel")
                         onClicked: curlInputDialog.close()
                     }
                 
                     Button {
-                        text: qsTr("Execute")
+                        text: tr.tr("Execute")
                         enabled: curlInput.text.length > 0
                         onClicked: {
                             app.executeCurlCommand(curlInput.text)

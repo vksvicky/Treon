@@ -56,7 +56,16 @@ int main(int argc, char *argv[])
     mainWindow.setWindowTitle("Treon");
     mainWindow.resize(1200, 800);
     
-    // Create native menu bar
+    // Initialize managers first
+    treon::SettingsManager settingsManager;
+    treon::I18nManager i18nManager;
+    
+    // Initialize I18nManager with saved language
+    QString savedLanguage = settingsManager.language();
+    qDebug() << "Saved language from settings:" << savedLanguage;
+    i18nManager.loadLanguage(savedLanguage);
+    
+    // Create native menu bar AFTER language is loaded
     QMenuBar *menuBar = new QMenuBar(&mainWindow);
     
     // Application Menu (macOS style) - no title for the first menu
@@ -125,10 +134,6 @@ int main(int argc, char *argv[])
     
     // Set the menu bar
     mainWindow.setMenuBar(menuBar);
-    
-    // Initialize managers
-    treon::SettingsManager settingsManager;
-    treon::I18nManager i18nManager;
     
     // Create QML application engine
     QQmlApplicationEngine engine;
@@ -210,16 +215,21 @@ int main(int argc, char *argv[])
         qDebug() << "No About window could be opened";
     });
     
-    QObject::connect(preferencesAction, &QAction::triggered, [&mainWindow, &i18nManager]() {
+    QObject::connect(preferencesAction, &QAction::triggered, [&mainWindow, &i18nManager, &engine]() {
         qDebug() << "Preferences action triggered, opening C++ preferences dialog";
         
         treon::PreferencesDialog dialog(&mainWindow);
         
         // Connect language change signal
         QObject::connect(&dialog, &treon::PreferencesDialog::languageChanged,
-                        [&i18nManager](const QString &language) {
+                        [&i18nManager, &engine](const QString &language) {
             qDebug() << "Language changed to:" << language;
             i18nManager.switchLanguage(language);
+            
+            // Force QML engine to retranslate
+            qDebug() << "Forcing QML retranslation...";
+            engine.retranslate();
+            qDebug() << "QML retranslation completed";
         });
         
         int result = dialog.exec();
