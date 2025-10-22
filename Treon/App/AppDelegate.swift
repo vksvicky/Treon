@@ -43,6 +43,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if handleIfRunningUnderTests() { return }
         if handleIfCLI() { return }
         logger.info("AppDelegate: Running in GUI mode")
+        
+        // Initialize Rust backend for hybrid processing
+        logger.info("🚀 AppDelegate: Initializing Rust backend...")
+        RustBackend.initialize()
+        
         setupMenuActions()
     }
 

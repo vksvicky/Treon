@@ -310,67 +310,38 @@ struct JSONViewerView: View {
             return
         }
 
-        // Parse JSON to build tree on a background queue to avoid blocking UI
+        // Parse JSON using the hybrid processor
         if fileInfo.isValidJSON {
             let currentText = jsonText
             let parseStartTime = CFAbsoluteTimeGetCurrent()
-            logger.info("📊 PARSING START: Beginning optimized JSON tree building for \(fileInfo.name)")
+            logger.info("📊 HYBRID PARSING START: Beginning hybrid JSON processing for \(fileInfo.name)")
             
-            DispatchQueue.global(qos: .userInitiated).async {
+            Task {
                 do {
                     let dataConversionStart = CFAbsoluteTimeGetCurrent()
                     let data = Data(currentText.utf8)
                     let dataConversionTime = CFAbsoluteTimeGetCurrent() - dataConversionStart
-                    logger.debug("📊 PARSING STEP 1: Data conversion: \(String(format: "%.3f", dataConversionTime))s (size: \(data.count) bytes)")
+                    logger.debug("📊 HYBRID PARSING STEP 1: Data conversion: \(String(format: "%.3f", dataConversionTime))s (size: \(data.count) bytes)")
                     
-                    // Add timeout protection for very large files
-                    let timeout: TimeInterval = data.count > 100 * 1024 * 1024 ? 10.0 : 30.0 // 10s for >100MB, 30s for others
-                    let startTime = CFAbsoluteTimeGetCurrent()
+                    // Get performance comparison
+                    let comparison = HybridJSONProcessor.getPerformanceComparison(for: Int64(data.count))
+                    logger.info("📊 HYBRID PARSING: File size: \(String(format: "%.2f", comparison.fileSizeMB)) MB")
+                    logger.info("📊 HYBRID PARSING: Swift estimate: \(comparison.swiftEstimateFormatted), Rust estimate: \(comparison.rustEstimateFormatted)")
+                    logger.info("📊 HYBRID PARSING: Using \(comparison.recommendedBackend.rawValue) backend (\(comparison.performanceGainFormatted) faster)")
                     
-                    // Check for timeout periodically
-                    func checkTimeout() throws {
-                        let elapsed = CFAbsoluteTimeGetCurrent() - startTime
-                        if elapsed > timeout {
-                            throw NSError(domain: "club.cycleruncode.treon", code: 408, userInfo: [NSLocalizedDescriptionKey: "Tree building timeout after \(timeout)s"])
-                        }
-                    }
-                    
-                    try checkTimeout()
-                    
-                    // For large files, use streaming approach with timeout protection
+                    // Process using hybrid processor
                     let treeBuildStart = CFAbsoluteTimeGetCurrent()
-                    let built: JSONNode
-                    
-                    if data.count > 5 * 1024 * 1024 { // 5MB threshold
-                        logger.info("📊 PARSING: Using streaming approach for large file (\(data.count) bytes)")
-                        
-                        // Add timeout protection for very large files
-                        if data.count > 100 * 1024 * 1024 { // 100MB threshold
-                            logger.info("📊 PARSING: Using ultra-conservative approach for very large file (\(data.count) bytes)")
-                            built = try OptimizedJSONTreeBuilder.buildUltraConservativeTree(from: data)
-                        } else {
-                            built = try OptimizedJSONTreeBuilder.buildStreamingTree(from: data)
-                        }
-                    } else {
-                        built = try JSONTreeBuilder.build(from: data)
-                    }
-                    
-                    try checkTimeout()
-                    
+                    let built = try await HybridJSONProcessor.processData(data)
                     let treeBuildTime = CFAbsoluteTimeGetCurrent() - treeBuildStart
                     
                     // Count nodes safely to avoid potential crashes with very large trees
                     let nodeCount = self.countNodes(built)
-                    logger.debug("📊 PARSING STEP 2: Tree building: \(String(format: "%.3f", treeBuildTime))s (nodes: \(nodeCount))")
+                    logger.debug("📊 HYBRID PARSING STEP 2: Tree building: \(String(format: "%.3f", treeBuildTime))s (nodes: \(nodeCount))")
                     
-                    let dispatchStart = CFAbsoluteTimeGetCurrent()
-                    
-                    // Always update UI, but use different strategies based on file size
-                    Task { @MainActor in
+                    // Update UI on main thread
+                    await MainActor.run {
                         let uiUpdateStart = CFAbsoluteTimeGetCurrent()
-                        let dispatchTime = uiUpdateStart - dispatchStart
-                        logger.debug("📊 PARSING STEP 3A: Task to main actor: \(String(format: "%.3f", dispatchTime))s")
-                        logger.debug("📊 PARSING STEP 3B: Starting UI update on main thread")
+                        logger.debug("📊 HYBRID PARSING STEP 3: Starting UI update on main thread")
                         
                         // Only apply if text hasn't changed in the meantime
                         if currentText == self.jsonText {
@@ -378,24 +349,24 @@ struct JSONViewerView: View {
                             
                             // For very large files, use a more conservative approach
                             if data.count > 100 * 1024 * 1024 { // 100MB threshold
-                                logger.info("📊 PARSING: Using conservative UI update for very large file (\(data.count) bytes)")
+                                logger.info("📊 HYBRID PARSING: Using conservative UI update for very large file (\(data.count) bytes)")
                                 // Set rootNode but with a delay to prevent UI blocking
                                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                                     self.rootNode = built
                                 }
                             } else {
                                 // Normal update for smaller files
-                            self.rootNode = built
+                                self.rootNode = built
                             }
                             
                             let rootNodeSetTime = CFAbsoluteTimeGetCurrent() - rootNodeSetStart
-                            logger.debug("📊 PARSING STEP 3C: rootNode assignment: \(String(format: "%.3f", rootNodeSetTime))s")
+                            logger.debug("📊 HYBRID PARSING STEP 3A: rootNode assignment: \(String(format: "%.3f", rootNodeSetTime))s")
                         }
                         
                         let uiUpdateTime = CFAbsoluteTimeGetCurrent() - uiUpdateStart
                         let totalParseTime = CFAbsoluteTimeGetCurrent() - parseStartTime
-                        logger.debug("📊 PARSING STEP 3D: UI update complete: \(String(format: "%.3f", uiUpdateTime))s")
-                        logger.info("📊 PARSING TOTAL: \(String(format: "%.3f", totalParseTime))s for \(fileInfo.name)")
+                        logger.debug("📊 HYBRID PARSING STEP 3B: UI update complete: \(String(format: "%.3f", uiUpdateTime))s")
+                        logger.info("📊 HYBRID PARSING TOTAL: \(String(format: "%.3f", totalParseTime))s for \(fileInfo.name)")
                     }
                 } catch {
                     Task { @MainActor in
