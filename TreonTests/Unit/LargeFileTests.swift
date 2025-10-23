@@ -17,13 +17,13 @@ class LargeFileTests: XCTestCase {
         try? FileManager.default.createDirectory(at: tempDirectory, withIntermediateDirectories: true)
 
         // Clear recent files for clean test state
-        fileManager.clearRecentFiles()
+        fileManager.clearAllRecentFiles()
     }
 
     override func tearDown() {
         // Clean up temp directory
         try? FileManager.default.removeItem(at: tempDirectory)
-        fileManager.clearRecentFiles()
+        fileManager.clearAllRecentFiles()
         super.tearDown()
     }
 

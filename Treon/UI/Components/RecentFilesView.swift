@@ -29,12 +29,35 @@ struct RecentFilesView: View {
                             .foregroundColor(.secondary)
                             .padding(.top, 8)
                     } else {
-                        // Show last 5 files in descending order (most recent first)
+                        // Show first 5 files without scrolling
                         ForEach(Array(fileManager.recentFiles.prefix(5).enumerated()), id: \.element.url) { index, recentFile in
                             RecentFileRow(
                                 recentFile: recentFile,
                                 onTap: { onFileSelected(recentFile) }
                             )
+                        }
+                        
+                        // If there are more than 5 files, show a scrollable section for the rest
+                        if fileManager.recentFiles.count > 5 {
+                            Divider()
+                                .padding(.vertical, 4)
+                            
+                            Text("More files (\(fileManager.recentFiles.count - 5) remaining)")
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                                .frame(maxWidth: .infinity, alignment: .center)
+                            
+                            ScrollView {
+                                LazyVStack(alignment: .leading, spacing: 6) {
+                                    ForEach(Array(fileManager.recentFiles.dropFirst(5).prefix(10).enumerated()), id: \.element.url) { index, recentFile in
+                                        RecentFileRow(
+                                            recentFile: recentFile,
+                                            onTap: { onFileSelected(recentFile) }
+                                        )
+                                    }
+                                }
+                            }
+                            .frame(maxHeight: 200) // Limit height to prevent the dropdown from becoming too large
                         }
                     }
                 }

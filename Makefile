@@ -5,7 +5,6 @@
 # Build Rust backend first, then Swift app
 build: build-rust
 	xcodebuild -project Treon.xcodeproj -scheme Treon -configuration Debug build
-	@$(MAKE) install-hooks
 
 # Build Rust backend
 build-rust:

@@ -11,11 +11,11 @@ final class RecentFilesViewTests: XCTestCase {
         super.setUp()
         fileManager = TreonFileManager.shared
         // Clear any existing recent files for clean test state
-        fileManager.clearRecentFiles()
+        fileManager.clearAllRecentFiles()
     }
 
     override func tearDown() {
-        fileManager.clearRecentFiles()
+        fileManager.clearAllRecentFiles()
         super.tearDown()
     }
 

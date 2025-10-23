@@ -405,6 +405,8 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
+				LIBRARY_SEARCH_PATHS = "$(SRCROOT)/rust_backend/target/release";
+				OTHER_LDFLAGS = "-ltreon_rust_backend";
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = club.cycleruncode.Treon;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -436,6 +438,8 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
+				LIBRARY_SEARCH_PATHS = "$(SRCROOT)/rust_backend/target/release";
+				OTHER_LDFLAGS = "-ltreon_rust_backend";
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = club.cycleruncode.Treon;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -466,6 +470,8 @@
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Treon.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Treon";
+				LIBRARY_SEARCH_PATHS = "$(SRCROOT)/rust_backend/target/release";
+				OTHER_LDFLAGS = "-ltreon_rust_backend";
 			};
 			name = Debug;
 		};
@@ -486,6 +492,8 @@
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Treon.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Treon";
+				LIBRARY_SEARCH_PATHS = "$(SRCROOT)/rust_backend/target/release";
+				OTHER_LDFLAGS = "-ltreon_rust_backend";
 			};
 			name = Release;
 		};

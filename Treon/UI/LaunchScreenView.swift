@@ -295,22 +295,31 @@ struct LaunchScreenView: View {
     private func openRecentFile(_ recentFile: RecentFile) {
         Task {
             do {
+                logger.info("🚀 Starting to open recent file: \(recentFile.name)")
                 fileManager.isLoading = true
                 fileManager.clearError()
                 logger.info("Attempting to open recent file: \(recentFile.url.path)")
-                let fileInfo = try await fileManager.openFile(url: recentFile.url)
+                logger.debug("About to call openFileWithBookmark")
+                
+                // Use bookmark-based file opening for recent files
+                let fileInfo = try await fileManager.openFileWithBookmark(recentFile)
+                logger.info("🚀 Successfully got file info: \(fileInfo.name)")
                 logger.info("Successfully got file info, setting current file")
                 fileManager.currentFile = fileInfo
+                logger.info("🚀 Set currentFile, should now show JSON viewer")
                 logger.info("Successfully opened recent file: \(fileInfo.name)")
             } catch {
+                logger.error("🚀 Error caught in openRecentFile: \(error)")
                 logger.error("Error caught in openRecentFile: \(error.localizedDescription)")
                 logger.debug("Error type: \(type(of: error))")
                 // Only show error if it's not a user cancellation
                 if let fileManagerError = error as? FileManagerError,
                    case .userCancelled = fileManagerError {
+                    logger.info("🚀 User cancelled file selection")
                     logger.info("User cancelled file selection")
                 } else {
                     // Clear the current file so we show the landing screen instead of JSON viewer
+                    logger.info("🚀 Clearing current file and setting error")
                     logger.info("Clearing current file and setting error")
                     fileManager.currentFile = nil
                     fileManager.setError(error)
@@ -318,6 +327,7 @@ struct LaunchScreenView: View {
                 }
             }
             fileManager.isLoading = false
+            logger.debug("🚀 Finished openRecentFile, isLoading = false")
         }
     }
 

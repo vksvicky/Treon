@@ -94,45 +94,39 @@ class HybridProcessorMock {
     
     /// Create a mock JSON tree from data
     private func createMockJSONTree(from data: Data) -> JSONNode {
-        let root = JSONNode(key: "", path: "$", value: .object)
-        
         // Add some mock children based on data size
         let dataSize = data.count
         let childCount = min(dataSize / 1000, 10) // Up to 10 children
         
-        for i in 0..<childCount {
-            let child = JSONNode(
+        let children = (0..<childCount).map { i in
+            JSONNode(
                 key: "mock_key_\(i)",
-                path: "$.mock_key_\(i)",
-                value: i % 2 == 0 ? .string("mock_value_\(i)") : .number(Double(i))
+                value: i % 2 == 0 ? .string("mock_value_\(i)") : .number(Double(i)),
+                path: "$.mock_key_\(i)"
             )
-            root.addChild(child)
         }
         
-        return root
+        return JSONNode(key: "", value: .object, children: children, path: "$")
     }
     
     /// Create a mock JSON tree from file URL
     private func createMockJSONTreeFromFile(_ url: URL) -> JSONNode {
-        let root = JSONNode(key: "", path: "$", value: .object)
-        
         // Add mock children based on filename
         let filename = url.lastPathComponent
-        let child = JSONNode(
-            key: "filename",
-            path: "$.filename",
-            value: .string(filename)
-        )
-        root.addChild(child)
+        let children = [
+            JSONNode(
+                key: "filename",
+                value: .string(filename),
+                path: "$.filename"
+            ),
+            JSONNode(
+                key: "size",
+                value: .number(1024.0),
+                path: "$.size"
+            )
+        ]
         
-        let sizeChild = JSONNode(
-            key: "size",
-            path: "$.size",
-            value: .number(1024.0)
-        )
-        root.addChild(sizeChild)
-        
-        return root
+        return JSONNode(key: "", value: .object, children: children, path: "$")
     }
 }
 
@@ -172,33 +166,26 @@ extension HybridProcessorMock {
     
     /// Create a mock JSON tree for testing
     static func createTestJSONTree() -> JSONNode {
-        let root = JSONNode(key: "", path: "$", value: .object)
-        
-        // Add test children
-        let nameChild = JSONNode(key: "name", path: "$.name", value: .string("Test"))
-        root.addChild(nameChild)
-        
-        let valueChild = JSONNode(key: "value", path: "$.value", value: .number(42.0))
-        root.addChild(valueChild)
-        
-        let activeChild = JSONNode(key: "active", path: "$.active", value: .bool(true))
-        root.addChild(activeChild)
-        
         // Add nested object
-        let nestedChild = JSONNode(key: "nested", path: "$.nested", value: .object)
-        let nestedValue = JSONNode(key: "data", path: "$.nested.data", value: .string("nested_value"))
-        nestedChild.addChild(nestedValue)
-        root.addChild(nestedChild)
+        let nestedValue = JSONNode(key: "data", value: .string("nested_value"), path: "$.nested.data")
+        let nestedChild = JSONNode(key: "nested", value: .object, children: [nestedValue], path: "$.nested")
         
         // Add array
-        let arrayChild = JSONNode(key: "items", path: "$.items", value: .array)
-        for i in 0..<3 {
-            let item = JSONNode(key: "\(i)", path: "$.items[\(i)]", value: .number(Double(i + 1)))
-            arrayChild.addChild(item)
+        let arrayItems = (0..<3).map { i in
+            JSONNode(key: "\(i)", value: .number(Double(i + 1)), path: "$.items[\(i)]")
         }
-        root.addChild(arrayChild)
+        let arrayChild = JSONNode(key: "items", value: .array, children: arrayItems, path: "$.items")
         
-        return root
+        // Add test children
+        let children = [
+            JSONNode(key: "name", value: .string("Test"), path: "$.name"),
+            JSONNode(key: "value", value: .number(42.0), path: "$.value"),
+            JSONNode(key: "active", value: .bool(true), path: "$.active"),
+            nestedChild,
+            arrayChild
+        ]
+        
+        return JSONNode(key: "", value: .object, children: children, path: "$")
     }
     
     /// Create a mock performance comparison for testing

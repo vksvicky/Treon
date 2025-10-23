@@ -15,13 +15,13 @@ class FileManagerTests: XCTestCase {
         try? FileManager.default.createDirectory(at: tempDirectory, withIntermediateDirectories: true)
 
         // Clear recent files for clean test state
-        fileManager.clearRecentFiles()
+        fileManager.clearAllRecentFiles()
     }
 
     override func tearDown() {
         // Clean up temp directory
         try? FileManager.default.removeItem(at: tempDirectory)
-        fileManager.clearRecentFiles()
+        fileManager.clearAllRecentFiles()
         super.tearDown()
     }
 
@@ -327,7 +327,7 @@ class FileManagerTests: XCTestCase {
 
         // Clear all recent files
         await MainActor.run {
-            fileManager.clearRecentFiles()
+            fileManager.clearAllRecentFiles()
             XCTAssertTrue(fileManager.recentFiles.isEmpty)
         }
     }
