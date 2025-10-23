@@ -111,7 +111,7 @@ class RustBackend {
         logger.info("📊 RUST BACKEND: Starting data processing for \(data.count) bytes")
         
         let resultPtr = data.withUnsafeBytes { bytes in
-            treon_rust_process_data(bytes.bindMemory(to: UInt8.self).baseAddress!, data.count)
+            treon_rust_process_data(bytes.bindMemory(to: UInt8.self).baseAddress!, Int32(data.count))
         }
         defer { 
             if let ptr = resultPtr {
@@ -316,6 +316,7 @@ struct RustBackendStats: Codable {
 }
 
 // MARK: - C FFI Declarations
+// These functions are implemented in the Rust backend library
 
 /// Initialize the Rust backend
 @_cdecl("treon_rust_init")
@@ -332,7 +333,7 @@ func treon_rust_process_file(_ filePath: UnsafePointer<CChar>) -> UnsafeMutableP
 
 /// Process JSON data from memory
 @_cdecl("treon_rust_process_data")
-func treon_rust_process_data(_ data: UnsafePointer<UInt8>, _ length: Int) -> UnsafeMutablePointer<CChar>? {
+func treon_rust_process_data(_ data: UnsafePointer<UInt8>, _ length: Int32) -> UnsafeMutablePointer<CChar>? {
     // This will be implemented by the Rust backend
     return nil
 }

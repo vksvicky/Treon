@@ -20,7 +20,8 @@ class HybridJSONProcessor {
     private static let logger = Loggers.perf
     
     /// File size threshold for using Rust backend (in bytes)
-    private static let rustThresholdBytes = 5 * 1024 * 1024 // 5MB
+    /// Temporarily set to very high value to disable Rust backend until it's properly linked
+    private static let rustThresholdBytes = 1000 * 1024 * 1024 // 1000MB (effectively disabled)
     
     /// Large file threshold for streaming (in bytes)
     private static let streamingThresholdBytes = 50 * 1024 * 1024 // 50MB
