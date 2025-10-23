@@ -186,8 +186,8 @@ class FileManagerTests: XCTestCase {
     // MARK: - Test File Size Limits
 
     func testOpenFile_rejectsOverMaxSize() async throws {
-        // Create a file larger than 100MB limit
-        let largeContent = String(repeating: "a", count: 101 * 1024 * 1024) // 101MB
+        // Create a file larger than 500MB limit
+        let largeContent = String(repeating: "a", count: 501 * 1024 * 1024) // 501MB
 
         let fileURL = tempDirectory.appendingPathComponent("toolarge.json")
         try largeContent.write(to: fileURL, atomically: true, encoding: .utf8)

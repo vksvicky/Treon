@@ -72,7 +72,7 @@ struct FileInfo {
 }
 
 // MARK: - Recent File
-struct RecentFile: Codable, Identifiable {
+struct RecentFile: Codable, Identifiable, Equatable {
     nonisolated let id = UUID()
     nonisolated let url: URL
     nonisolated let name: String
@@ -119,5 +119,10 @@ struct RecentFile: Codable, Identifiable {
         try container.encode(size, forKey: .size)
         try container.encode(isValidJSON, forKey: .isValidJSON)
         try container.encodeIfPresent(bookmarkData, forKey: .bookmarkData)
+    }
+    
+    // MARK: - Equatable
+    static func == (lhs: RecentFile, rhs: RecentFile) -> Bool {
+        return lhs.url == rhs.url && lhs.name == rhs.name
     }
 }

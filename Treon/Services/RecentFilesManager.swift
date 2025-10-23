@@ -81,14 +81,14 @@ class RecentFilesManager {
     
     func removeRecentFile(_ recentFile: RecentFile) {
         var files = loadRecentFiles()
-        files.removeAll { $0.id == recentFile.id }
+        files.removeAll { $0 == recentFile }
         saveRecentFiles(files)
         logger.info("Removed recent file: \(recentFile.name)")
     }
     
     func updateRecentFileAccess(_ recentFile: RecentFile) {
         var files = loadRecentFiles()
-        if let index = files.firstIndex(where: { $0.id == recentFile.id }) {
+        if let index = files.firstIndex(where: { $0 == recentFile }) {
             let updatedFile = RecentFile(
                 url: recentFile.url,
                 name: recentFile.name,
