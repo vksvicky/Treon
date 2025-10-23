@@ -66,7 +66,7 @@ class TreonFileManager: ObservableObject {
     
     func clearAllRecentFiles() {
         RecentFilesManager.shared.clearAllRecentFiles()
-        recentFiles = []
+        recentFiles = RecentFilesManager.shared.loadRecentFiles()
     }
 
     func createNewFile() -> FileInfo {
