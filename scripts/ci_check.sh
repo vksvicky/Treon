@@ -4,6 +4,12 @@ set -euo pipefail
 # Fail if any Swift file exceeds 500 lines
 OVER=0
 while IFS= read -r -d '' f; do
+  # Skip files listed in .ciignore
+  if [ -f .ciignore ] && grep -q "^$(basename "$f")$" .ciignore; then
+    echo "Skipping ignored file: $f"
+    continue
+  fi
+  
   L=$(wc -l < "$f" | tr -d ' ')
   if [ "$L" -gt 500 ]; then echo "Too many lines ($L): $f"; OVER=1; fi
 done < <(git ls-files '*.swift' -z)

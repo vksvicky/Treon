@@ -9,6 +9,26 @@
 import Foundation
 import OSLog
 
+// MARK: - Treon Error Types
+
+/// General error type for Treon operations
+enum TreonError: LocalizedError {
+    case backendNotInitialized
+    case processingFailed(String)
+    case generic(String)
+    
+    var errorDescription: String? {
+        switch self {
+        case .backendNotInitialized:
+            return "Rust backend not initialized"
+        case .processingFailed(let reason):
+            return "Processing failed: \(reason)"
+        case .generic(let message):
+            return message
+        }
+    }
+}
+
 /// Swift-Rust FFI bridge for high-performance JSON processing
 /// 
 /// This class provides a clean Swift interface to the Rust backend,
@@ -52,7 +72,11 @@ class RustBackend {
         let cString = filePath.cString(using: .utf8)!
         
         let resultPtr = treon_rust_process_file(cString)
-        defer { treon_rust_free_string(resultPtr) }
+        defer { 
+            if let ptr = resultPtr {
+                treon_rust_free_string(ptr)
+            }
+        }
         
         guard let resultPtr = resultPtr else {
             logger.error("❌ RUST BACKEND: Failed to process file")
@@ -78,7 +102,7 @@ class RustBackend {
     /// - Parameter data: JSON data to process
     /// - Returns: Processed JSON tree structure
     /// - Throws: TreonError if processing fails
-    static func processData(_ data: Data) async throws -> RustJSONTree {
+    static func processData(_ data: Data) throws -> RustJSONTree {
         guard isInitialized else {
             throw TreonError.backendNotInitialized
         }
@@ -89,7 +113,11 @@ class RustBackend {
         let resultPtr = data.withUnsafeBytes { bytes in
             treon_rust_process_data(bytes.bindMemory(to: UInt8.self).baseAddress!, data.count)
         }
-        defer { treon_rust_free_string(resultPtr) }
+        defer { 
+            if let ptr = resultPtr {
+                treon_rust_free_string(ptr)
+            }
+        }
         
         guard let resultPtr = resultPtr else {
             logger.error("❌ RUST BACKEND: Failed to process data")
@@ -117,7 +145,11 @@ class RustBackend {
         guard isInitialized else { return nil }
         
         let statsPtr = treon_rust_get_stats()
-        defer { treon_rust_free_string(statsPtr) }
+        defer { 
+            if let ptr = statsPtr {
+                treon_rust_free_string(ptr)
+            }
+        }
         
         guard let statsPtr = statsPtr else { return nil }
         
@@ -168,7 +200,7 @@ struct RustJSONNode: Codable {
 }
 
 /// JSON value type from the Rust backend
-enum RustJSONValue: Codable {
+enum RustJSONValue: Codable, Equatable {
     case string(String)
     case number(Double)
     case boolean(Bool)
@@ -287,29 +319,34 @@ struct RustBackendStats: Codable {
 
 /// Initialize the Rust backend
 @_cdecl("treon_rust_init")
-func treon_rust_init()
+func treon_rust_init() {
+    // This will be implemented by the Rust backend
+}
 
 /// Process a JSON file
 @_cdecl("treon_rust_process_file")
-func treon_rust_process_file(_ filePath: UnsafePointer<CChar>) -> UnsafeMutablePointer<CChar>?
+func treon_rust_process_file(_ filePath: UnsafePointer<CChar>) -> UnsafeMutablePointer<CChar>? {
+    // This will be implemented by the Rust backend
+    return nil
+}
 
 /// Process JSON data from memory
 @_cdecl("treon_rust_process_data")
-func treon_rust_process_data(_ data: UnsafePointer<UInt8>, _ length: Int) -> UnsafeMutablePointer<CChar>?
+func treon_rust_process_data(_ data: UnsafePointer<UInt8>, _ length: Int) -> UnsafeMutablePointer<CChar>? {
+    // This will be implemented by the Rust backend
+    return nil
+}
 
 /// Free a string returned by the Rust backend
 @_cdecl("treon_rust_free_string")
-func treon_rust_free_string(_ ptr: UnsafeMutablePointer<CChar>)
+func treon_rust_free_string(_ ptr: UnsafeMutablePointer<CChar>) {
+    // This will be implemented by the Rust backend
+}
 
 /// Get performance statistics
 @_cdecl("treon_rust_get_stats")
-func treon_rust_get_stats() -> UnsafeMutablePointer<CChar>?
-
-// MARK: - Error Extensions
-
-extension TreonError {
-    static let backendNotInitialized = TreonError.generic("Rust backend not initialized")
-    static func processingFailed(_ reason: String) -> TreonError {
-        return .generic("Processing failed: \(reason)")
-    }
+func treon_rust_get_stats() -> UnsafeMutablePointer<CChar>? {
+    // This will be implemented by the Rust backend
+    return nil
 }
+

@@ -50,7 +50,7 @@ final class HybridJSONProcessorTests: XCTestCase {
         }
         """.data(using: .utf8)!
         
-        Task {
+        Task { @MainActor in
             do {
                 let result = try await HybridJSONProcessor.processData(jsonData)
                 XCTAssertNotNil(result)
@@ -104,7 +104,7 @@ final class HybridJSONProcessorTests: XCTestCase {
         
         let jsonData = largeJSON.data(using: .utf8)!
         
-        Task {
+        Task { @MainActor in
             do {
                 let result = try await HybridJSONProcessor.processData(jsonData)
                 XCTAssertNotNil(result)

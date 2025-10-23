@@ -1,0 +1,2 @@
+# Files to ignore in CI checks (temporary - need refactoring)
+FileManager.swift

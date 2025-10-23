@@ -122,7 +122,7 @@ class HybridJSONProcessor {
     
     /// Process data using Rust backend
     private static func processDataWithRustBackend(_ data: Data) async throws -> JSONNode {
-        let rustTree = try await RustBackend.processData(data)
+        let rustTree = try RustBackend.processData(data)
         return convertRustTreeToSwiftTree(rustTree)
     }
     
@@ -154,23 +154,21 @@ class HybridJSONProcessor {
     private static func convertRustNodeToSwiftNode(_ rustNode: RustJSONNode) -> JSONNode {
         let swiftValue = convertRustValueToSwiftValue(rustNode.value, childrenCount: rustNode.children.count)
         
+        // Convert children first
+        let swiftChildren = rustNode.children.map { convertRustNodeToSwiftNode($0) }
+        
         let swiftNode = JSONNode(
             key: rustNode.key,
-            path: rustNode.path,
-            value: swiftValue
+            value: swiftValue,
+            children: swiftChildren,
+            path: rustNode.path
         )
-        
-        // Convert children
-        for rustChild in rustNode.children {
-            let swiftChild = convertRustNodeToSwiftNode(rustChild)
-            swiftNode.addChild(swiftChild)
-        }
         
         return swiftNode
     }
     
     /// Convert Rust value to Swift value
-    private static func convertRustValueToSwiftValue(_ rustValue: RustJSONValue, childrenCount: Int) -> JSONValue {
+    private static func convertRustValueToSwiftValue(_ rustValue: RustJSONValue, childrenCount: Int) -> JSONNodeValue {
         switch rustValue {
         case .string(let value):
             return .string(value)
@@ -254,11 +252,3 @@ struct PerformanceComparison {
     }
 }
 
-// MARK: - JSONNode Extensions
-
-extension JSONNode {
-    /// Add a child node
-    func addChild(_ child: JSONNode) {
-        children.append(child)
-    }
-}

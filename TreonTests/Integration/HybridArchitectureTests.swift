@@ -86,7 +86,7 @@ final class HybridArchitectureTests: XCTestCase {
         let comparison = HybridJSONProcessor.getPerformanceComparison(for: Int64(smallJSON.count))
         XCTAssertEqual(comparison.recommendedBackend, .swift)
         
-        Task {
+        Task { @MainActor in
             do {
                 let result = try await HybridJSONProcessor.processData(smallJSON)
                 XCTAssertNotNil(result)
@@ -148,7 +148,7 @@ final class HybridArchitectureTests: XCTestCase {
         let comparison = HybridJSONProcessor.getPerformanceComparison(for: Int64(largeJSONData.count))
         XCTAssertEqual(comparison.recommendedBackend, .rust)
         
-        Task {
+        Task { @MainActor in
             do {
                 let result = try await HybridJSONProcessor.processData(largeJSONData)
                 XCTAssertNotNil(result)
@@ -222,7 +222,7 @@ final class HybridArchitectureTests: XCTestCase {
         // Measure processing time
         let startTime = CFAbsoluteTimeGetCurrent()
         
-        Task {
+        Task { @MainActor in
             do {
                 let result = try await HybridJSONProcessor.processData(data)
                 let processingTime = CFAbsoluteTimeGetCurrent() - startTime
@@ -262,7 +262,7 @@ final class HybridArchitectureTests: XCTestCase {
         }
         """.data(using: .utf8)!
         
-        Task {
+        Task { @MainActor in
             do {
                 let result = try await HybridJSONProcessor.processData(jsonData)
                 
@@ -325,7 +325,7 @@ final class HybridArchitectureTests: XCTestCase {
         
         let data = largeJSON.data(using: .utf8)!
         
-        Task {
+        Task { @MainActor in
             do {
                 let result = try await HybridJSONProcessor.processData(data)
                 XCTAssertNotNil(result)

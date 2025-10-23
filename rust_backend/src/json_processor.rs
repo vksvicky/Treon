@@ -1,224 +1,110 @@
-//! Main JSON processor for the Treon Rust backend
+//! JSON processing for the Treon Rust backend
 //! 
-//! This module coordinates JSON processing using streaming parsers and provides
-//! the main interface for the Swift frontend.
+//! This module provides high-level JSON processing functionality
+//! that coordinates between parsing and tree building.
 
-use crate::error::{Result, TreonError};
-use crate::streaming_parser::StreamingParser;
-use crate::tree_builder::{JSONTree, ProcessingStats};
-use std::path::Path;
+use crate::error::Result;
+use crate::tree_builder::{JSONTree, TreeBuilder};
 use std::time::Instant;
 
-/// Main JSON processor that coordinates parsing and tree building
+/// JSON processor for handling large JSON files
+#[allow(dead_code)]
 pub struct JSONProcessor {
-    /// Streaming parser for large files
-    streaming_parser: StreamingParser,
-    
-    /// Performance statistics
-    stats: ProcessingStats,
+    tree_builder: TreeBuilder,
+    max_file_size: usize,
+    timeout_seconds: u64,
 }
 
+#[allow(dead_code)]
 impl JSONProcessor {
     /// Create a new JSON processor
     pub fn new() -> Self {
         Self {
-            streaming_parser: StreamingParser::new(),
-            stats: ProcessingStats {
-                processing_time_ms: 0,
-                parsing_time_ms: 0,
-                tree_building_time_ms: 0,
-                peak_memory_bytes: 0,
-                used_streaming: false,
-                streaming_chunks: 0,
-            },
+            tree_builder: TreeBuilder::new()
+                .with_max_depth(50)
+                .with_max_nodes(50_000),
+            max_file_size: 1024 * 1024 * 1024, // 1GB
+            timeout_seconds: 30,
         }
     }
     
-    /// Create a JSON processor with custom streaming settings
-    pub fn with_streaming_settings(max_depth: usize, max_children: usize, chunk_size: usize) -> Self {
-        Self {
-            streaming_parser: StreamingParser::with_settings(max_depth, max_children, chunk_size),
-            stats: ProcessingStats {
-                processing_time_ms: 0,
-                parsing_time_ms: 0,
-                tree_building_time_ms: 0,
-                peak_memory_bytes: 0,
-                used_streaming: false,
-                streaming_chunks: 0,
-            },
-        }
+    /// Set the maximum file size to process
+    pub fn with_max_file_size(mut self, size: usize) -> Self {
+        self.max_file_size = size;
+        self
     }
     
-    /// Process a JSON file and return a tree structure
-    pub async fn process_file(&self, file_path: &str) -> Result<JSONTree> {
-        let start_time = Instant::now();
-        log::info!("🚀 Starting JSON processing for file: {}", file_path);
-        
-        let path = Path::new(file_path);
-        if !path.exists() {
-            return Err(TreonError::file_not_found(file_path));
-        }
-        
-        // Check file size to determine processing strategy
-        let metadata = tokio::fs::metadata(path).await?;
-        let file_size = metadata.len() as usize;
-        
-        log::info!("📊 File size: {} bytes ({:.2} MB)", file_size, file_size as f64 / 1024.0 / 1024.0);
-        
-        // Process based on file size
-        let root = if file_size > 50 * 1024 * 1024 { // 50MB threshold
-            log::info!("📊 Using streaming parser for large file");
-            self.streaming_parser.parse_file(path).await?
-        } else {
-            log::info!("📊 Using standard parser for medium file");
-            self.parse_standard_file(path).await?
-        };
-        
-        let processing_time = start_time.elapsed().as_millis() as u64;
-        
-        // Create the tree with statistics
-        let mut tree = JSONTree::new(root, file_size);
-        tree.stats = ProcessingStats {
-            processing_time_ms: processing_time,
-            parsing_time_ms: processing_time / 2, // Rough estimate
-            tree_building_time_ms: processing_time / 2,
-            peak_memory_bytes: file_size / 4, // Rough estimate
-            used_streaming: file_size > 50 * 1024 * 1024,
-            streaming_chunks: if file_size > 50 * 1024 * 1024 { file_size / (1024 * 1024) } else { 1 },
-        };
-        
-        log::info!("✅ JSON processing completed in {}ms", processing_time);
-        log::info!("📊 Tree stats: {} nodes, {} bytes", tree.total_nodes, tree.total_size_bytes);
-        
-        Ok(tree)
+    /// Set the processing timeout
+    pub fn with_timeout(mut self, seconds: u64) -> Self {
+        self.timeout_seconds = seconds;
+        self
     }
     
     /// Process JSON data from memory
-    pub async fn process_data(&self, data: &[u8]) -> Result<JSONTree> {
+    pub fn process_data(&self, data: &[u8]) -> Result<JSONTree> {
         let start_time = Instant::now();
-        log::info!("🚀 Starting JSON processing for {} bytes of data", data.len());
         
-        // Use SIMD-optimized parsing for in-memory data
-        let mut json_data = data.to_vec();
-        let root = self.parse_memory_data(&mut json_data).await?;
+        // Check data size
+        if data.len() > self.max_file_size {
+            return Err(crate::error::TreonError::invalid_input(
+                format!("Data too large: {} bytes (max: {} bytes)", data.len(), self.max_file_size)
+            ));
+        }
         
-        let processing_time = start_time.elapsed().as_millis() as u64;
+        log::info!("Processing {} bytes of JSON data", data.len());
         
-        // Create the tree with statistics
-        let mut tree = JSONTree::new(root, data.len());
-        tree.stats = ProcessingStats {
-            processing_time_ms: processing_time,
-            parsing_time_ms: processing_time / 2,
-            tree_building_time_ms: processing_time / 2,
-            peak_memory_bytes: data.len() / 2,
-            used_streaming: false,
-            streaming_chunks: 1,
-        };
+        // Build the tree
+        let tree = self.tree_builder.build_from_data(data)?;
         
-        log::info!("✅ JSON processing completed in {}ms", processing_time);
+        let processing_time = start_time.elapsed();
+        log::info!("JSON processing completed in {:?}", processing_time);
+        
+        // Check timeout
+        if processing_time.as_secs() > self.timeout_seconds {
+            return Err(crate::error::TreonError::timeout(
+                format!("Processing took too long: {:?}", processing_time)
+            ));
+        }
         
         Ok(tree)
     }
     
-    /// Parse a standard-sized file using optimized parsing
-    async fn parse_standard_file(&self, path: &Path) -> Result<crate::tree_builder::JSONNode> {
+    /// Process a JSON file
+    pub fn process_file(&self, file_path: &str) -> Result<JSONTree> {
         let start_time = Instant::now();
         
-        // Read the entire file
-        let data = tokio::fs::read(path).await?;
-        let mut json_data = data;
+        log::info!("Processing JSON file: {}", file_path);
         
-        // Parse using SIMD-optimized parser
-        let root = self.parse_memory_data(&mut json_data).await?;
+        // Check if file exists and get its size
+        let metadata = std::fs::metadata(file_path)?;
+        if metadata.len() > self.max_file_size as u64 {
+            return Err(crate::error::TreonError::invalid_input(
+                format!("File too large: {} bytes (max: {} bytes)", metadata.len(), self.max_file_size)
+            ));
+        }
         
-        let parsing_time = start_time.elapsed().as_millis() as u64;
-        log::debug!("📊 Standard file parsing completed in {}ms", parsing_time);
+        // Read the file
+        let data = std::fs::read(file_path)?;
         
-        Ok(root)
+        // Process the data
+        let tree = self.process_data(&data)?;
+        
+        let processing_time = start_time.elapsed();
+        log::info!("File processing completed in {:?}", processing_time);
+        
+        Ok(tree)
     }
     
-    /// Parse JSON data from memory using SIMD optimization
-    async fn parse_memory_data(&self, data: &mut [u8]) -> Result<crate::tree_builder::JSONNode> {
-        use simd_json::{BorrowedValue, ValueAccess};
-        
-        let start_time = Instant::now();
-        
-        // Parse using SIMD-optimized JSON parser
-        let value: BorrowedValue = simd_json::from_slice(data)
-            .map_err(|e| TreonError::JsonParsing(e))?;
-        
-        let parsing_time = start_time.elapsed().as_millis() as u64;
-        log::debug!("📊 SIMD parsing completed in {}ms", parsing_time);
-        
-        // Build tree from parsed value
-        let tree_start = Instant::now();
-        let root = self.build_tree_from_value(&value, "", "$", 0).await?;
-        let tree_time = tree_start.elapsed().as_millis() as u64;
-        log::debug!("📊 Tree building completed in {}ms", tree_time);
-        
-        Ok(root)
-    }
-    
-    /// Build a tree from a parsed JSON value
-    async fn build_tree_from_value(
-        &self,
-        value: &BorrowedValue,
-        key: &str,
-        path: &str,
-        depth: usize,
-    ) -> Result<crate::tree_builder::JSONNode> {
-        use simd_json::ValueAccess;
-        use crate::tree_builder::{JSONNode, JSONValue, NodeMetadata};
-        
-        let start_time = Instant::now();
-        
-        let (json_value, children) = match value {
-            BorrowedValue::String(s) => (JSONValue::String(s.to_string()), Vec::new()),
-            BorrowedValue::Number(n) => (JSONValue::Number(n.as_f64().unwrap_or(0.0)), Vec::new()),
-            BorrowedValue::Bool(b) => (JSONValue::Boolean(*b), Vec::new()),
-            BorrowedValue::Null => (JSONValue::Null, Vec::new()),
-            BorrowedValue::Object(obj) => {
-                let mut children = Vec::new();
-                
-                for (k, v) in obj.iter() {
-                    let child_path = format!("{}.{}", path, k);
-                    let child = self.build_tree_from_value(v, k, &child_path, depth + 1).await?;
-                    children.push(child);
-                }
-                
-                (JSONValue::Object, children)
-            }
-            BorrowedValue::Array(arr) => {
-                let mut children = Vec::new();
-                
-                for (i, v) in arr.iter().enumerate() {
-                    let child_path = format!("{}[{}]", path, i);
-                    let child = self.build_tree_from_value(v, &i.to_string(), &child_path, depth + 1).await?;
-                    children.push(child);
-                }
-                
-                (JSONValue::Array, children)
-            }
-        };
-        
-        let processing_time = start_time.elapsed().as_millis() as u64;
-        
-        let mut node = JSONNode::new(key.to_string(), path.to_string(), json_value);
-        node.children = children;
-        node.metadata = NodeMetadata {
-            size_bytes: 0, // Will be calculated if needed
-            depth,
-            descendant_count: node.children.len(),
-            streamed: false,
-            processing_time_ms: processing_time,
-        };
-        
-        Ok(node)
-    }
-    
-    /// Get current performance statistics
-    pub fn get_stats(&self) -> &ProcessingStats {
-        &self.stats
+    /// Get processing statistics
+    pub fn get_stats(&self) -> serde_json::Value {
+        serde_json::json!({
+            "max_file_size": self.max_file_size,
+            "timeout_seconds": self.timeout_seconds,
+            "max_depth": self.tree_builder.max_depth,
+            "max_nodes": self.tree_builder.max_nodes,
+            "backend": "rust",
+            "version": "0.1.0"
+        })
     }
 }
 
@@ -231,38 +117,201 @@ impl Default for JSONProcessor {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::path::PathBuf;
-
-    #[tokio::test]
-    async fn test_json_processor_creation() {
+    use std::fs::File;
+    use std::io::Write;
+    use tempfile::tempdir;
+    
+    #[test]
+    fn test_json_processor_creation() {
         let processor = JSONProcessor::new();
-        assert_eq!(processor.stats.processing_time_ms, 0);
-        assert!(!processor.stats.used_streaming);
+        assert_eq!(processor.max_file_size, 1024 * 1024 * 1024);
+        assert_eq!(processor.timeout_seconds, 30);
+        assert_eq!(processor.tree_builder.max_depth, 50);
+        assert_eq!(processor.tree_builder.max_nodes, 50_000);
     }
-
-    #[tokio::test]
-    async fn test_process_simple_data() {
-        let processor = JSONProcessor::new();
-        let json_data = br#"{"name": "test", "value": 42, "active": true}"#;
+    
+    #[test]
+    fn test_json_processor_with_max_file_size() {
+        let processor = JSONProcessor::new().with_max_file_size(1024);
+        assert_eq!(processor.max_file_size, 1024);
+        assert_eq!(processor.timeout_seconds, 30);
+    }
+    
+    #[test]
+    fn test_json_processor_with_timeout() {
+        let processor = JSONProcessor::new().with_timeout(60);
+        assert_eq!(processor.max_file_size, 1024 * 1024 * 1024);
+        assert_eq!(processor.timeout_seconds, 60);
+    }
+    
+    #[test]
+    fn test_json_processor_chained_configuration() {
+        let processor = JSONProcessor::new()
+            .with_max_file_size(2048)
+            .with_timeout(120);
         
-        let result = processor.process_data(json_data).await;
+        assert_eq!(processor.max_file_size, 2048);
+        assert_eq!(processor.timeout_seconds, 120);
+    }
+    
+    #[test]
+    fn test_json_processor_default() {
+        let processor = JSONProcessor::default();
+        assert_eq!(processor.max_file_size, 1024 * 1024 * 1024);
+        assert_eq!(processor.timeout_seconds, 30);
+    }
+    
+    #[test]
+    fn test_process_small_data() {
+        let processor = JSONProcessor::new();
+        let data = b"{}";
+        let result = processor.process_data(data);
         assert!(result.is_ok());
         
         let tree = result.unwrap();
-        assert_eq!(tree.total_nodes, 4); // root + 3 children
-        assert_eq!(tree.root.children.len(), 3);
+        assert_eq!(tree.root.value, crate::tree_builder::JSONValue::Object);
     }
-
-    #[tokio::test]
-    async fn test_process_array_data() {
-        let processor = JSONProcessor::new();
-        let json_data = br#"[1, 2, 3, {"nested": "value"}]"#;
+    
+    #[test]
+    fn test_process_large_data() {
+        let processor = JSONProcessor::new().with_max_file_size(100);
+        let data = vec![0u8; 200]; // 200 bytes
+        let result = processor.process_data(&data);
+        assert!(result.is_err());
         
-        let result = processor.process_data(json_data).await;
+        if let Err(error) = result {
+            assert!(matches!(error, crate::error::TreonError::InvalidInput(_)));
+        }
+    }
+    
+    #[test]
+    fn test_process_data_exactly_at_limit() {
+        let processor = JSONProcessor::new().with_max_file_size(100);
+        let data = vec![0u8; 100]; // Exactly 100 bytes
+        let result = processor.process_data(&data);
         assert!(result.is_ok());
+    }
+    
+    #[test]
+    fn test_process_data_just_over_limit() {
+        let processor = JSONProcessor::new().with_max_file_size(100);
+        let data = vec![0u8; 101]; // Just over 100 bytes
+        let result = processor.process_data(&data);
+        assert!(result.is_err());
+    }
+    
+    #[test]
+    fn test_process_file_success() {
+        let temp_dir = tempdir().unwrap();
+        let file_path = temp_dir.path().join("test.json");
         
+        // Create a test JSON file
+        let mut file = File::create(&file_path).unwrap();
+        file.write_all(b"{\"test\": \"value\"}").unwrap();
+        drop(file);
+        
+        let processor = JSONProcessor::new();
+        let result = processor.process_file(file_path.to_str().unwrap());
+        
+        assert!(result.is_ok());
         let tree = result.unwrap();
-        assert_eq!(tree.root.value, crate::tree_builder::JSONValue::Array);
-        assert_eq!(tree.root.children.len(), 4);
+        assert_eq!(tree.root.value, crate::tree_builder::JSONValue::Object);
+    }
+    
+    #[test]
+    fn test_process_file_not_found() {
+        let processor = JSONProcessor::new();
+        let result = processor.process_file("nonexistent.json");
+        
+        assert!(result.is_err());
+        if let Err(error) = result {
+            assert!(matches!(error, crate::error::TreonError::Io(_)));
+        }
+    }
+    
+    #[test]
+    fn test_process_file_too_large() {
+        let temp_dir = tempdir().unwrap();
+        let file_path = temp_dir.path().join("large.json");
+        
+        // Create a large test file
+        let mut file = File::create(&file_path).unwrap();
+        let large_data = vec![0u8; 200]; // 200 bytes
+        file.write_all(&large_data).unwrap();
+        drop(file);
+        
+        let processor = JSONProcessor::new().with_max_file_size(100);
+        let result = processor.process_file(file_path.to_str().unwrap());
+        
+        assert!(result.is_err());
+        if let Err(error) = result {
+            assert!(matches!(error, crate::error::TreonError::InvalidInput(_)));
+        }
+    }
+    
+    #[test]
+    fn test_get_stats() {
+        let processor = JSONProcessor::new()
+            .with_max_file_size(2048)
+            .with_timeout(60);
+        
+        let stats = processor.get_stats();
+        
+        assert_eq!(stats["max_file_size"], 2048);
+        assert_eq!(stats["timeout_seconds"], 60);
+        assert_eq!(stats["max_depth"], 50);
+        assert_eq!(stats["max_nodes"], 50_000);
+        assert_eq!(stats["backend"], "rust");
+        assert_eq!(stats["version"], "0.1.0");
+    }
+    
+    #[test]
+    fn test_process_data_with_timeout() {
+        let processor = JSONProcessor::new().with_timeout(0); // Very short timeout
+        let data = b"{}";
+        
+        // This should still succeed because processing is very fast
+        let result = processor.process_data(data);
+        assert!(result.is_ok());
+    }
+    
+    #[test]
+    fn test_process_data_empty() {
+        let processor = JSONProcessor::new();
+        let data = b"";
+        let result = processor.process_data(data);
+        
+        // Should succeed with empty data
+        assert!(result.is_ok());
+    }
+    
+    #[test]
+    fn test_process_data_single_byte() {
+        let processor = JSONProcessor::new();
+        let data = b"a";
+        let result = processor.process_data(data);
+        
+        // Should succeed with single byte
+        assert!(result.is_ok());
+    }
+    
+    #[test]
+    fn test_process_data_max_size() {
+        let processor = JSONProcessor::new();
+        let data = vec![0u8; processor.max_file_size];
+        let result = processor.process_data(&data);
+        
+        // Should succeed with data at max size
+        assert!(result.is_ok());
+    }
+    
+    #[test]
+    fn test_process_data_over_max_size() {
+        let processor = JSONProcessor::new();
+        let data = vec![0u8; processor.max_file_size + 1];
+        let result = processor.process_data(&data);
+        
+        // Should fail with data over max size
+        assert!(result.is_err());
     }
 }
