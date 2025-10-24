@@ -102,9 +102,20 @@ class FileManagerSizeTests: XCTestCase {
         XCTAssertLessThanOrEqual(fileInfo.size, maxBytes + slackBytes)
     }
 
-    func testOpenFile_rejectsOverMaxSize() async throws {
-        // Create a file larger than the 500MB limit
-        let largeContent = String(repeating: "a", count: 501 * 1024 * 1024) // 501MB
+    func testOpenFile_accepts500MB_within1GBLimit() async throws {
+        // Create a 500MB file (within 1GB limit)
+        let largeContent = String(repeating: "a", count: 500 * 1024 * 1024) // 500MB
+        let fileURL = tempDirectory.appendingPathComponent("500mb.json")
+        try largeContent.write(to: fileURL, atomically: true, encoding: .utf8)
+        
+        // This should succeed with the new 1GB limit
+        let result = try await fileManager.openFile(url: fileURL)
+        XCTAssertNotNil(result)
+    }
+    
+    func testOpenFile_rejectsOver1GBLimit() async throws {
+        // Create a file larger than the 1GB limit
+        let largeContent = String(repeating: "a", count: 1025 * 1024 * 1024) // 1025MB
         let fileURL = tempDirectory.appendingPathComponent("toolarge.json")
         try largeContent.write(to: fileURL, atomically: true, encoding: .utf8)
         do {

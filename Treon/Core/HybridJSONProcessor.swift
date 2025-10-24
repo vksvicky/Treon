@@ -107,8 +107,11 @@ class HybridJSONProcessor {
         // Convert children first
         let swiftChildren = rustNode.children.map { convertRustNodeToSwiftNode($0) }
         
+        // Handle root key conversion: Rust returns "" for root, Swift expects nil
+        let swiftKey = rustNode.key.isEmpty ? nil : rustNode.key
+        
         let swiftNode = JSONNode(
-            key: rustNode.key,
+            key: swiftKey,
             value: swiftValue,
             children: swiftChildren,
             path: rustNode.path

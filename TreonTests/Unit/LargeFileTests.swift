@@ -126,15 +126,61 @@ class LargeFileTests: XCTestCase {
         logger.info("49MB file processed in \(timeElapsed)s")
     }
 
-    func testRejectsFileSize_over50MBLimit_with51MB() async throws {
-        // With app limit at 500MB, create a file larger than 500MB to test rejection
+    func testAcceptsFileSize_501MB_within1GBLimit() async throws {
+        // With app limit at 1GB, a 501MB file should be accepted
         let content = generateJSONContent(targetSize: 501 * 1024 * 1024) // 501MB
         let fileURL = tempDirectory.appendingPathComponent("501mb.json")
         try content.write(to: fileURL, atomically: true, encoding: .utf8)
 
+        // This should succeed with the new 1GB limit
+        let result = try await fileManager.openFile(url: fileURL)
+        XCTAssertNotNil(result)
+        XCTAssertEqual(result.name, "501mb.json")
+    }
+
+    func testRejectsFileSize_over1GBLimit() async throws {
+        // With app limit at 1GB, create a file larger than 1GB to test rejection
+        let content = generateJSONContent(targetSize: 1025 * 1024 * 1024) // 1025MB
+        let fileURL = tempDirectory.appendingPathComponent("1025mb.json")
+        try content.write(to: fileURL, atomically: true, encoding: .utf8)
+
         do {
             _ = try await fileManager.openFile(url: fileURL)
-            XCTFail("Should have thrown file too large error for 501MB file")
+            XCTFail("Should have thrown file too large error for 1025MB file")
+        } catch FileManagerError.fileTooLarge {
+            // Expected
+        } catch {
+            XCTFail("Unexpected error: \(error)")
+        }
+    }
+    
+    func testFileSizeLimits_comprehensive() async throws {
+        // Test various file sizes to ensure proper limit enforcement
+        
+        // Test 1: 500MB should be accepted (within 1GB limit)
+        let content500MB = generateJSONContent(targetSize: 500 * 1024 * 1024) // 500MB
+        let fileURL500MB = tempDirectory.appendingPathComponent("500mb.json")
+        try content500MB.write(to: fileURL500MB, atomically: true, encoding: .utf8)
+        
+        let result500MB = try await fileManager.openFile(url: fileURL500MB)
+        XCTAssertNotNil(result500MB, "500MB file should be accepted")
+        
+        // Test 2: 1GB should be accepted (under the 1GB limit)
+        let content1GB = generateJSONContent(targetSize: 1000 * 1024 * 1024) // 1000MB (clearly under 1GB)
+        let fileURL1GB = tempDirectory.appendingPathComponent("1gb.json")
+        try content1GB.write(to: fileURL1GB, atomically: true, encoding: .utf8)
+        
+        let result1GB = try await fileManager.openFile(url: fileURL1GB)
+        XCTAssertNotNil(result1GB, "1GB file should be accepted")
+        
+        // Test 3: 1.1GB should be rejected (over the limit)
+        let content1_1GB = generateJSONContent(targetSize: 1100 * 1024 * 1024) // 1.1GB
+        let fileURL1_1GB = tempDirectory.appendingPathComponent("1.1gb.json")
+        try content1_1GB.write(to: fileURL1_1GB, atomically: true, encoding: .utf8)
+        
+        do {
+            _ = try await fileManager.openFile(url: fileURL1_1GB)
+            XCTFail("1.1GB file should be rejected")
         } catch FileManagerError.fileTooLarge {
             // Expected
         } catch {

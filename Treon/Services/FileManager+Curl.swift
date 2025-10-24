@@ -11,7 +11,7 @@ extension TreonFileManager {
     func executeCurlCommand(_ command: String) async throws -> FileInfo {
         let parsedCommand = try parseCurlCommand(command)
 
-        var request = buildURLRequest(from: parsedCommand)
+        let request = buildURLRequest(from: parsedCommand)
 
         do {
             let (data, response) = try await URLSession.shared.data(for: request)

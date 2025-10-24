@@ -33,7 +33,7 @@ final class HybridJSONProcessorIntegrationTests: XCTestCase {
             let result = try await HybridJSONProcessor.processData(testData)
             
             XCTAssertGreaterThan(result.children.count, 0, "\(description) should have children")
-            XCTAssertEqual(result.key, "", "Root key should be empty string")
+            XCTAssertNil(result.key, "Root key should be nil for root node")
             XCTAssertEqual(result.value, .object, "Root should be an Object")
             
             print("✅ \(description) processing test passed")
@@ -55,7 +55,7 @@ final class HybridJSONProcessorIntegrationTests: XCTestCase {
             let result = try await HybridJSONProcessor.processData(testData)
             
             XCTAssertGreaterThan(result.children.count, 0, "\(description) should have children")
-            XCTAssertEqual(result.key, "", "Root key should be empty string")
+            XCTAssertNil(result.key, "Root key should be nil for root node")
             XCTAssertEqual(result.value, .object, "Root should be an Object")
             
             print("✅ \(description) processing test passed")

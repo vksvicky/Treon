@@ -10,6 +10,7 @@ import XCTest
 @testable import Treon
 
 /// Tests for the HybridProcessorMock to ensure it works correctly
+@MainActor
 class HybridProcessorMockTests: XCTestCase {
     
     var mock: HybridProcessorMock!

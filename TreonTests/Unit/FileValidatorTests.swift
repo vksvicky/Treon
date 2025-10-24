@@ -78,9 +78,20 @@ final class FileValidatorTests: XCTestCase {
         }
     }
     
-    func testValidateAndLoadFile_largeFile_throwsError() async throws {
-        // Create a large file (over 500MB limit)
-        let largeContent = String(repeating: "a", count: 501 * 1024 * 1024) // 501MB
+    func testValidateAndLoadFile_500MB_accepted() async throws {
+        // Create a 500MB file (within 1GB limit)
+        let largeContent = String(repeating: "a", count: 500 * 1024 * 1024) // 500MB
+        let fileURL = tempDirectory.appendingPathComponent("500mb.json")
+        try largeContent.write(to: fileURL, atomically: true, encoding: .utf8)
+        
+        // This should succeed with the new 1GB limit
+        let result = try await fileValidator.validateAndLoadFile(url: fileURL)
+        XCTAssertNotNil(result)
+    }
+
+    func testValidateAndLoadFile_largeFile1GB_throwsError() async throws {
+        // Create a large file (over 1GB limit)
+        let largeContent = String(repeating: "a", count: 1025 * 1024 * 1024) // 1025MB
         let fileURL = tempDirectory.appendingPathComponent("large.json")
         try largeContent.write(to: fileURL, atomically: true, encoding: .utf8)
         

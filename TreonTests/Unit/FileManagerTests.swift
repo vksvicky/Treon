@@ -185,9 +185,21 @@ class FileManagerTests: XCTestCase {
 
     // MARK: - Test File Size Limits
 
-    func testOpenFile_rejectsOverMaxSize() async throws {
-        // Create a file larger than 500MB limit
-        let largeContent = String(repeating: "a", count: 501 * 1024 * 1024) // 501MB
+    func testOpenFile_accepts500MB_within1GBLimit() async throws {
+        // Create a 500MB file (within 1GB limit)
+        let largeContent = String(repeating: "a", count: 500 * 1024 * 1024) // 500MB
+
+        let fileURL = tempDirectory.appendingPathComponent("500mb.json")
+        try largeContent.write(to: fileURL, atomically: true, encoding: .utf8)
+
+        // This should succeed with the new 1GB limit
+        let result = try await fileManager.openFile(url: fileURL)
+        XCTAssertNotNil(result)
+    }
+
+    func testOpenFile_rejectsOver1GBMaxSize() async throws {
+        // Create a file larger than 1GB limit
+        let largeContent = String(repeating: "a", count: 1025 * 1024 * 1024) // 1025MB
 
         let fileURL = tempDirectory.appendingPathComponent("toolarge.json")
         try largeContent.write(to: fileURL, atomically: true, encoding: .utf8)
@@ -267,9 +279,12 @@ class FileManagerTests: XCTestCase {
             _ = try await fileManager.openFile(url: fileURL)
         }
 
+        // Give a moment for recent files to be updated
+        try await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+
         // Should only keep 10 recent files
         await MainActor.run {
-            XCTAssertEqual(fileManager.recentFiles.count, 10)
+            XCTAssertEqual(fileManager.recentFiles.count, 10, "Should have exactly 10 recent files, but got \(fileManager.recentFiles.count)")
 
             // Most recent should be file14.json
             XCTAssertEqual(fileManager.recentFiles.first?.name, "file14.json")

@@ -48,7 +48,9 @@ final class RustBackendIntegrationTests: XCTestCase {
             (25 * 1024 * 1024, "25MB"),
             (50 * 1024 * 1024, "50MB"),
             (100 * 1024 * 1024, "100MB"),
-            (250 * 1024 * 1024, "250MB")
+            (250 * 1024 * 1024, "250MB"),
+            (500 * 1024 * 1024, "500MB"),
+            (1 * 1024 * 1024 * 1024, "1GB")
         ]
         
         for (targetSizeBytes, description) in testSizes {
