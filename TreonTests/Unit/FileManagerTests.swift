@@ -2,7 +2,7 @@
 //  FileManagerTests.swift
 //  Treon
 //
-//  Created by Vivek on 2024-10-19.
+//  Created by Vivek on 2025-10-19.
 //  Copyright © 2025 Treon. All rights reserved.
 //
 
@@ -34,7 +34,6 @@ class FileManagerTests: XCTestCase {
     }
 
     // MARK: - Test File Creation
-
     func testCreateNewFile_initialContentValidJSON() {
         let fileInfo = fileManager.createNewFile()
 
@@ -45,7 +44,6 @@ class FileManagerTests: XCTestCase {
     }
 
     // MARK: - Test JSON Validation
-
     func testOpenFile_validJSON_returnsValid() async throws {
         let validJSON = """
         {
@@ -190,9 +188,7 @@ class FileManagerTests: XCTestCase {
     }
 
     // Size-focused tests moved to FileManagerSizeTests.swift
-
     // MARK: - Test File Size Limits
-
     func testOpenFile_accepts500MB_within1GBLimit() async throws {
         // Create a 500MB file (within 1GB limit)
         let largeContent = String(repeating: "a", count: 500 * 1024 * 1024) // 500MB
@@ -223,7 +219,6 @@ class FileManagerTests: XCTestCase {
     }
 
     // MARK: - Test File Not Found
-
     func testOpenFile_nonexistentURL_throwsFileNotFound() async throws {
         let nonExistentURL = tempDirectory.appendingPathComponent("nonexistent.json")
 
@@ -238,7 +233,6 @@ class FileManagerTests: XCTestCase {
     }
 
     // MARK: - Test Unsupported File Types
-
     func testOpenFile_unsupportedExtension_throws() async throws {
         let txtFile = tempDirectory.appendingPathComponent("test.txt")
         try "This is a text file".write(to: txtFile, atomically: true, encoding: .utf8)
@@ -356,7 +350,6 @@ class FileManagerTests: XCTestCase {
     }
 
     // MARK: - Test File Content Operations
-
     func testGetFileContent_returnsContent() async throws {
         let content = "{\"test\": \"content\"}"
         let fileURL = tempDirectory.appendingPathComponent("content.json")
@@ -377,7 +370,6 @@ class FileManagerTests: XCTestCase {
     }
 
     // MARK: - Test Error Handling
-
     func testSetError_invalidJSON_setsMessage() {
         let error = FileManagerError.invalidJSON("Test error")
         fileManager.setError(error)
@@ -389,7 +381,6 @@ class FileManagerTests: XCTestCase {
     }
 
     // MARK: - Test File Info Properties
-
     func testFileInfo_populatedFields() async throws {
         let content = "{\"test\": \"properties\"}"
         let fileURL = tempDirectory.appendingPathComponent("properties.json")
@@ -407,7 +398,6 @@ class FileManagerTests: XCTestCase {
     }
 
     // MARK: - Test Concurrent Operations
-
     func testOpenFiles_concurrently_allValid() async throws {
         let validJSON = "{\"test\": \"concurrent\"}"
 
@@ -501,5 +491,4 @@ class FileManagerTests: XCTestCase {
         let fileInfo = try await fileManager.openFile(url: fileURL)
         XCTAssertTrue(fileInfo.isValidJSON)
     }
-    
 }

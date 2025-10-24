@@ -319,87 +319,102 @@ struct JSONViewerView: View {
             return
         }
 
-        // Parse JSON using the hybrid processor
         if fileInfo.isValidJSON {
-            let currentText = jsonText
-            let parseStartTime = CFAbsoluteTimeGetCurrent()
-            logger.info("📊 HYBRID PARSING START: Beginning hybrid JSON processing for \(fileInfo.name)")
+            processValidJSON(fileInfo: fileInfo)
+        } else {
+            handleInvalidJSON(fileInfo: fileInfo)
+        }
+    }
+    
+    private func processValidJSON(fileInfo: FileInfo) {
+        let currentText = jsonText
+        let parseStartTime = CFAbsoluteTimeGetCurrent()
+        logger.info("📊 HYBRID PARSING START: Beginning hybrid JSON processing for \(fileInfo.name)")
+        
+        Task {
+            do {
+                let data = try await convertTextToData(currentText)
+                let built = try await processJSONData(data, fileInfo: fileInfo)
+                await updateUIWithResult(built, currentText: currentText, parseStartTime: parseStartTime, fileInfo: fileInfo)
+            } catch {
+                await handleParsingError(error)
+            }
+        }
+    }
+    
+    private func convertTextToData(_ text: String) async throws -> Data {
+        let dataConversionStart = CFAbsoluteTimeGetCurrent()
+        let data = Data(text.utf8)
+        let dataConversionTime = CFAbsoluteTimeGetCurrent() - dataConversionStart
+        logger.debug("📊 HYBRID PARSING STEP 1: Data conversion: \(String(format: "%.3f", dataConversionTime))s (size: \(data.count) bytes)")
+        return data
+    }
+    
+    private func processJSONData(_ data: Data, fileInfo: FileInfo) async throws -> JSONNode {
+        logger.info("📊 HYBRID PARSING: File size: \(String(format: "%.2f", Double(data.count) / 1024 / 1024)) MB")
+        logger.info("📊 HYBRID PARSING: Using Rust backend for all processing")
+        
+        let treeBuildStart = CFAbsoluteTimeGetCurrent()
+        let built = try await HybridJSONProcessor.processData(data)
+        let treeBuildTime = CFAbsoluteTimeGetCurrent() - treeBuildStart
+        
+        let nodeCount = countNodes(built)
+        logger.debug("📊 HYBRID PARSING STEP 2: Tree building: \(String(format: "%.3f", treeBuildTime))s (nodes: \(nodeCount))")
+        return built
+    }
+    
+    private func updateUIWithResult(_ built: JSONNode, currentText: String, parseStartTime: CFAbsoluteTime, fileInfo: FileInfo) async {
+        await MainActor.run {
+            let uiUpdateStart = CFAbsoluteTimeGetCurrent()
+            logger.debug("📊 HYBRID PARSING STEP 3: Starting UI update on main thread")
             
-            Task {
-                do {
-                    let dataConversionStart = CFAbsoluteTimeGetCurrent()
-                    let data = Data(currentText.utf8)
-                    let dataConversionTime = CFAbsoluteTimeGetCurrent() - dataConversionStart
-                    logger.debug("📊 HYBRID PARSING STEP 1: Data conversion: \(String(format: "%.3f", dataConversionTime))s (size: \(data.count) bytes)")
-                    
-                    // Always using Rust backend for all processing
-                    logger.info("📊 HYBRID PARSING: File size: \(String(format: "%.2f", Double(data.count) / 1024 / 1024)) MB")
-                    logger.info("📊 HYBRID PARSING: Using Rust backend for all processing")
-                    
-                    // Process using hybrid processor
-                    let treeBuildStart = CFAbsoluteTimeGetCurrent()
-                    let built = try await HybridJSONProcessor.processData(data)
-                    let treeBuildTime = CFAbsoluteTimeGetCurrent() - treeBuildStart
-                    
-                    // Count nodes safely to avoid potential crashes with very large trees
-                    let nodeCount = self.countNodes(built)
-                    logger.debug("📊 HYBRID PARSING STEP 2: Tree building: \(String(format: "%.3f", treeBuildTime))s (nodes: \(nodeCount))")
-                    
-                    // Update UI on main thread
-                    await MainActor.run {
-                        let uiUpdateStart = CFAbsoluteTimeGetCurrent()
-                        logger.debug("📊 HYBRID PARSING STEP 3: Starting UI update on main thread")
-                        
-                        // Only apply if text hasn't changed in the meantime
-                        if currentText == self.jsonText {
-                            let rootNodeSetStart = CFAbsoluteTimeGetCurrent()
-                            
-                            // For very large files, use a more conservative approach
-                            if data.count > 100 * 1024 * 1024 { // 100MB threshold
-                                logger.info("📊 HYBRID PARSING: Using conservative UI update for very large file (\(data.count) bytes)")
-                                // Set rootNode but with a delay to prevent UI blocking
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                                    self.rootNode = built
-                                    // Reset expansion state for new file
-                                    self.expansion.resetAll()
-                                }
-                            } else {
-                                // Normal update for smaller files
-                                self.rootNode = built
-                                // Reset expansion state for new file
-                                self.expansion.resetAll()
-                            }
-                            
-                            let rootNodeSetTime = CFAbsoluteTimeGetCurrent() - rootNodeSetStart
-                            logger.debug("📊 HYBRID PARSING STEP 3A: rootNode assignment: \(String(format: "%.3f", rootNodeSetTime))s")
-                        }
-                        
-                        let uiUpdateTime = CFAbsoluteTimeGetCurrent() - uiUpdateStart
-                        let totalParseTime = CFAbsoluteTimeGetCurrent() - parseStartTime
-                        logger.debug("📊 HYBRID PARSING STEP 3B: UI update complete: \(String(format: "%.3f", uiUpdateTime))s")
-                        logger.info("📊 HYBRID PARSING TOTAL: \(String(format: "%.3f", totalParseTime))s for \(fileInfo.name)")
-                    }
-                } catch {
-                    Task { @MainActor in
-                        if let nsError = error as NSError?, nsError.code == 408 {
-                            // Timeout error - show a more helpful message
-                            self.showError("File too large to parse completely. Tree view will show limited content. Use the text view for full content.")
-                            // Still try to show the raw text
-                            self.rootNode = nil
-                            self.expansion.resetAll()
-                        } else {
-                        self.showError("Failed to parse JSON: \(error.localizedDescription)")
-                        self.expansion.resetAll()
-                        }
-                    }
-                }
+            if currentText == self.jsonText {
+                updateRootNode(built, dataSize: currentText.utf8.count)
+                
+                let uiUpdateTime = CFAbsoluteTimeGetCurrent() - uiUpdateStart
+                let totalParseTime = CFAbsoluteTimeGetCurrent() - parseStartTime
+                logger.debug("📊 HYBRID PARSING STEP 3B: UI update complete: \(String(format: "%.3f", uiUpdateTime))s")
+                logger.info("📊 HYBRID PARSING TOTAL: \(String(format: "%.3f", totalParseTime))s for \(fileInfo.name)")
+            }
+        }
+    }
+    
+    private func updateRootNode(_ built: JSONNode, dataSize: Int) {
+        let rootNodeSetStart = CFAbsoluteTimeGetCurrent()
+        
+        if dataSize > 100 * 1024 * 1024 { // 100MB threshold
+            logger.info("📊 HYBRID PARSING: Using conservative UI update for very large file (\(dataSize) bytes)")
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                self.rootNode = built
+                self.expansion.resetAll()
             }
         } else {
-            rootNode = nil
-            expansion.resetAll()
-            if let errorMsg = fileInfo.errorMessage {
-                showError(errorMsg)
+            self.rootNode = built
+            self.expansion.resetAll()
+        }
+        
+        let rootNodeSetTime = CFAbsoluteTimeGetCurrent() - rootNodeSetStart
+        logger.debug("📊 HYBRID PARSING STEP 3A: rootNode assignment: \(String(format: "%.3f", rootNodeSetTime))s")
+    }
+    
+    private func handleParsingError(_ error: Error) async {
+        await MainActor.run {
+            if let nsError = error as NSError?, nsError.code == 408 {
+                self.showError("File too large to parse completely. Tree view will show limited content. Use the text view for full content.")
+                self.rootNode = nil
+                self.expansion.resetAll()
+            } else {
+                self.showError("Failed to parse JSON: \(error.localizedDescription)")
+                self.expansion.resetAll()
             }
+        }
+    }
+    
+    private func handleInvalidJSON(fileInfo: FileInfo) {
+        rootNode = nil
+        expansion.resetAll()
+        if let errorMsg = fileInfo.errorMessage {
+            showError(errorMsg)
         }
     }
     
