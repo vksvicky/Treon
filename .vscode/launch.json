@@ -6,8 +6,8 @@
       "type": "lldb",
       "request": "launch",
       "args": [],
-      "cwd": "/Users/vivek/Development/Treon/cpp/src",
-      "program": "/Users/vivek/Development/Treon/cpp/src/build/Debug/outDebug"
+      "cwd": "/Users/vivek/Development/Treon/rust_backend/src",
+      "program": "/Users/vivek/Development/Treon/rust_backend/src/build/Debug/outDebug"
     }
   ]
 }

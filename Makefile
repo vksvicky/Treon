@@ -1,6 +1,6 @@
 # Treon Xcode Project Makefile with Rust Backend
 
-.PHONY: build test run-app run-cli clean install-hooks build-rust clean-rust
+.PHONY: build test test-all test-rust test-swift test-integration test-quick test-legacy run-app run-cli clean install-hooks build-rust clean-rust
 
 # Build Rust backend first, then Swift app
 build: build-rust
@@ -18,7 +18,26 @@ clean-rust:
 	cd rust_backend && cargo clean
 	@echo "✅ Rust backend cleaned"
 
-test:
+# Test targets
+test: test-all
+
+test-all:
+	bash scripts/test_all.sh
+
+test-rust:
+	bash scripts/test_rust.sh
+
+test-swift:
+	bash scripts/test_swift.sh
+
+test-integration:
+	bash scripts/test_integration.sh
+
+test-quick:
+	bash scripts/test_quick.sh
+
+# Legacy test target (runs all tests)
+test-legacy:
 	xcodebuild -project Treon.xcodeproj -scheme Treon -configuration Debug test
 
 run-app: build

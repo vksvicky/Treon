@@ -196,10 +196,8 @@ public enum JSONTreeBuilder {
                 children.append(child)
             }
             
-            // Only sort if we have many children (performance optimization)
-            if children.count > 10 {
-                children.sort { ($0.key ?? "") < ($1.key ?? "") }
-            }
+            // Sort keys alphabetically for consistent ordering
+            children.sort { ($0.key ?? "") < ($1.key ?? "") }
             
             return JSONNode(key: key, value: .object, children: children, path: currentPath)
         } else if let arr = any as? [Any] {
@@ -217,6 +215,10 @@ public enum JSONTreeBuilder {
         } else if let s = any as? String {
             return JSONNode(key: key, value: .string(s), children: [], path: currentPath)
         } else if let n = any as? NSNumber {
+            // Check if this is actually a boolean value (__NSCFBoolean)
+            if CFBooleanGetTypeID() == CFGetTypeID(n) {
+                return JSONNode(key: key, value: .bool(n.boolValue), children: [], path: currentPath)
+            }
             // Optimize number handling
             if CFNumberIsFloatType(n) {
                 return JSONNode(key: key, value: .number(n.doubleValue), children: [], path: currentPath)

@@ -323,11 +323,9 @@ struct JSONViewerView: View {
                     let dataConversionTime = CFAbsoluteTimeGetCurrent() - dataConversionStart
                     logger.debug("📊 HYBRID PARSING STEP 1: Data conversion: \(String(format: "%.3f", dataConversionTime))s (size: \(data.count) bytes)")
                     
-                    // Get performance comparison
-                    let comparison = HybridJSONProcessor.getPerformanceComparison(for: Int64(data.count))
-                    logger.info("📊 HYBRID PARSING: File size: \(String(format: "%.2f", comparison.fileSizeMB)) MB")
-                    logger.info("📊 HYBRID PARSING: Swift estimate: \(comparison.swiftEstimateFormatted), Rust estimate: \(comparison.rustEstimateFormatted)")
-                    logger.info("📊 HYBRID PARSING: Using \(comparison.recommendedBackend.rawValue) backend (\(comparison.performanceGainFormatted) faster)")
+                    // Always using Rust backend for all processing
+                    logger.info("📊 HYBRID PARSING: File size: \(String(format: "%.2f", Double(data.count) / 1024 / 1024)) MB")
+                    logger.info("📊 HYBRID PARSING: Using Rust backend for all processing")
                     
                     // Process using hybrid processor
                     let treeBuildStart = CFAbsoluteTimeGetCurrent()

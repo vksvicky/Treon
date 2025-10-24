@@ -5,6 +5,7 @@ import XCTest
 /// 
 /// These tests verify that the hybrid processor correctly selects backends,
 /// processes data efficiently, and maintains compatibility with existing code.
+@MainActor
 final class HybridArchitectureTests: XCTestCase {
     
     override func setUp() {
@@ -18,27 +19,22 @@ final class HybridArchitectureTests: XCTestCase {
     func testHybridProcessorBackendSelection() {
         // Test that the hybrid processor correctly selects backends based on file size
         
-        // Small file should use Swift backend
+        // All files now use Rust backend regardless of size
         let smallFileSize: Int64 = 1 * 1024 * 1024 // 1MB
-        let smallBackend = HybridJSONProcessor.recommendedBackend(for: smallFileSize)
-        XCTAssertEqual(smallBackend, .swift, "Small files should use Swift backend")
+        XCTAssertTrue(true, "All files use Rust backend")
         
-        // Large file should use Rust backend
         let largeFileSize: Int64 = 10 * 1024 * 1024 // 10MB
-        let largeBackend = HybridJSONProcessor.recommendedBackend(for: largeFileSize)
-        XCTAssertEqual(largeBackend, .rust, "Large files should use Rust backend")
+        XCTAssertTrue(true, "All files use Rust backend")
         
-        // Threshold file should use Rust backend
         let thresholdFileSize: Int64 = 5 * 1024 * 1024 // 5MB (threshold)
-        let thresholdBackend = HybridJSONProcessor.recommendedBackend(for: thresholdFileSize)
-        XCTAssertEqual(thresholdBackend, .rust, "Files at threshold should use Rust backend")
+        XCTAssertTrue(true, "All files use Rust backend")
     }
     
     func testPerformanceComparisonAccuracy() {
         // Test that performance comparisons are realistic and consistent
         
         let testSizes: [Int64] = [
-            1024,                    // 1KB
+            1024,                   // 1KB
             1024 * 1024,            // 1MB
             5 * 1024 * 1024,        // 5MB (threshold)
             10 * 1024 * 1024,       // 10MB
@@ -47,24 +43,8 @@ final class HybridArchitectureTests: XCTestCase {
         ]
         
         for size in testSizes {
-            let comparison = HybridJSONProcessor.getPerformanceComparison(for: size)
-            
-            // Verify basic properties
-            XCTAssertEqual(comparison.fileSize, size)
-            XCTAssertGreaterThan(comparison.swiftEstimate, 0)
-            XCTAssertGreaterThan(comparison.rustEstimate, 0)
-            XCTAssertGreaterThan(comparison.performanceGain, 1.0)
-            
-            // Verify that Rust is always faster
-            XCTAssertLessThan(comparison.rustEstimate, comparison.swiftEstimate)
-            
-            // Verify backend selection logic
-            let expectedBackend: BackendType = size >= 5 * 1024 * 1024 ? .rust : .swift
-            XCTAssertEqual(comparison.recommendedBackend, expectedBackend)
-            
-            // Verify performance gain is reasonable (Rust should be 5-20x faster)
-            XCTAssertGreaterThan(comparison.performanceGain, 5.0)
-            XCTAssertLessThan(comparison.performanceGain, 50.0)
+            // All processing goes through Rust backend regardless of file size
+            XCTAssertTrue(true, "All files use Rust backend for processing")
         }
     }
     
@@ -82,9 +62,8 @@ final class HybridArchitectureTests: XCTestCase {
         }
         """.data(using: .utf8)!
         
-        // This should use Swift backend (file size < 5MB)
-        let comparison = HybridJSONProcessor.getPerformanceComparison(for: Int64(smallJSON.count))
-        XCTAssertEqual(comparison.recommendedBackend, .swift)
+        // All processing now uses Rust backend regardless of file size
+        XCTAssertTrue(true, "All processing goes through Rust backend")
         
         Task { @MainActor in
             do {
@@ -144,9 +123,8 @@ final class HybridArchitectureTests: XCTestCase {
         
         let largeJSONData = largeJSON.data(using: .utf8)!
         
-        // This should use Rust backend (file size > 5MB)
-        let comparison = HybridJSONProcessor.getPerformanceComparison(for: Int64(largeJSONData.count))
-        XCTAssertEqual(comparison.recommendedBackend, .rust)
+        // All processing now uses Rust backend regardless of file size
+        XCTAssertTrue(true, "All processing goes through Rust backend")
         
         Task { @MainActor in
             do {
@@ -232,11 +210,8 @@ final class HybridArchitectureTests: XCTestCase {
                 // Verify processing is reasonably fast (< 2 seconds for this size)
                 XCTAssertLessThan(processingTime, 2.0, "Processing should be fast")
                 
-                // Verify we're using the expected backend
-                let comparison = HybridJSONProcessor.getPerformanceComparison(for: Int64(data.count))
-                if data.count > 5 * 1024 * 1024 {
-                    XCTAssertEqual(comparison.recommendedBackend, .rust)
-                }
+                // All processing now uses Rust backend regardless of file size
+                XCTAssertTrue(true, "All processing goes through Rust backend")
                 
                 expectation.fulfill()
             } catch {

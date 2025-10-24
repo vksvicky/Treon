@@ -2,7 +2,7 @@
 //  FileValidatorTests.swift
 //  TreonTests
 //
-//  Created by AI Assistant on 2024-12-19.
+//  Created by Vivek on 2024-10-19.
 //  Copyright © 2024 Treon. All rights reserved.
 //
 
@@ -79,8 +79,8 @@ final class FileValidatorTests: XCTestCase {
     }
     
     func testValidateAndLoadFile_largeFile_throwsError() async throws {
-        // Create a large file (over 100MB)
-        let largeContent = String(repeating: "a", count: 101 * 1024 * 1024) // 101MB
+        // Create a large file (over 500MB limit)
+        let largeContent = String(repeating: "a", count: 501 * 1024 * 1024) // 501MB
         let fileURL = tempDirectory.appendingPathComponent("large.json")
         try largeContent.write(to: fileURL, atomically: true, encoding: .utf8)
         

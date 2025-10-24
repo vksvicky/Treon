@@ -2,6 +2,7 @@ import XCTest
 import Foundation
 @testable import Treon
 
+@MainActor
 class FileManagerSizeTests: XCTestCase {
     var fileManager: TreonFileManager!
     var tempDirectory: URL!
@@ -74,8 +75,8 @@ class FileManagerSizeTests: XCTestCase {
     }
 
     func testOpenFile_extremelyLargeJSON_underMaxLimit() async throws {
-        let maxBytes = await TreonFileManager.shared.maxFileSize
-        let slackBytes = await TreonFileManager.shared.sizeSlackBytes
+        let maxBytes = TreonFileManager.shared.maxFileSize
+        let slackBytes = TreonFileManager.shared.sizeSlackBytes
         let safetyMargin: Int64 = 16 * 1024
         let target = Int(max(0, maxBytes + slackBytes - safetyMargin))
 
@@ -102,7 +103,8 @@ class FileManagerSizeTests: XCTestCase {
     }
 
     func testOpenFile_rejectsOverMaxSize() async throws {
-        let largeContent = String(repeating: "a", count: 101 * 1024 * 1024)
+        // Create a file larger than the 500MB limit
+        let largeContent = String(repeating: "a", count: 501 * 1024 * 1024) // 501MB
         let fileURL = tempDirectory.appendingPathComponent("toolarge.json")
         try largeContent.write(to: fileURL, atomically: true, encoding: .utf8)
         do {

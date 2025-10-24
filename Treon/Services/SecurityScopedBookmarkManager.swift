@@ -2,7 +2,7 @@
 //  SecurityScopedBookmarkManager.swift
 //  Treon
 //
-//  Created by AI Assistant on 2024-10-22.
+//  Created by Vivek on 2024-10-22.
 //  Copyright © 2024 Treon. All rights reserved.
 //
 

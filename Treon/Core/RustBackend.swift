@@ -2,12 +2,13 @@
 //  RustBackend.swift
 //  Treon
 //
-//  Created by AI Assistant on 2025-01-18.
+//  Created by Vivek on 2025-10-18.
 //  Copyright © 2025 Treon. All rights reserved.
 //
 
 import Foundation
 import OSLog
+import Darwin
 
 // MARK: - Treon Error Types
 
@@ -100,18 +101,19 @@ class RustBackend {
     /// Process JSON data from memory using the Rust backend
     /// 
     /// - Parameter data: JSON data to process
+    /// - Parameter maxDepth: Maximum depth for tree building (0 = automatic)
     /// - Returns: Processed JSON tree structure
     /// - Throws: TreonError if processing fails
-    static func processData(_ data: Data) throws -> RustJSONTree {
+    static func processData(_ data: Data, maxDepth: Int32 = 0) throws -> RustJSONTree {
         guard isInitialized else {
             throw TreonError.backendNotInitialized
         }
         
         let startTime = CFAbsoluteTimeGetCurrent()
-        logger.info("📊 RUST BACKEND: Starting data processing for \(data.count) bytes")
+        logger.info("📊 RUST BACKEND: Starting data processing for \(data.count) bytes with maxDepth: \(maxDepth)")
         
         let resultPtr = data.withUnsafeBytes { bytes in
-            treon_rust_process_data(bytes.bindMemory(to: UInt8.self).baseAddress!, Int32(data.count))
+            treon_rust_process_data(bytes.bindMemory(to: UInt8.self).baseAddress!, Int32(data.count), maxDepth)
         }
         defer { 
             if let ptr = resultPtr {
@@ -127,6 +129,8 @@ class RustBackend {
         let resultString = String(cString: resultPtr)
         let processingTime = CFAbsoluteTimeGetCurrent() - startTime
         logger.info("📊 RUST BACKEND: Data processing completed in \(String(format: "%.3f", processingTime))s")
+        logger.info("📊 RUST BACKEND: Result string length: \(resultString.count) characters")
+        logger.info("📊 RUST BACKEND: Result string preview: \(String(resultString.prefix(500)))")
         
         do {
             let tree = try JSONDecoder().decode(RustJSONTree.self, from: resultString.data(using: .utf8)!)
@@ -134,6 +138,7 @@ class RustBackend {
             return tree
         } catch {
             logger.error("❌ RUST BACKEND: Failed to decode result: \(error)")
+            logger.error("❌ RUST BACKEND: Full result string: \(resultString)")
             throw TreonError.processingFailed("Failed to decode Rust backend result: \(error.localizedDescription)")
         }
     }
@@ -221,7 +226,14 @@ enum RustJSONValue: Codable, Equatable {
         let container = try decoder.singleValueContainer()
         
         if let string = try? container.decode(String.self) {
-            self = .string(string)
+            // Handle special case strings for Object and Array
+            if string == "Object" {
+                self = .object
+            } else if string == "Array" {
+                self = .array
+            } else {
+                self = .string(string)
+            }
         } else if let number = try? container.decode(Double.self) {
             self = .number(number)
         } else if let boolean = try? container.decode(Bool.self) {
@@ -245,9 +257,10 @@ enum RustJSONValue: Codable, Equatable {
             try container.encode(value)
         case .null:
             try container.encodeNil()
-        case .object, .array:
-            // These are handled by the tree structure
-            break
+        case .object:
+            try container.encode("Object")
+        case .array:
+            try container.encode("Array")
         }
     }
     
@@ -315,39 +328,95 @@ struct RustBackendStats: Codable {
     let performance: [String: String]
 }
 
-// MARK: - C FFI Declarations
-// These functions are implemented in the Rust backend library
+// MARK: - Dynamic Loading of Rust Functions
+
+private var rustLibraryHandle: UnsafeMutableRawPointer?
+
+/// Load the Rust library dynamically
+private func loadRustLibrary() -> Bool {
+    guard rustLibraryHandle == nil else { return true }
+    
+    let libraryPath = Bundle.main.bundlePath + "/Contents/Frameworks/libtreon_rust_backend.dylib"
+    rustLibraryHandle = dlopen(libraryPath, RTLD_LAZY)
+    
+    if rustLibraryHandle == nil {
+        // Try alternative path
+        let altPath = "/Users/vivek/Development/Treon/rust_backend/target/release/libtreon_rust_backend.dylib"
+        rustLibraryHandle = dlopen(altPath, RTLD_LAZY)
+    }
+    
+    return rustLibraryHandle != nil
+}
+
+/// Get a function pointer from the Rust library
+private func getRustFunction<T>(_ name: String) -> T? {
+    guard let handle = rustLibraryHandle else { return nil }
+    
+    let symbol = dlsym(handle, name)
+    guard let symbol = symbol else { return nil }
+    
+    return unsafeBitCast(symbol, to: T.self)
+}
+
+// MARK: - FFI Function Declarations
+// These functions are implemented in the Rust backend and loaded dynamically
 
 /// Initialize the Rust backend
-@_cdecl("treon_rust_init")
 func treon_rust_init() {
-    // This will be implemented by the Rust backend
+    guard loadRustLibrary() else {
+        print("❌ RUST BACKEND: Failed to load Rust library")
+        return
+    }
+    
+    guard let initFunc: @convention(c) () -> Void = getRustFunction("treon_rust_init") else {
+        print("❌ RUST BACKEND: Failed to get treon_rust_init function")
+        return
+    }
+    
+    initFunc()
 }
 
 /// Process a JSON file
-@_cdecl("treon_rust_process_file")
 func treon_rust_process_file(_ filePath: UnsafePointer<CChar>) -> UnsafeMutablePointer<CChar>? {
-    // This will be implemented by the Rust backend
-    return nil
+    guard loadRustLibrary() else { return nil }
+    
+    guard let processFunc: @convention(c) (UnsafePointer<CChar>) -> UnsafeMutablePointer<CChar>? = getRustFunction("treon_rust_process_file") else {
+        return nil
+    }
+    
+    return processFunc(filePath)
 }
 
-/// Process JSON data from memory
-@_cdecl("treon_rust_process_data")
-func treon_rust_process_data(_ data: UnsafePointer<UInt8>, _ length: Int32) -> UnsafeMutablePointer<CChar>? {
-    // This will be implemented by the Rust backend
-    return nil
+/// Process JSON data from memory with depth limiting
+func treon_rust_process_data(_ data: UnsafePointer<UInt8>, _ length: Int32, _ maxDepth: Int32) -> UnsafeMutablePointer<CChar>? {
+    guard loadRustLibrary() else { return nil }
+    
+    guard let processFunc: @convention(c) (UnsafePointer<UInt8>, Int32, Int32) -> UnsafeMutablePointer<CChar>? = getRustFunction("treon_rust_process_data") else {
+        return nil
+    }
+    
+    return processFunc(data, length, maxDepth)
 }
 
 /// Free a string returned by the Rust backend
-@_cdecl("treon_rust_free_string")
 func treon_rust_free_string(_ ptr: UnsafeMutablePointer<CChar>) {
-    // This will be implemented by the Rust backend
+    guard loadRustLibrary() else { return }
+    
+    guard let freeFunc: @convention(c) (UnsafeMutablePointer<CChar>) -> Void = getRustFunction("treon_rust_free_string") else {
+        return
+    }
+    
+    freeFunc(ptr)
 }
 
 /// Get performance statistics
-@_cdecl("treon_rust_get_stats")
 func treon_rust_get_stats() -> UnsafeMutablePointer<CChar>? {
-    // This will be implemented by the Rust backend
-    return nil
+    guard loadRustLibrary() else { return nil }
+    
+    guard let statsFunc: @convention(c) () -> UnsafeMutablePointer<CChar>? = getRustFunction("treon_rust_get_stats") else {
+        return nil
+    }
+    
+    return statsFunc()
 }
 

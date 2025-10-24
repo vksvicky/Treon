@@ -5,7 +5,7 @@ edition = "2021"
 
 [lib]
 name = "treon_rust_backend"
-crate-type = ["cdylib", "staticlib"]
+crate-type = ["cdylib", "staticlib", "rlib"]
 
 [dependencies]
 # High-performance JSON processing

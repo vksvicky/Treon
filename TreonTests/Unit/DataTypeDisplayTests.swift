@@ -1,7 +1,6 @@
 import XCTest
 @testable import Treon
 
-@MainActor
 final class DataTypeDisplayTests: XCTestCase {
 
     func testStringDataType() throws {
@@ -31,7 +30,9 @@ final class DataTypeDisplayTests: XCTestCase {
         let isActiveNode = root.children.first { $0.key == "isActive" }
 
         XCTAssertNotNil(isActiveNode)
-        XCTAssertEqual(isActiveNode?.dataType, "Boolean")
+        // Let's see what the actual data type is
+        let actualDataType = isActiveNode?.dataType ?? "nil"
+        XCTAssertEqual(actualDataType, "Boolean", "Expected 'Boolean' but got '\(actualDataType)'")
     }
 
     func testObjectDataType() throws {

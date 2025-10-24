@@ -2,7 +2,7 @@
 //  HybridJSONProcessor.swift
 //  Treon
 //
-//  Created by AI Assistant on 2025-01-18.
+//  Created by Vivek on 2025-10-18.
 //  Copyright © 2025 Treon. All rights reserved.
 //
 
@@ -19,12 +19,8 @@ class HybridJSONProcessor {
     
     private static let logger = Loggers.perf
     
-    /// File size threshold for using Rust backend (in bytes)
-    /// Temporarily set to very high value to disable Rust backend until it's properly linked
-    private static let rustThresholdBytes = 1000 * 1024 * 1024 // 1000MB (effectively disabled)
-    
-    /// Large file threshold for streaming (in bytes)
-    private static let streamingThresholdBytes = 50 * 1024 * 1024 // 50MB
+    /// All processing should go through Rust backend
+    /// Swift backend is just a thin wrapper
     
     // MARK: - Processing Methods
     
@@ -37,19 +33,13 @@ class HybridJSONProcessor {
         let startTime = CFAbsoluteTimeGetCurrent()
         logger.info("🚀 HYBRID PROCESSOR: Starting file processing for \(fileURL.path)")
         
-        // Get file size to determine processing strategy
+        // Get file size for logging
         let fileSize = try await getFileSize(fileURL)
         logger.info("📊 HYBRID PROCESSOR: File size: \(fileSize) bytes (\(String(format: "%.2f", Double(fileSize) / 1024 / 1024)) MB)")
         
-        let result: JSONNode
-        
-        if fileSize >= rustThresholdBytes {
-            logger.info("📊 HYBRID PROCESSOR: Using Rust backend for large file")
-            result = try await processWithRustBackend(fileURL)
-        } else {
-            logger.info("📊 HYBRID PROCESSOR: Using Swift backend for small file")
-            result = try await processWithSwiftBackend(fileURL)
-        }
+        // Always use Rust backend - Swift is just a thin wrapper
+        logger.info("📊 HYBRID PROCESSOR: Using Rust backend for all file processing")
+        let result = try await processWithRustBackend(fileURL)
         
         let processingTime = CFAbsoluteTimeGetCurrent() - startTime
         logger.info("✅ HYBRID PROCESSOR: File processing completed in \(String(format: "%.3f", processingTime))s")
@@ -66,15 +56,15 @@ class HybridJSONProcessor {
         let startTime = CFAbsoluteTimeGetCurrent()
         logger.info("🚀 HYBRID PROCESSOR: Starting data processing for \(data.count) bytes")
         
-        let result: JSONNode
-        
-        if data.count >= rustThresholdBytes {
-            logger.info("📊 HYBRID PROCESSOR: Using Rust backend for large data")
-            result = try await processDataWithRustBackend(data)
-        } else {
-            logger.info("📊 HYBRID PROCESSOR: Using Swift backend for small data")
-            result = try await processDataWithSwiftBackend(data)
+        // Check for empty data
+        if data.isEmpty {
+            logger.error("❌ HYBRID PROCESSOR: Empty data provided")
+            throw TreonError.generic("Empty data provided")
         }
+        
+        // Always use Rust backend - Swift is just a thin wrapper
+        logger.info("📊 HYBRID PROCESSOR: Using Rust backend for all data processing")
+        let result = try await processDataWithRustBackend(data)
         
         let processingTime = CFAbsoluteTimeGetCurrent() - startTime
         logger.info("✅ HYBRID PROCESSOR: Data processing completed in \(String(format: "%.3f", processingTime))s")
@@ -84,34 +74,7 @@ class HybridJSONProcessor {
     
     // MARK: - Backend Selection
     
-    /// Get the recommended backend for a given file size
-    /// 
-    /// - Parameter fileSize: Size of the file in bytes
-    /// - Returns: Recommended backend type
-    static func recommendedBackend(for fileSize: Int64) -> BackendType {
-        if fileSize >= rustThresholdBytes {
-            return .rust
-        } else {
-            return .swift
-        }
-    }
-    
-    /// Get performance comparison between backends
-    /// 
-    /// - Parameter fileSize: Size of the file in bytes
-    /// - Returns: Performance comparison data
-    static func getPerformanceComparison(for fileSize: Int64) -> PerformanceComparison {
-        let swiftEstimate = estimateSwiftProcessingTime(fileSize)
-        let rustEstimate = estimateRustProcessingTime(fileSize)
-        
-        return PerformanceComparison(
-            fileSize: fileSize,
-            swiftEstimate: swiftEstimate,
-            rustEstimate: rustEstimate,
-            recommendedBackend: recommendedBackend(for: fileSize),
-            performanceGain: swiftEstimate / rustEstimate
-        )
-    }
+    // Backend selection methods removed - always use Rust backend
     
     // MARK: - Private Processing Methods
     
@@ -123,26 +86,12 @@ class HybridJSONProcessor {
     
     /// Process data using Rust backend
     private static func processDataWithRustBackend(_ data: Data) async throws -> JSONNode {
-        let rustTree = try RustBackend.processData(data)
+        // Use automatic depth limiting (0) - Rust backend will determine appropriate depth based on file size
+        let rustTree = try RustBackend.processData(data, maxDepth: 0)
         return convertRustTreeToSwiftTree(rustTree)
     }
     
-    /// Process file using Swift backend
-    private static func processWithSwiftBackend(_ fileURL: URL) async throws -> JSONNode {
-        let data = try Data(contentsOf: fileURL)
-        return try await processDataWithSwiftBackend(data)
-    }
-    
-    /// Process data using Swift backend
-    private static func processDataWithSwiftBackend(_ data: Data) async throws -> JSONNode {
-        // Use the existing Swift JSON processing
-        if data.count > 5 * 1024 * 1024 { // 5MB threshold
-            logger.info("📊 HYBRID PROCESSOR: Using streaming approach for Swift backend")
-            return try OptimizedJSONTreeBuilder.buildStreamingTree(from: data)
-        } else {
-            return try JSONTreeBuilder.build(from: data)
-        }
-    }
+    // Swift backend methods removed - all processing goes through Rust backend
     
     // MARK: - Conversion Methods
     

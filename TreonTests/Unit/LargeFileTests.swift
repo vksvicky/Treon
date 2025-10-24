@@ -3,6 +3,7 @@ import Foundation
 import OSLog
 @testable import Treon
 
+@MainActor
 class LargeFileTests: XCTestCase {
     private let logger = Logger(subsystem: "club.cycleruncode.Treon", category: "LargeFileTests")
     var fileManager: TreonFileManager!
@@ -126,14 +127,14 @@ class LargeFileTests: XCTestCase {
     }
 
     func testRejectsFileSize_over50MBLimit_with51MB() async throws {
-        // With app limit at 50MB (+slack), 51MB should be rejected
-        let content = generateJSONContent(targetSize: 51 * 1024 * 1024)
-        let fileURL = tempDirectory.appendingPathComponent("51mb.json")
+        // With app limit at 500MB, create a file larger than 500MB to test rejection
+        let content = generateJSONContent(targetSize: 501 * 1024 * 1024) // 501MB
+        let fileURL = tempDirectory.appendingPathComponent("501mb.json")
         try content.write(to: fileURL, atomically: true, encoding: .utf8)
 
         do {
             _ = try await fileManager.openFile(url: fileURL)
-            XCTFail("Should have thrown file too large error for 51MB file")
+            XCTFail("Should have thrown file too large error for 501MB file")
         } catch FileManagerError.fileTooLarge {
             // Expected
         } catch {
@@ -142,22 +143,8 @@ class LargeFileTests: XCTestCase {
     }
 
     // MARK: - Test File Size Limit
-
-    func testRejectsFileSize_overLimit_51MB() async throws {
-        let content = generateJSONContent(targetSize: 51 * 1024 * 1024) // 51MB (exceeds 50MB limit)
-        let fileURL = tempDirectory.appendingPathComponent("51mb.json")
-        try content.write(to: fileURL, atomically: true, encoding: .utf8)
-
-        do {
-            _ = try await fileManager.openFile(url: fileURL)
-            XCTFail("Should have thrown file too large error")
-        } catch FileManagerError.fileTooLarge {
-            // Expected error
-            logger.info("Correctly rejected 51MB file as too large")
-        } catch {
-            XCTFail("Unexpected error: \(error)")
-        }
-    }
+    // Note: The 51MB rejection test was removed as it was based on an outdated 50MB limit.
+    // The current limit is 500MB, so 51MB files are valid and should be processed successfully.
 
     // MARK: - Test Memory Usage
 
@@ -187,11 +174,15 @@ class LargeFileTests: XCTestCase {
         let sizes = [1024, 10 * 1024, 100 * 1024, 1024 * 1024] // 1KB, 10KB, 100KB, 1MB
 
         // Create files concurrently
+        guard let tempDir = tempDirectory else {
+            XCTFail("tempDirectory is nil")
+            return
+        }
         try await withThrowingTaskGroup(of: Void.self) { group in
             for size in sizes {
                 group.addTask {
                     let content = self.generateJSONContent(targetSize: size)
-                    let fileURL = self.tempDirectory.appendingPathComponent("concurrent\(size).json")
+                    let fileURL = tempDir.appendingPathComponent("concurrent\(size).json")
                     try content.write(to: fileURL, atomically: true, encoding: .utf8)
                 }
             }
@@ -203,7 +194,7 @@ class LargeFileTests: XCTestCase {
         try await withThrowingTaskGroup(of: FileInfo.self) { group in
             for size in sizes {
                 group.addTask {
-                    let fileURL = self.tempDirectory.appendingPathComponent("concurrent\(size).json")
+                    let fileURL = tempDir.appendingPathComponent("concurrent\(size).json")
                     return try await self.fileManager.openFile(url: fileURL)
                 }
             }
@@ -291,7 +282,7 @@ class LargeFileTests: XCTestCase {
 
     // MARK: - Helper Methods
 
-    private func generateJSONContent(targetSize: Int) -> String {
+    nonisolated private func generateJSONContent(targetSize: Int) -> String {
         var content = "{\n"
         var currentSize = 2 // Start with "{\n"
 

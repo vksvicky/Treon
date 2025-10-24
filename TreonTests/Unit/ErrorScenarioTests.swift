@@ -2,6 +2,7 @@ import XCTest
 import Foundation
 @testable import Treon
 
+@MainActor
 class ErrorScenarioTests: XCTestCase {
     var fileManager: TreonFileManager!
     var tempDirectory: URL!
@@ -113,8 +114,8 @@ class ErrorScenarioTests: XCTestCase {
     func testOpenFile_nearLimitResourceConsumption_validUnderLimit() async throws {
         // Create a file that's just under the configured limit with complex structure
         // Use runtime constants to avoid exceeding validation thresholds
-        let maxBytes = await TreonFileManager.shared.maxFileSize
-        let slackBytes = await TreonFileManager.shared.sizeSlackBytes
+        let maxBytes = TreonFileManager.shared.maxFileSize
+        let slackBytes = TreonFileManager.shared.sizeSlackBytes
         // Stay well under (max + slack) to account for structure/metadata differences
         let safetyMargin: Int64 = 8 * 1024 // 8KB
         let targetBytes = max(0, maxBytes + slackBytes - safetyMargin)
@@ -238,6 +239,7 @@ class ErrorScenarioTests: XCTestCase {
     private func generateComplexJSON(targetSize: Int) -> String {
         var content = "{\n"
         var currentSize = 2
+        var isFirstEntry = true
 
         while currentSize < targetSize {
             let key = "key_\(currentSize)"
@@ -245,15 +247,17 @@ class ErrorScenarioTests: XCTestCase {
             let repeatCount = max(0, min(1000, remaining))
             let value = String(repeating: "x", count: repeatCount)
 
+            if !isFirstEntry {
+                content += ",\n"
+                currentSize += 2
+            }
+            
             content += "  \"\(key)\": \"\(value)\""
             currentSize += key.count + value.count + 8
 
-            if currentSize < targetSize - 10 {
-                content += ","
-                currentSize += 1
-            }
             content += "\n"
             currentSize += 1
+            isFirstEntry = false
         }
 
         content += "}"

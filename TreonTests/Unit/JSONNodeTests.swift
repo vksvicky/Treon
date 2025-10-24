@@ -143,14 +143,14 @@ final class JSONNodeTests: XCTestCase {
         let root = try JSONTreeBuilder.build(from: data)
         XCTAssertEqual(root.path, "$")
         XCTAssertEqual(root.value, .array)
-        XCTAssertEqual(root.children.count, 8)
+        XCTAssertEqual(root.children.count, 8, "Expected 8 children but got \(root.children.count)")
 
         // Check different value types
         XCTAssertEqual(root.children[0].value, .string("string"))
         XCTAssertEqual(root.children[1].value, .number(42))
         XCTAssertEqual(root.children[2].value, .number(3.14))
-        XCTAssertEqual(root.children[3].value, .bool(true))
-        XCTAssertEqual(root.children[4].value, .bool(false))
+        XCTAssertEqual(root.children[3].value, .bool(true), "Expected bool(true) but got \(root.children[3].value)")
+        XCTAssertEqual(root.children[4].value, .bool(false), "Expected bool(false) but got \(root.children[4].value)")
         XCTAssertEqual(root.children[5].value, .null)
         XCTAssertEqual(root.children[6].value, .object)
         XCTAssertEqual(root.children[7].value, .array)

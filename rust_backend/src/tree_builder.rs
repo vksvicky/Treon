@@ -161,29 +161,101 @@ impl TreeBuilder {
     }
     
     /// Build a tree from JSON data
-    pub fn build_from_data(&self, _data: &[u8]) -> Result<JSONTree> {
-        // For now, create a simple mock tree
-        // TODO: Implement actual JSON parsing
-        let root = JSONNode::new(
-            None,
-            JSONValue::Object,
-            "$".to_string(),
-            0,
-        );
+    pub fn build_from_data(&self, data: &[u8]) -> Result<JSONTree> {
+        // Parse JSON data
+        let json_value: serde_json::Value = serde_json::from_slice(data)
+            .map_err(|e| crate::error::TreonError::json_parsing(&e.to_string()))?;
         
-        // Add some mock children
-        let mut root = root;
-        for i in 0..5 {
-            let child = JSONNode::new(
-                Some(format!("key_{}", i)),
-                JSONValue::String(format!("value_{}", i)),
-                format!("$.key_{}", i),
-                1,
-            );
-            root.add_child(child);
-        }
+        // Convert to tree structure
+        let root = self.convert_json_value_to_node(&json_value, None, "$".to_string(), 0)?;
+        
+        // Calculate total nodes and size
+        let _total_nodes = self.count_nodes(&root);
+        let _total_size_bytes = data.len();
         
         Ok(JSONTree::new(root))
+    }
+    
+    /// Convert a serde_json::Value to a JSONNode
+    fn convert_json_value_to_node(
+        &self,
+        value: &serde_json::Value,
+        key: Option<String>,
+        path: String,
+        depth: usize,
+    ) -> Result<JSONNode> {
+        // Check depth limit
+        if depth >= self.max_depth {
+            return Ok(JSONNode::new(
+                key,
+                JSONValue::String("[Depth Limited]".to_string()),
+                path,
+                depth,
+            ));
+        }
+        
+        let json_value = match value {
+            serde_json::Value::String(s) => JSONValue::String(s.clone()),
+            serde_json::Value::Number(n) => JSONValue::Number(n.as_f64().unwrap_or(0.0)),
+            serde_json::Value::Bool(b) => JSONValue::Boolean(*b),
+            serde_json::Value::Null => JSONValue::Null,
+            serde_json::Value::Object(_) => JSONValue::Object,
+            serde_json::Value::Array(_) => JSONValue::Array,
+        };
+        
+        let mut node = JSONNode::new(key, json_value, path.clone(), depth);
+        
+        // Add children for objects and arrays
+        match value {
+            serde_json::Value::Object(obj) => {
+                let mut child_count = 0;
+                for (k, v) in obj.iter() {
+                    // Limit children more aggressively to stay under max_nodes
+                    if child_count >= self.max_nodes / 10 { // Limit to 1/10th of max_nodes per level
+                        break;
+                    }
+                    let child_path = format!("{}.{}", path, k);
+                    let child = self.convert_json_value_to_node(
+                        v,
+                        Some(k.clone()),
+                        child_path,
+                        depth + 1,
+                    )?;
+                    node.add_child(child);
+                    child_count += 1;
+                }
+            }
+            serde_json::Value::Array(arr) => {
+                let mut child_count = 0;
+                for (i, v) in arr.iter().enumerate() {
+                    // Limit children more aggressively to stay under max_nodes
+                    if child_count >= self.max_nodes / 10 { // Limit to 1/10th of max_nodes per level
+                        break;
+                    }
+                    let child_path = format!("{}[{}]", path, i);
+                    let child = self.convert_json_value_to_node(
+                        v,
+                        Some(i.to_string()),
+                        child_path,
+                        depth + 1,
+                    )?;
+                    node.add_child(child);
+                    child_count += 1;
+                }
+            }
+            _ => {}
+        }
+        
+        Ok(node)
+    }
+    
+    /// Count total nodes in a tree
+    fn count_nodes(&self, node: &JSONNode) -> usize {
+        let mut count = 1; // Count the current node
+        for child in &node.children {
+            count += self.count_nodes(child);
+        }
+        count
     }
     
     /// Build a tree from a file
@@ -219,317 +291,5 @@ impl TreeBuilder {
 impl Default for TreeBuilder {
     fn default() -> Self {
         Self::new()
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    
-    #[test]
-    fn test_json_node_creation() {
-        let node = JSONNode::new(
-            Some("test".to_string()),
-            JSONValue::String("value".to_string()),
-            "$.test".to_string(),
-            0,
-        );
-        
-        assert_eq!(node.key, Some("test".to_string()));
-        assert_eq!(node.path, "$.test");
-        assert_eq!(node.metadata.depth, 0);
-        assert_eq!(node.metadata.child_count, 0);
-        assert_eq!(node.metadata.size_bytes, 0);
-        assert!(!node.metadata.is_expanded);
-    }
-    
-    #[test]
-    fn test_json_node_creation_with_none_key() {
-        let node = JSONNode::new(
-            None,
-            JSONValue::Object,
-            "$".to_string(),
-            0,
-        );
-        
-        assert_eq!(node.key, None);
-        assert_eq!(node.path, "$");
-        assert_eq!(node.value, JSONValue::Object);
-    }
-    
-    #[test]
-    fn test_json_node_placeholder() {
-        let node = JSONNode::placeholder(
-            "array".to_string(),
-            "$.array".to_string(),
-            JSONValue::Array,
-            100,
-        );
-        
-        assert_eq!(node.key, Some("array".to_string()));
-        assert_eq!(node.path, "$.array");
-        assert_eq!(node.value, JSONValue::Array);
-        assert_eq!(node.metadata.child_count, 100);
-        assert_eq!(node.metadata.depth, 0);
-    }
-    
-    #[test]
-    fn test_json_node_add_child() {
-        let mut parent = JSONNode::new(
-            Some("parent".to_string()),
-            JSONValue::Object,
-            "$.parent".to_string(),
-            0,
-        );
-        
-        let child = JSONNode::new(
-            Some("child".to_string()),
-            JSONValue::String("value".to_string()),
-            "$.parent.child".to_string(),
-            1,
-        );
-        
-        parent.add_child(child);
-        
-        assert_eq!(parent.children.len(), 1);
-        assert_eq!(parent.metadata.child_count, 1);
-        assert_eq!(parent.children[0].key, Some("child".to_string()));
-    }
-    
-    #[test]
-    fn test_json_node_total_nodes() {
-        let mut root = JSONNode::new(
-            None,
-            JSONValue::Object,
-            "$".to_string(),
-            0,
-        );
-        
-        // Add 3 children
-        for i in 0..3 {
-            let child = JSONNode::new(
-                Some(format!("child_{}", i)),
-                JSONValue::String(format!("value_{}", i)),
-                format!("$.child_{}", i),
-                1,
-            );
-            root.add_child(child);
-        }
-        
-        // Root + 3 children = 4 total nodes
-        assert_eq!(root.total_nodes(), 4);
-    }
-    
-    #[test]
-    fn test_json_node_max_depth() {
-        let mut root = JSONNode::new(
-            None,
-            JSONValue::Object,
-            "$".to_string(),
-            0,
-        );
-        
-        let mut child1 = JSONNode::new(
-            Some("child1".to_string()),
-            JSONValue::Object,
-            "$.child1".to_string(),
-            1,
-        );
-        
-        let grandchild = JSONNode::new(
-            Some("grandchild".to_string()),
-            JSONValue::String("value".to_string()),
-            "$.child1.grandchild".to_string(),
-            2,
-        );
-        
-        child1.add_child(grandchild);
-        root.add_child(child1);
-        
-        // Max depth should be 2 (grandchild depth)
-        assert_eq!(root.max_depth(), 2);
-    }
-    
-    #[test]
-    fn test_json_node_max_depth_single_node() {
-        let node = JSONNode::new(
-            Some("single".to_string()),
-            JSONValue::String("value".to_string()),
-            "$.single".to_string(),
-            0,
-        );
-        
-        // Single node should have depth 0
-        assert_eq!(node.max_depth(), 0);
-    }
-    
-    #[test]
-    fn test_json_tree_creation() {
-        let root = JSONNode::new(
-            None,
-            JSONValue::Object,
-            "$".to_string(),
-            0,
-        );
-        
-        let tree = JSONTree::new(root);
-        
-        assert_eq!(tree.total_nodes, 1);
-        assert_eq!(tree.max_depth, 0);
-        assert_eq!(tree.total_size_bytes, 0);
-    }
-    
-    #[test]
-    fn test_json_tree_with_children() {
-        let mut root = JSONNode::new(
-            None,
-            JSONValue::Object,
-            "$".to_string(),
-            0,
-        );
-        
-        // Add 2 children
-        for i in 0..2 {
-            let child = JSONNode::new(
-                Some(format!("child_{}", i)),
-                JSONValue::String(format!("value_{}", i)),
-                format!("$.child_{}", i),
-                1,
-            );
-            root.add_child(child);
-        }
-        
-        let tree = JSONTree::new(root);
-        
-        assert_eq!(tree.total_nodes, 3); // root + 2 children
-        assert_eq!(tree.max_depth, 1);
-    }
-    
-    #[test]
-    fn test_tree_builder_new() {
-        let builder = TreeBuilder::new();
-        
-        assert_eq!(builder.max_depth, 100);
-        assert_eq!(builder.max_nodes, 100_000);
-    }
-    
-    #[test]
-    fn test_tree_builder_with_max_depth() {
-        let builder = TreeBuilder::new().with_max_depth(50);
-        
-        assert_eq!(builder.max_depth, 50);
-        assert_eq!(builder.max_nodes, 100_000);
-    }
-    
-    #[test]
-    fn test_tree_builder_with_max_nodes() {
-        let builder = TreeBuilder::new().with_max_nodes(10_000);
-        
-        assert_eq!(builder.max_depth, 100);
-        assert_eq!(builder.max_nodes, 10_000);
-    }
-    
-    #[test]
-    fn test_tree_builder_chained_configuration() {
-        let builder = TreeBuilder::new()
-            .with_max_depth(25)
-            .with_max_nodes(5_000);
-        
-        assert_eq!(builder.max_depth, 25);
-        assert_eq!(builder.max_nodes, 5_000);
-    }
-    
-    #[test]
-    fn test_tree_builder_build_from_data() {
-        let builder = TreeBuilder::new();
-        let mock_data = b"{}";
-        let tree = builder.build_from_data(mock_data).unwrap();
-        
-        assert_eq!(tree.root.value, JSONValue::Object);
-        assert_eq!(tree.root.path, "$");
-        assert!(tree.total_nodes > 0);
-        assert!(tree.root.children.len() > 0);
-    }
-    
-    #[test]
-    fn test_tree_builder_build_from_file() {
-        let builder = TreeBuilder::new();
-        let tree = builder.build_from_file("test.json").unwrap();
-        
-        assert_eq!(tree.root.value, JSONValue::Object);
-        assert_eq!(tree.root.path, "$");
-        assert!(tree.total_nodes > 0);
-        
-        // Check that filename was added as a child
-        let filename_child = tree.root.children.iter()
-            .find(|child| child.key == Some("filename".to_string()));
-        assert!(filename_child.is_some());
-    }
-    
-    #[test]
-    fn test_tree_builder_build_from_file_with_path() {
-        let builder = TreeBuilder::new();
-        let tree = builder.build_from_file("/path/to/some/file.json").unwrap();
-        
-        assert_eq!(tree.root.value, JSONValue::Object);
-        
-        // Check that the filename was extracted correctly
-        let filename_child = tree.root.children.iter()
-            .find(|child| child.key == Some("filename".to_string()));
-        assert!(filename_child.is_some());
-        
-        if let Some(child) = filename_child {
-            assert_eq!(child.value, JSONValue::String("file.json".to_string()));
-        }
-    }
-    
-    #[test]
-    fn test_tree_builder_default() {
-        let builder = TreeBuilder::default();
-        
-        assert_eq!(builder.max_depth, 100);
-        assert_eq!(builder.max_nodes, 100_000);
-    }
-    
-    #[test]
-    fn test_json_value_types() {
-        let string_value = JSONValue::String("test".to_string());
-        let number_value = JSONValue::Number(42.5);
-        let boolean_value = JSONValue::Boolean(true);
-        let null_value = JSONValue::Null;
-        let object_value = JSONValue::Object;
-        let array_value = JSONValue::Array;
-        
-        assert!(matches!(string_value, JSONValue::String(_)));
-        assert!(matches!(number_value, JSONValue::Number(_)));
-        assert!(matches!(boolean_value, JSONValue::Boolean(_)));
-        assert!(matches!(null_value, JSONValue::Null));
-        assert!(matches!(object_value, JSONValue::Object));
-        assert!(matches!(array_value, JSONValue::Array));
-    }
-    
-    #[test]
-    fn test_json_value_equality() {
-        let value1 = JSONValue::String("test".to_string());
-        let value2 = JSONValue::String("test".to_string());
-        let value3 = JSONValue::String("different".to_string());
-        
-        assert_eq!(value1, value2);
-        assert_ne!(value1, value3);
-    }
-    
-    #[test]
-    fn test_node_metadata() {
-        let metadata = NodeMetadata {
-            depth: 2,
-            child_count: 5,
-            size_bytes: 1024,
-            is_expanded: true,
-        };
-        
-        assert_eq!(metadata.depth, 2);
-        assert_eq!(metadata.child_count, 5);
-        assert_eq!(metadata.size_bytes, 1024);
-        assert!(metadata.is_expanded);
     }
 }

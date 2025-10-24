@@ -78,7 +78,7 @@ class ConstantsTests: XCTestCase {
 
     func testFileConstants_limitsAndTypes_areExpected() {
         // File size limits
-        XCTAssertEqual(FileConstants.maxFileSize, 50 * 1024 * 1024) // 50MB
+        XCTAssertEqual(FileConstants.maxFileSize, 500 * 1024 * 1024) // 500MB
         XCTAssertEqual(FileConstants.maxJSONSize, 10 * 1024 * 1024) // 10MB
         XCTAssertEqual(FileConstants.maxRecentFiles, 10)
 
