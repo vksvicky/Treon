@@ -1,3 +1,11 @@
+//
+//  FileManagerTypes.swift
+//  Treon
+//
+//  Created by Vivek on 2025-10-19.
+//  Copyright © 2025 Treon. All rights reserved.
+//
+
 import Foundation
 import SwiftUI
 import UniformTypeIdentifiers
@@ -54,7 +62,30 @@ struct FileInfo {
     nonisolated let modifiedDate: Date
     nonisolated let isValidJSON: Bool
     nonisolated let errorMessage: String?
-    nonisolated let content: String?
+    
+    // Lazy content loading - don't store large content in memory
+    // Content is loaded on-demand and cleared when not needed
+    private nonisolated var _content: String?
+    nonisolated var content: String? {
+        get { _content }
+        set { _content = newValue }
+    }
+    
+    // Flag to track if content has been loaded
+    nonisolated var isContentLoaded: Bool {
+        _content != nil
+    }
+    
+    // Initializer
+    init(url: URL?, name: String, size: Int64, modifiedDate: Date, isValidJSON: Bool, errorMessage: String?, content: String? = nil) {
+        self.url = url
+        self.name = name
+        self.size = size
+        self.modifiedDate = modifiedDate
+        self.isValidJSON = isValidJSON
+        self.errorMessage = errorMessage
+        self._content = content
+    }
 
     nonisolated var formattedSize: String {
         let formatter = ByteCountFormatter()
@@ -68,6 +99,21 @@ struct FileInfo {
         formatter.dateStyle = .medium
         formatter.timeStyle = .short
         return formatter.string(from: modifiedDate)
+    }
+    
+    // Clear content from memory to free up space
+    nonisolated mutating func clearContent() {
+        _content = nil
+    }
+    
+    // Load content on-demand (to be implemented by FileManager)
+    nonisolated mutating func loadContent() async throws -> String {
+        if let existingContent = _content {
+            return existingContent
+        }
+        
+        // This will be implemented by FileManager to load content from URL
+        throw FileManagerError.unknownError("Content loading not implemented")
     }
 }
 

@@ -1,3 +1,11 @@
+//
+//  JSONViewerView.swift
+//  Treon
+//
+//  Created by Vivek on 2025-10-19.
+//  Copyright © 2025 Treon. All rights reserved.
+//
+
 import SwiftUI
 import AppKit
 import OSLog
@@ -260,6 +268,7 @@ struct JSONViewerView: View {
         guard let fileInfo = fileInfo else {
             jsonText = ""
             rootNode = nil
+            expansion.resetAll()
             return
         }
 
@@ -351,10 +360,14 @@ struct JSONViewerView: View {
                                 // Set rootNode but with a delay to prevent UI blocking
                                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                                     self.rootNode = built
+                                    // Reset expansion state for new file
+                                    self.expansion.resetAll()
                                 }
                             } else {
                                 // Normal update for smaller files
                                 self.rootNode = built
+                                // Reset expansion state for new file
+                                self.expansion.resetAll()
                             }
                             
                             let rootNodeSetTime = CFAbsoluteTimeGetCurrent() - rootNodeSetStart
@@ -373,14 +386,17 @@ struct JSONViewerView: View {
                             self.showError("File too large to parse completely. Tree view will show limited content. Use the text view for full content.")
                             // Still try to show the raw text
                             self.rootNode = nil
+                            self.expansion.resetAll()
                         } else {
                         self.showError("Failed to parse JSON: \(error.localizedDescription)")
+                        self.expansion.resetAll()
                         }
                     }
                 }
             }
         } else {
             rootNode = nil
+            expansion.resetAll()
             if let errorMsg = fileInfo.errorMessage {
                 showError(errorMsg)
             }

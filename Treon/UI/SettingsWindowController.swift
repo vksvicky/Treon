@@ -1,3 +1,11 @@
+//
+//  SettingsWindowController.swift
+//  Treon
+//
+//  Created by Vivek on 2024-10-19.
+//  Copyright © 2025 Treon. All rights reserved.
+//
+
 import Cocoa
 import SwiftUI
 import OSLog

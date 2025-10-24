@@ -199,7 +199,7 @@ final class RustBackendValidationTests: XCTestCase {
         print("Size".padding(toLength: 8, withPad: " ", startingAt: 0) + " | Status    | Time(s)")
         print(String(repeating: "-", count: 30))
         
-        for (description, success, time, message) in results {
+        for (description, success, time, _) in results {
             let status = success ? "SUCCESS" : "FAILED"
             let timeStr = String(format: "%.3f", time).padding(toLength: 7, withPad: " ", startingAt: 0)
             print("\(description.padding(toLength: 8, withPad: " ", startingAt: 0)) | \(status.padding(toLength: 8, withPad: " ", startingAt: 0)) | \(timeStr)")

@@ -3,7 +3,7 @@
 //  Treon
 //
 //  Created by Vivek on 2024-10-19.
-//  Copyright © 2024 Treon. All rights reserved.
+//  Copyright © 2025 Treon. All rights reserved.
 //
 
 import Foundation
@@ -96,6 +96,15 @@ class TabManager: ObservableObject {
         }
         
         let wasActive = tabs[tabIndex].isActive
+        let fileInfo = tabs[tabIndex].fileInfo
+        
+        // Clear content from memory before removing tab to prevent memory issues
+        if fileInfo.isContentLoaded {
+            logger.info("Clearing content from memory for large file: \(fileInfo.name)")
+            var mutableFileInfo = fileInfo
+            mutableFileInfo.clearContent()
+        }
+        
         tabs.remove(at: tabIndex)
         
         // If we closed the active tab, switch to another tab
@@ -113,6 +122,16 @@ class TabManager: ObservableObject {
     /// Closes all tabs
     func closeAllTabs() {
         logger.info("Closing all tabs")
+        
+        // Clear content from all tabs before removing them
+        for tab in tabs {
+            if tab.fileInfo.isContentLoaded {
+                logger.info("Clearing content from memory for large file: \(tab.fileInfo.name)")
+                var mutableFileInfo = tab.fileInfo
+                mutableFileInfo.clearContent()
+            }
+        }
+        
         tabs.removeAll()
         activeTabId = nil
     }

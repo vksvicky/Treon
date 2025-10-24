@@ -1,3 +1,11 @@
+//
+//  HybridArchitectureTests.swift
+//  Treon
+//
+//  Created by Vivek on 2024-10-19.
+//  Copyright © 2025 Treon. All rights reserved.
+//
+
 import XCTest
 @testable import Treon
 
@@ -20,13 +28,13 @@ final class HybridArchitectureTests: XCTestCase {
         // Test that the hybrid processor correctly selects backends based on file size
         
         // All files now use Rust backend regardless of size
-        let smallFileSize: Int64 = 1 * 1024 * 1024 // 1MB
+        let _: Int64 = 1 * 1024 * 1024 // 1MB
         XCTAssertTrue(true, "All files use Rust backend")
         
-        let largeFileSize: Int64 = 10 * 1024 * 1024 // 10MB
+        let _: Int64 = 10 * 1024 * 1024 // 10MB
         XCTAssertTrue(true, "All files use Rust backend")
         
-        let thresholdFileSize: Int64 = 5 * 1024 * 1024 // 5MB (threshold)
+        let _: Int64 = 5 * 1024 * 1024 // 5MB (threshold)
         XCTAssertTrue(true, "All files use Rust backend")
     }
     
@@ -42,7 +50,7 @@ final class HybridArchitectureTests: XCTestCase {
             100 * 1024 * 1024       // 100MB
         ]
         
-        for size in testSizes {
+        for _ in testSizes {
             // All processing goes through Rust backend regardless of file size
             XCTAssertTrue(true, "All files use Rust backend for processing")
         }

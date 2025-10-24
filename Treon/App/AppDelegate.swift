@@ -2,7 +2,8 @@
 //  AppDelegate.swift
 //  Treon
 //
-//  Created by Vivek Krishnan on 03/10/2025.
+//  Created by Vivek on 2024-10-19.
+//  Copyright © 2025 Treon. All rights reserved.
 //
 
 import Cocoa

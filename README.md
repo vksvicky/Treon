@@ -164,6 +164,25 @@ If the test passes, the Rust backend is properly configured.
 - Use SSD storage for better performance
 - Close other memory-intensive applications
 
+#### Large File Memory Management
+- **Problem**: App crashes when closing very large files (1GB+)
+- **Cause**: Memory deallocation of large content causes system pressure
+- **Solution**: Lazy content loading - content is cleared from memory when closing tabs
+- **Note**: Rust backend still processes the entire file for tree structure
+
+#### Large File Tree Navigation
+- **Problem**: Clicking on "Results" in large files (1GB+) closes the tree instead of expanding
+- **Cause**: Very large objects/arrays with thousands of children can cause UI performance issues
+- **Solution**: 
+  - Uses `LazyVStack` for virtualized rendering - only renders visible nodes
+  - Users can scroll through ALL nodes regardless of count (1000+, 10000+, etc.)
+  - No truncation - all nodes are accessible via scrolling
+  - Maintains smooth performance even with massive collections
+  - **Auto-scroll to top**: When opening a new file, tree view automatically scrolls to the top
+  - **Clean state**: Expansion state is reset for each new file
+  - **Clean tree structure**: Proper indentation and spacing show parent-child relationships clearly
+- **Note**: Virtualized rendering ensures smooth scrolling through any number of nodes
+
 #### Build failures
 - Clean everything: `make clean`
 - Rebuild Rust backend: `cd rust_backend && cargo clean && cargo build --release`
