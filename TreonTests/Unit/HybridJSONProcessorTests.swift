@@ -14,14 +14,14 @@ final class HybridJSONProcessorTests: XCTestCase {
     
     func testBackendSelectionForSmallFiles() {
         // Test that all files use Rust backend now
-        let smallFileSize: Int64 = 1024 * 1024 // 1MB
+        let _: Int64 = 1024 * 1024 // 1MB
         // All processing goes through Rust backend regardless of file size
         XCTAssertTrue(true, "All files use Rust backend")
     }
     
     func testAlwaysUsesRustBackend() {
         // Since we always use Rust backend now, this test verifies the architecture
-        let fileSize: Int64 = 5 * 1024 * 1024 // 5MB
+        let _: Int64 = 5 * 1024 * 1024 // 5MB
         // The processor should always use Rust backend regardless of file size
         XCTAssertTrue(true, "All processing goes through Rust backend")
     }
@@ -164,7 +164,7 @@ final class HybridJSONProcessorTests: XCTestCase {
             100 * 1024 * 1024  // 100MB
         ]
         
-        for size in testSizes {
+        for _ in testSizes {
             // All processing goes through Rust backend regardless of file size
             XCTAssertTrue(true, "All files use Rust backend for processing")
         }

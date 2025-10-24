@@ -3,6 +3,7 @@ import XCTest
 
 /// Comprehensive integration tests for Rust backend
 /// Tests the full roundtrip: Swift -> Rust FFI -> JSON string -> Swift decode
+@MainActor
 final class RustBackendIntegrationTests: XCTestCase {
     
     override func setUp() {
