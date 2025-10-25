@@ -11,7 +11,7 @@ import AppKit
 @testable import Treon
 
 @MainActor
-final class NotificationManagerTests: XCTestCase {
+final class NotificationManagerTests: XCTestCase, @unchecked Sendable {
     
     private var notificationManager: NotificationManager!
     
@@ -309,7 +309,7 @@ final class NotificationManagerTests: XCTestCase {
     func testNotificationThreadSafety() {
         let expectation = XCTestExpectation(description: "Thread safety test")
         expectation.expectedFulfillmentCount = 10
-        
+
         for i in 0..<10 {
             DispatchQueue.global().async {
                 let notification = AppNotification(
@@ -317,15 +317,31 @@ final class NotificationManagerTests: XCTestCase {
                     title: "Thread \(i)",
                     message: "Message from thread \(i)"
                 )
-                self.notificationManager.showNotification(notification)
-                expectation.fulfill()
+
+                // Ensure UI updates happen on main actor using shared instance
+                Task { @MainActor in
+                    NotificationManager.shared.showNotification(notification)
+                    expectation.fulfill()
+                }
             }
         }
-        
+
         wait(for: [expectation], timeout: 5.0)
         
         // Clean up
-        notificationManager.dismissNotification()
+        NotificationManager.shared.dismissNotification()
+        
+        // Wait for the async cleanup (NotificationManager clears currentNotification after 0.3 seconds)
+        let cleanupExpectation = XCTestExpectation(description: "Notification cleanup")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+            cleanupExpectation.fulfill()
+        }
+        
+        wait(for: [cleanupExpectation], timeout: 1.0)
+        
+        // Now verify the notification is properly dismissed
+        XCTAssertFalse(NotificationManager.shared.isShowingNotification)
+        XCTAssertNil(NotificationManager.shared.currentNotification)
     }
     
     // MARK: - Notification Type Tests

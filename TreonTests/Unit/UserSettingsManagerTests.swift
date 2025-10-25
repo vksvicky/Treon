@@ -218,8 +218,8 @@ final class UserSettingsManagerTests: XCTestCase {
             "maxDepth": 25
         ]
         
-        let originalWidth = settings.navigatorWidth
-        let originalDepth = settings.maxDepth
+        _ = settings.navigatorWidth
+        _ = settings.maxDepth
         let originalThreshold = settings.largeFileThreshold
         
         settings.importSettings(partialSettings)
