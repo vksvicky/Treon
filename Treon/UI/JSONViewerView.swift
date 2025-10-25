@@ -58,10 +58,18 @@ struct JSONViewerView: View {
                 .frame(minWidth: 400)
         }
         .onAppear {
+            print("🔍 DEBUG: JSONViewerView onAppear called")
+            if let window = NSApplication.shared.windows.first {
+                print("🔍 DEBUG: Window frame on JSONViewerView onAppear: \(window.frame.debugDescription)")
+            }
             loadCurrentFile()
             setupWindowFrameTracking()
         }
         .onChange(of: fileInfo?.url) {
+            print("🔍 DEBUG: fileInfo URL changed, calling loadCurrentFile")
+            if let window = NSApplication.shared.windows.first {
+                print("🔍 DEBUG: Window frame on file change: \(window.frame.debugDescription)")
+            }
             loadCurrentFile()
         }
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ToggleNavigator"))) { _ in
@@ -254,6 +262,7 @@ struct JSONViewerView: View {
                     .font(.system(.body, design: .monospaced))
                     .padding(8)
                     .background(Color(NSColor.textBackgroundColor))
+                    .scrollContentBackground(.hidden)
             }
             .background(Color(NSColor.textBackgroundColor))
         }
@@ -261,15 +270,23 @@ struct JSONViewerView: View {
     }
 
     private func loadCurrentFile() {
+        print("🔍 DEBUG: loadCurrentFile called")
+        if let window = NSApplication.shared.windows.first {
+            print("🔍 DEBUG: Window frame before loading file: \(window.frame.debugDescription)")
+        }
+        
         let displayStartTime = CFAbsoluteTimeGetCurrent()
         logger.info("📊 DISPLAY START: Beginning file display for \(fileInfo?.name ?? "unknown")")
         
         guard let fileInfo = fileInfo else {
+            print("🔍 DEBUG: No fileInfo available, clearing content")
             jsonText = ""
             rootNode = nil
             expansion.resetAll()
             return
         }
+        
+        print("🔍 DEBUG: Loading file: \(fileInfo.url?.lastPathComponent ?? "unknown")")
 
         // Load file content if not already loaded
         if let content = fileInfo.content {
@@ -457,6 +474,7 @@ struct JSONViewerView: View {
         showingError = true
     }
 }
+
 
 // MARK: - Tree View Components
 // Using existing ListTreeView and NodeRow from TwoPaneRootView.swift

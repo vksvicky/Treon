@@ -63,6 +63,12 @@ class UserSettingsManager: ObservableObject {
         }
     }
     
+    @Published var wrapText: Bool {
+        didSet {
+            saveWrapText()
+        }
+    }
+    
     // MARK: - Recent Files Settings
     
     @Published var clearRecentFilesOnQuit: Bool {
@@ -91,6 +97,7 @@ class UserSettingsManager: ObservableObject {
         self.maxDepth = Self.loadMaxDepth()
         self.autoFormatOnOpen = Self.loadAutoFormatOnOpen()
         self.showLineNumbers = Self.loadShowLineNumbers()
+        self.wrapText = Self.loadWrapText()
         
         // Load recent files settings
         self.clearRecentFilesOnQuit = Self.loadClearRecentFilesOnQuit()
@@ -183,6 +190,15 @@ class UserSettingsManager: ObservableObject {
         return UserDefaults.standard.bool(forKey: "showLineNumbers")
     }
     
+    private func saveWrapText() {
+        userDefaults.set(wrapText, forKey: "wrapText")
+        logger.debug("Saved wrap text: \(self.wrapText)")
+    }
+    
+    private static func loadWrapText() -> Bool {
+        return UserDefaults.standard.bool(forKey: "wrapText")
+    }
+    
     // MARK: - Recent Files Settings
     
     private func saveClearRecentFilesOnQuit() {
@@ -220,6 +236,7 @@ class UserSettingsManager: ObservableObject {
         maxDepth = 3
         autoFormatOnOpen = false
         showLineNumbers = true
+        wrapText = false
         
         // Reset recent files settings
         clearRecentFilesOnQuit = false
@@ -242,6 +259,7 @@ class UserSettingsManager: ObservableObject {
             "maxDepth": maxDepth,
             "autoFormatOnOpen": autoFormatOnOpen,
             "showLineNumbers": showLineNumbers,
+            "wrapText": wrapText,
             "clearRecentFilesOnQuit": clearRecentFilesOnQuit,
             "largeFileThreshold": largeFileThreshold
         ]
@@ -276,6 +294,9 @@ class UserSettingsManager: ObservableObject {
         }
         if let lineNumbers = settings["showLineNumbers"] as? Bool {
             showLineNumbers = lineNumbers
+        }
+        if let wrap = settings["wrapText"] as? Bool {
+            wrapText = wrap
         }
         if let clearOnQuit = settings["clearRecentFilesOnQuit"] as? Bool {
             clearRecentFilesOnQuit = clearOnQuit

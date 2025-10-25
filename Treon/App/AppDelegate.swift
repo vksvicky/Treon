@@ -45,6 +45,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if handleIfCLI() { return }
         logger.info("AppDelegate: Running in GUI mode")
         
+        // Debug window frame on app launch
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            if let window = NSApplication.shared.windows.first {
+                print("🔍 DEBUG: App launch - Window frame: \(window.frame.debugDescription)")
+            }
+        }
+        
         // Initialize Rust backend for hybrid processing
         logger.info("🚀 AppDelegate: Initializing Rust backend...")
         RustBackend.initialize()
@@ -62,6 +69,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             self.connectPreferencesMenuItem()
             self.connectFileMenuActions()
             self.connectEditMenuActions()
+            self.connectFormatMenuActions()
         }
     }
 
@@ -183,6 +191,36 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             selectAllItem.action = #selector(selectAll(_:))
             logger.info("AppDelegate: Connected Select All menu item")
         }
+    }
+    
+    private func connectFormatMenuActions() {
+        guard let mainMenu = NSApp.mainMenu else {
+            logger.error("AppDelegate: Could not find main menu")
+            return
+        }
+        
+        // Find the Format menu (usually at index 3)
+        guard let formatMenu = mainMenu.item(at: 3)?.submenu else {
+            logger.error("AppDelegate: Could not find Format menu")
+            return
+        }
+        
+        // Add Wrap Text menu item if it doesn't exist
+        if formatMenu.item(withTitle: "Wrap Text") == nil {
+            let wrapTextItem = NSMenuItem(title: "Wrap Text", action: #selector(toggleWrapText(_:)), keyEquivalent: "l")
+            wrapTextItem.target = self
+            formatMenu.addItem(wrapTextItem)
+            logger.info("AppDelegate: Added Wrap Text menu item")
+        }
+    }
+    
+    // MARK: - Format Menu Actions
+    
+    @IBAction func toggleWrapText(_ sender: Any?) {
+        logger.info("AppDelegate: toggleWrapText called")
+        let settings = UserSettingsManager.shared
+        settings.wrapText.toggle()
+        logger.info("AppDelegate: Wrap text toggled to \(settings.wrapText)")
     }
     
     // MARK: - File Menu Actions

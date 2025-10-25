@@ -112,12 +112,31 @@ struct JSONViewerHelpers {
     
     // MARK: - Window Frame Tracking
     
+    private static var hasSetupWindowFrameTracking = false
+    
     static func setupWindowFrameTracking(settings: UserSettingsManager) {
+        // Only set up window frame tracking once
+        guard !hasSetupWindowFrameTracking else { 
+            print("🔍 DEBUG: setupWindowFrameTracking called but already set up - skipping")
+            return 
+        }
+        hasSetupWindowFrameTracking = true
+        
+        print("🔍 DEBUG: Setting up window frame tracking for the first time")
+        
         // Set up window frame tracking to save dimensions
         DispatchQueue.main.async {
             if let window = NSApplication.shared.windows.first {
-                // Set initial frame from settings
-                window.setFrame(settings.windowFrame, display: true)
+                let currentFrame = window.frame
+                
+                print("🔍 DEBUG: Current window frame: \(currentFrame.debugDescription)")
+                print("🔍 DEBUG: Setting up frame tracking - keeping current frame")
+                
+                // Simply save the current frame and don't apply any saved frame
+                // This prevents any unwanted resizing when opening files
+                settings.windowFrame = currentFrame
+                
+                print("🔍 DEBUG: Saved current frame as new window frame")
                 
                 // Observe window frame changes
                 NotificationCenter.default.addObserver(
@@ -126,6 +145,7 @@ struct JSONViewerHelpers {
                     queue: .main
                 ) { _ in
                     Task { @MainActor in
+                        print("🔍 DEBUG: Window resized to: \(window.frame.debugDescription)")
                         settings.windowFrame = window.frame
                     }
                 }
@@ -136,9 +156,12 @@ struct JSONViewerHelpers {
                     queue: .main
                 ) { _ in
                     Task { @MainActor in
+                        print("🔍 DEBUG: Window moved to: \(window.frame.debugDescription)")
                         settings.windowFrame = window.frame
                     }
                 }
+            } else {
+                print("🔍 DEBUG: No window found for frame tracking setup")
             }
         }
     }
