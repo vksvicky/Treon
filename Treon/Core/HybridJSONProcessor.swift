@@ -86,8 +86,12 @@ class HybridJSONProcessor {
     
     /// Process data using Rust backend
     private static func processDataWithRustBackend(_ data: Data) async throws -> JSONNode {
-        // Use automatic depth limiting (0) - Rust backend will determine appropriate depth based on file size
-        let rustTree = try RustBackend.processData(data, maxDepth: 0)
+        // Use user-defined depth setting from UserSettingsManager
+        let userMaxDepth = UserSettingsManager.shared.maxDepth
+        let maxDepthInt32 = Int32(userMaxDepth)
+        
+        logger.info("📊 HYBRID PROCESSOR: Using user-defined maxDepth: \(userMaxDepth) (0 = unlimited)")
+        let rustTree = try RustBackend.processData(data, maxDepth: maxDepthInt32)
         return convertRustTreeToSwiftTree(rustTree)
     }
     

@@ -2,7 +2,7 @@
 //  PermissionManager.swift
 //  Treon
 //
-//  Created by Vivek on 2024-10-19.
+//  Created by Vivek on 2025-10-19.
 //  Copyright © 2025 Treon. All rights reserved.
 //
 
@@ -11,14 +11,26 @@ import AppKit
 import OSLog
 import Combine
 import UniformTypeIdentifiers
+import Security
 
 /// Centralized permission management for file access
 class PermissionManager: ObservableObject {
     static let shared = PermissionManager()
 
     private let logger = Logger(subsystem: "club.cycleruncode.Treon", category: "PermissionManager")
+    private let bookmarkManager = SecurityScopedBookmarkManager.shared
 
     @Published var hasFileAccessPermission: Bool = false
+    @Published var grantedDirectories: [URL] = []
+    @Published var permissionStatus: PermissionStatus = .unknown
+
+    enum PermissionStatus {
+        case unknown
+        case granted
+        case denied
+        case restricted
+        case needsUserAction
+    }
 
     private init() {
         checkFileAccessPermission()
@@ -26,43 +38,85 @@ class PermissionManager: ObservableObject {
 
     /// Check if the app has file access permission
     func checkFileAccessPermission() {
-        // Check if we can access the Downloads folder (common location for files)
-        let downloadsURL = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first!
-        let testFile = downloadsURL.appendingPathComponent(".treon_permission_test")
-
-        do {
-            // Try to create a test file
-            try "test".write(to: testFile, atomically: true, encoding: .utf8)
-            // If successful, clean up and set permission to true
-            try FileManager.default.removeItem(at: testFile)
-            hasFileAccessPermission = true
-            logger.info("File access permission: GRANTED")
-        } catch {
+        logger.info("Checking file access permissions")
+        
+        // Check if we have any saved security-scoped bookmarks
+        let savedBookmarks = bookmarkManager.loadAllBookmarks()
+        
+        if savedBookmarks.isEmpty {
+            permissionStatus = .needsUserAction
             hasFileAccessPermission = false
-            logger.warning("File access permission: DENIED - \(error.localizedDescription)")
+            logger.info("No file access permissions found - user action required")
+            return
         }
+        
+        // Test access to saved bookmarks
+        var accessibleDirectories: [URL] = []
+        
+        for (path, bookmarkData) in savedBookmarks {
+            if let url = bookmarkManager.resolveBookmark(bookmarkData) {
+                if bookmarkManager.startAccessingSecurityScopedResource(url) {
+                    accessibleDirectories.append(url)
+                    logger.info("Successfully accessing directory: \(url.path)")
+                } else {
+                    logger.warning("Failed to start accessing directory: \(path)")
+                }
+            } else {
+                logger.warning("Failed to resolve bookmark for: \(path)")
+            }
+        }
+        
+        grantedDirectories = accessibleDirectories
+        hasFileAccessPermission = !accessibleDirectories.isEmpty
+        permissionStatus = self.hasFileAccessPermission ? .granted : .denied
+        
+        logger.info("File access permission check complete: \(self.hasFileAccessPermission ? "GRANTED" : "DENIED")")
     }
 
-    /// Request file access permission by opening a file dialog
+    /// Request file access permission by opening a directory dialog
     func requestFileAccessPermission() async -> Bool {
-        logger.info("Requesting file access permission")
+        logger.info("PermissionManager: Requesting directory access permission")
 
         return await withCheckedContinuation { continuation in
             DispatchQueue.main.async {
+                self.logger.info("PermissionManager: Creating NSOpenPanel")
                 let panel = NSOpenPanel()
-                panel.allowsMultipleSelection = false
-                panel.canChooseDirectories = false
-                panel.allowedContentTypes = [.json]
-                panel.title = "Grant File Access Permission"
-                panel.message = "Please select any JSON file to grant Treon permission to access files on your system."
+                panel.allowsMultipleSelection = true
+                panel.canChooseDirectories = true
+                panel.canChooseFiles = false
+                panel.title = "Grant Directory Access"
+                panel.message = "Select directories that Treon can access to read JSON files. You can select multiple directories."
+                panel.prompt = "Grant Access"
 
-                if panel.runModal() == .OK {
-                    self.logger.info("User granted file access permission")
-                    self.hasFileAccessPermission = true
-                    continuation.resume(returning: true)
-                } else {
-                    self.logger.info("User denied file access permission")
-                    continuation.resume(returning: false)
+                // Use a non-blocking approach to show the panel
+                panel.begin { response in
+                    if response == .OK {
+                    let selectedURLs = panel.urls
+                    self.logger.info("User selected \(selectedURLs.count) directories")
+                    
+                    // Create security-scoped bookmarks for each selected directory
+                    var successCount = 0
+                    for url in selectedURLs {
+                        if let bookmarkData = self.bookmarkManager.createBookmark(for: url) {
+                            self.bookmarkManager.saveBookmark(bookmarkData, for: url)
+                            successCount += 1
+                            self.logger.info("Created and saved bookmark for: \(url.path)")
+                        } else {
+                            self.logger.error("Failed to create bookmark for: \(url.path)")
+                        }
+                    }
+                    
+                    if successCount > 0 {
+                        self.checkFileAccessPermission() // Refresh permission status
+                        continuation.resume(returning: true)
+                    } else {
+                        self.logger.error("Failed to create any bookmarks")
+                        continuation.resume(returning: false)
+                    }
+                    } else {
+                        self.logger.info("User cancelled directory selection")
+                        continuation.resume(returning: false)
+                    }
                 }
             }
         }
@@ -80,19 +134,67 @@ class PermissionManager: ObservableObject {
 
     /// Get a user-friendly permission status message
     var permissionStatusMessage: String {
-        if hasFileAccessPermission {
-            return "File access permission is granted"
-        } else {
+        switch permissionStatus {
+        case .granted:
+            if grantedDirectories.count == 1 {
+                return "Access granted to: \(grantedDirectories[0].lastPathComponent)"
+            } else {
+                return "Access granted to \(grantedDirectories.count) directories"
+            }
+        case .denied:
+            return "File access permission was denied"
+        case .restricted:
+            return "File access is restricted by system"
+        case .needsUserAction:
             return "File access permission is required"
+        case .unknown:
+            return "Checking file access permissions..."
+        }
+    }
+    
+    /// Get detailed permission information
+    var permissionDetails: String {
+        switch permissionStatus {
+        case .granted:
+            if grantedDirectories.isEmpty {
+                return "No accessible directories found"
+            } else {
+                return grantedDirectories.map { $0.path }.joined(separator: "\n")
+            }
+        case .denied:
+            return "Access to previously granted directories was revoked"
+        case .restricted:
+            return "System security policies prevent file access"
+        case .needsUserAction:
+            return "Click 'Grant Permission' to select directories for JSON file access"
+        case .unknown:
+            return "Permission status is being determined"
         }
     }
 
     /// Get a user-friendly permission status color
     var permissionStatusColor: String {
-        if hasFileAccessPermission {
+        switch permissionStatus {
+        case .granted:
             return "green"
-        } else {
+        case .denied, .restricted:
             return "red"
+        case .needsUserAction:
+            return "orange"
+        case .unknown:
+            return "gray"
         }
+    }
+    
+    /// Revoke all granted permissions
+    func revokeAllPermissions() {
+        logger.info("Revoking all file access permissions")
+        bookmarkManager.clearAllBookmarks()
+        checkFileAccessPermission()
+    }
+    
+    /// Add additional directory access
+    func addDirectoryAccess() async -> Bool {
+        return await requestFileAccessPermission()
     }
 }

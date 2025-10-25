@@ -2,7 +2,7 @@
 //  SettingsWindowController.swift
 //  Treon
 //
-//  Created by Vivek on 2024-10-19.
+//  Created by Vivek on 2025-10-19.
 //  Copyright © 2025 Treon. All rights reserved.
 //
 
@@ -55,9 +55,12 @@ class SettingsWindowController: NSWindowController {
         window.setFrame(NSRect(x: 0, y: 0, width: 600, height: 500), display: false)
         window.center()
 
+        logger.info("SettingsWindowController: About to show window")
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
 
         logger.info("SettingsWindowController: window shown, isVisible: \(window.isVisible)")
+        logger.info("SettingsWindowController: window frame: \(window.frame.debugDescription)")
+        logger.info("SettingsWindowController: window level: \(window.level.rawValue)")
     }
 }

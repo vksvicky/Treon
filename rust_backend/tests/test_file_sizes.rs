@@ -18,7 +18,7 @@ fn generate_json_data(target_size: usize) -> String {
     
     while current_size < target_size - 1 { // Reserve 1 byte for ']'
         let item = format!(
-            r#"{{"id": {}, "name": "item_{}", "value": {}, "description": "This is item number {} with some additional data to increase size", "metadata": {{"created": "2024-01-01", "updated": "2024-01-01", "tags": ["tag1", "tag2", "tag3"]}}}}"#,
+            r#"{{"id": {}, "name": "item_{}", "value": {}, "description": "This is item number {} with some additional data to increase size", "metadata": {{"created": "2025-01-01", "updated": "2025-01-01", "tags": ["tag1", "tag2", "tag3"]}}}}"#,
             item_count, item_count, item_count * 10, item_count
         );
         

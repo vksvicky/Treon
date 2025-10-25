@@ -104,30 +104,31 @@ final class PermissionManagerTests: XCTestCase {
     func testPermissionManager_permissionStatusMessage_returnsCorrectMessage() {
         // Given: Permission manager with different states
 
-        // When: Permission is false
-        permissionManager.hasFileAccessPermission = false
+        // When: Permission status is needsUserAction
+        permissionManager.permissionStatus = .needsUserAction
 
         // Then: Should return appropriate message
         XCTAssertEqual(permissionManager.permissionStatusMessage, "File access permission is required")
 
-        // When: Permission is true
-        permissionManager.hasFileAccessPermission = true
+        // When: Permission status is granted
+        permissionManager.permissionStatus = .granted
+        permissionManager.grantedDirectories = [URL(fileURLWithPath: "/test/directory")]
 
         // Then: Should return appropriate message
-        XCTAssertEqual(permissionManager.permissionStatusMessage, "File access permission is granted")
+        XCTAssertEqual(permissionManager.permissionStatusMessage, "Access granted to: directory")
     }
 
     func testPermissionManager_permissionStatusColor_returnsCorrectColor() {
         // Given: Permission manager with different states
 
-        // When: Permission is false
-        permissionManager.hasFileAccessPermission = false
+        // When: Permission status is denied
+        permissionManager.permissionStatus = .denied
 
         // Then: Should return appropriate color
         XCTAssertEqual(permissionManager.permissionStatusColor, "red")
 
-        // When: Permission is true
-        permissionManager.hasFileAccessPermission = true
+        // When: Permission status is granted
+        permissionManager.permissionStatus = .granted
 
         // Then: Should return appropriate color
         XCTAssertEqual(permissionManager.permissionStatusColor, "green")

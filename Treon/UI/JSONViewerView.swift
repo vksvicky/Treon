@@ -12,6 +12,7 @@ import OSLog
 
 struct JSONViewerView: View {
     @StateObject private var fileManager = TreonFileManager.shared
+    @StateObject private var settings = UserSettingsManager.shared
     @State private var jsonText: String = ""
     @State private var rootNode: JSONNode? = nil
     @State private var showingError = false
@@ -25,33 +26,30 @@ struct JSONViewerView: View {
         self.fileInfo = fileInfo
     }
 
-    // Xcode-style navigator state
-    @State private var navigatorWidth: CGFloat = 400
-    @State private var isNavigatorCollapsed = false
+    // Xcode-style navigator state - now using settings manager
     @State private var isDragging = false
-    @State private var isNavigatorPinned = false
     private let minNavigatorWidth: CGFloat = 200
     private let maxNavigatorWidth: CGFloat = 600
 
     var body: some View {
         HStack(spacing: 0) {
             // Left pane - Tree Navigator (Xcode-style)
-            if !isNavigatorCollapsed {
+            if !settings.isNavigatorCollapsed {
                 treeNavigator
                     .frame(minWidth: 200, idealWidth: 400, maxWidth: maxNavigatorWidth)
-                    .frame(width: navigatorWidth)
+                    .frame(width: settings.navigatorWidth)
                     .transition(.move(edge: .leading).combined(with: .opacity))
-                    .animation(.easeInOut(duration: 0.25), value: isNavigatorCollapsed)
+                    .animation(.easeInOut(duration: 0.25), value: settings.isNavigatorCollapsed)
             } else {
                 // Collapsed state indicator (Xcode-style)
                 collapsedNavigatorIndicator
                     .frame(width: 20)
                     .transition(.move(edge: .leading).combined(with: .opacity))
-                    .animation(.easeInOut(duration: 0.25), value: isNavigatorCollapsed)
+                    .animation(.easeInOut(duration: 0.25), value: settings.isNavigatorCollapsed)
             }
 
             // Resize handle (Xcode-style)
-            if !isNavigatorCollapsed && !isNavigatorPinned {
+            if !settings.isNavigatorCollapsed && !settings.isNavigatorPinned {
                 resizeHandle
             }
 
@@ -61,13 +59,14 @@ struct JSONViewerView: View {
         }
         .onAppear {
             loadCurrentFile()
+            setupWindowFrameTracking()
         }
         .onChange(of: fileInfo?.url) {
             loadCurrentFile()
         }
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ToggleNavigator"))) { _ in
             withAnimation(.easeInOut(duration: 0.25)) {
-                isNavigatorCollapsed.toggle()
+                settings.isNavigatorCollapsed.toggle()
             }
         }
         .alert("Error", isPresented: $showingError) {
@@ -82,19 +81,19 @@ struct JSONViewerView: View {
             // Header (Xcode-style)
             HStack {
                 Button(action: {
-                    if !isNavigatorPinned {
+                    if !settings.isNavigatorPinned {
                         withAnimation(.easeInOut(duration: 0.25)) {
-                            isNavigatorCollapsed.toggle()
+                            settings.isNavigatorCollapsed.toggle()
                         }
                     }
                 }) {
-                    Image(systemName: isNavigatorCollapsed ? "chevron.right" : "chevron.left")
+                    Image(systemName: settings.isNavigatorCollapsed ? "chevron.right" : "chevron.left")
                         .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(isNavigatorPinned ? .secondary.opacity(0.5) : .secondary)
+                        .foregroundColor(settings.isNavigatorPinned ? .secondary.opacity(0.5) : .secondary)
                 }
                 .buttonStyle(.borderless)
                 .frame(width: 16, height: 16)
-                .disabled(isNavigatorPinned)
+                .disabled(settings.isNavigatorPinned)
 
                 Text("Navigator")
                     .font(.headline)
@@ -105,14 +104,14 @@ struct JSONViewerView: View {
                 HStack(spacing: 8) {
                     // Pin button (Xcode-style)
                     Button(action: {
-                        isNavigatorPinned.toggle()
+                        settings.isNavigatorPinned.toggle()
                     }) {
-                        Image(systemName: isNavigatorPinned ? "lock.fill" : "lock.open.fill")
+                        Image(systemName: settings.isNavigatorPinned ? "lock.fill" : "lock.open.fill")
                             .font(.system(size: 12, weight: .medium))
-                            .foregroundColor(isNavigatorPinned ? .blue : .secondary)
+                            .foregroundColor(settings.isNavigatorPinned ? .blue : .secondary)
                     }
                     .buttonStyle(.borderless)
-                    .help(isNavigatorPinned ? "Unlock Navigator" : "Lock Navigator")
+                    .help(settings.isNavigatorPinned ? "Unlock Navigator" : "Lock Navigator")
 
                     Button("Expand All") {
                         if let rootNode { expansion.expandAll(root: rootNode) }
@@ -153,15 +152,15 @@ struct JSONViewerView: View {
     private var collapsedNavigatorIndicator: some View {
         VStack {
             Button(action: {
-                if !isNavigatorPinned {
+                if !settings.isNavigatorPinned {
                     withAnimation(.easeInOut(duration: 0.25)) {
-                        isNavigatorCollapsed = false
+                        settings.isNavigatorCollapsed = false
                     }
                 }
             }) {
                 Image(systemName: "chevron.right")
                     .font(.system(size: 10, weight: .medium))
-                    .foregroundColor(isNavigatorPinned ? .secondary.opacity(0.5) : .secondary)
+                    .foregroundColor(settings.isNavigatorPinned ? .secondary.opacity(0.5) : .secondary)
             }
             .buttonStyle(.borderless)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -198,8 +197,8 @@ struct JSONViewerView: View {
                                     NSCursor.resizeLeftRight.push()
                                 }
 
-                                let newWidth = navigatorWidth + value.translation.width
-                                navigatorWidth = max(minNavigatorWidth, min(maxNavigatorWidth, newWidth))
+                                let newWidth = settings.navigatorWidth + value.translation.width
+                                settings.navigatorWidth = max(minNavigatorWidth, min(maxNavigatorWidth, newWidth))
                             }
                             .onEnded { _ in
                                 isDragging = false
@@ -333,34 +332,13 @@ struct JSONViewerView: View {
         
         Task {
             do {
-                let data = try await convertTextToData(currentText)
-                let built = try await processJSONData(data, fileInfo: fileInfo)
+                let data = try await JSONViewerHelpers.convertTextToData(currentText)
+                let built = try await JSONViewerHelpers.processJSONData(data, fileInfo: fileInfo)
                 await updateUIWithResult(built, currentText: currentText, parseStartTime: parseStartTime, fileInfo: fileInfo)
             } catch {
-                await handleParsingError(error)
+                await JSONViewerHelpers.handleParsingError(error, showError: showError, expansion: expansion)
             }
         }
-    }
-    
-    private func convertTextToData(_ text: String) async throws -> Data {
-        let dataConversionStart = CFAbsoluteTimeGetCurrent()
-        let data = Data(text.utf8)
-        let dataConversionTime = CFAbsoluteTimeGetCurrent() - dataConversionStart
-        logger.debug("📊 HYBRID PARSING STEP 1: Data conversion: \(String(format: "%.3f", dataConversionTime))s (size: \(data.count) bytes)")
-        return data
-    }
-    
-    private func processJSONData(_ data: Data, fileInfo: FileInfo) async throws -> JSONNode {
-        logger.info("📊 HYBRID PARSING: File size: \(String(format: "%.2f", Double(data.count) / 1024 / 1024)) MB")
-        logger.info("📊 HYBRID PARSING: Using Rust backend for all processing")
-        
-        let treeBuildStart = CFAbsoluteTimeGetCurrent()
-        let built = try await HybridJSONProcessor.processData(data)
-        let treeBuildTime = CFAbsoluteTimeGetCurrent() - treeBuildStart
-        
-        let nodeCount = countNodes(built)
-        logger.debug("📊 HYBRID PARSING STEP 2: Tree building: \(String(format: "%.3f", treeBuildTime))s (nodes: \(nodeCount))")
-        return built
     }
     
     private func updateUIWithResult(_ built: JSONNode, currentText: String, parseStartTime: CFAbsoluteTime, fileInfo: FileInfo) async {
@@ -397,25 +375,14 @@ struct JSONViewerView: View {
         logger.debug("📊 HYBRID PARSING STEP 3A: rootNode assignment: \(String(format: "%.3f", rootNodeSetTime))s")
     }
     
-    private func handleParsingError(_ error: Error) async {
-        await MainActor.run {
-            if let nsError = error as NSError?, nsError.code == 408 {
-                self.showError("File too large to parse completely. Tree view will show limited content. Use the text view for full content.")
-                self.rootNode = nil
-                self.expansion.resetAll()
-            } else {
-                self.showError("Failed to parse JSON: \(error.localizedDescription)")
-                self.expansion.resetAll()
-            }
-        }
-    }
-    
     private func handleInvalidJSON(fileInfo: FileInfo) {
         rootNode = nil
-        expansion.resetAll()
-        if let errorMsg = fileInfo.errorMessage {
-            showError(errorMsg)
-        }
+        JSONViewerHelpers.handleInvalidJSON(fileInfo: fileInfo, showError: showError, expansion: expansion)
+    }
+    
+    // MARK: - Window Frame Tracking
+    private func setupWindowFrameTracking() {
+        JSONViewerHelpers.setupWindowFrameTracking(settings: settings)
     }
     
     

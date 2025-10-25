@@ -2,7 +2,7 @@
 //  SecurityScopedBookmarkManager.swift
 //  Treon
 //
-//  Created by Vivek on 2024-10-22.
+//  Created by Vivek on 2025-10-22.
 //  Copyright © 2025 Treon. All rights reserved.
 //
 
@@ -121,7 +121,7 @@ class SecurityScopedBookmarkManager {
     
     /// Loads all bookmarks from UserDefaults
     /// - Returns: Dictionary of file paths to bookmark data
-    private func loadAllBookmarks() -> [String: Data] {
+    func loadAllBookmarks() -> [String: Data] {
         guard let data = UserDefaults.standard.data(forKey: bookmarksKey),
               let bookmarks = try? JSONDecoder().decode([String: Data].self, from: data) else {
             return [:]
@@ -131,13 +131,19 @@ class SecurityScopedBookmarkManager {
     
     /// Saves all bookmarks to UserDefaults
     /// - Parameter bookmarks: Dictionary of file paths to bookmark data
-    private func saveAllBookmarks(_ bookmarks: [String: Data]) {
+    func saveAllBookmarks(_ bookmarks: [String: Data]) {
         do {
             let data = try JSONEncoder().encode(bookmarks)
             UserDefaults.standard.set(data, forKey: bookmarksKey)
         } catch {
             logger.error("Failed to save bookmarks: \(error.localizedDescription)")
         }
+    }
+    
+    /// Clears all saved bookmarks
+    func clearAllBookmarks() {
+        UserDefaults.standard.removeObject(forKey: bookmarksKey)
+        logger.info("Cleared all bookmarks")
     }
     
     // MARK: - Cleanup

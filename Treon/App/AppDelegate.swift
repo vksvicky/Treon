@@ -2,7 +2,7 @@
 //  AppDelegate.swift
 //  Treon
 //
-//  Created by Vivek on 2024-10-19.
+//  Created by Vivek on 2025-10-19.
 //  Copyright © 2025 Treon. All rights reserved.
 //
 
@@ -48,6 +48,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Initialize Rust backend for hybrid processing
         logger.info("🚀 AppDelegate: Initializing Rust backend...")
         RustBackend.initialize()
+        
+        // Initialize user settings manager
+        logger.info("⚙️ AppDelegate: Initializing user settings...")
+        _ = UserSettingsManager.shared
         
         setupMenuActions()
     }
