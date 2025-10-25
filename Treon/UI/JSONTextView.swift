@@ -99,13 +99,12 @@ struct JSONTextView: NSViewRepresentable {
             )
             
             // Set text view frame to match scroll view
-            if let clipView = scrollView.contentView as? NSClipView {
-                textView.frame = NSRect(
-                    x: 0, y: 0,
-                    width: clipView.bounds.width,
-                    height: textView.frame.height
-                )
-            }
+            let clipView = scrollView.contentView
+            textView.frame = NSRect(
+                x: 0, y: 0,
+                width: clipView.bounds.width,
+                height: textView.frame.height
+            )
         } else {
             // Disable word wrap - allow horizontal scrolling
             scrollView.hasHorizontalScroller = true

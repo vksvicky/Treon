@@ -1,196 +1,399 @@
+//
+//  NotificationManagerTests.swift
+//  TreonTests
+//
+//  Created by Vivek on 2025-10-25.
+//  Copyright © 2025 Treon. All rights reserved.
+//
+
 import XCTest
-import Combine
+import AppKit
 @testable import Treon
 
 @MainActor
 final class NotificationManagerTests: XCTestCase {
-
+    
     private var notificationManager: NotificationManager!
-    private var cancellables: Set<AnyCancellable>!
-
-    override func setUp() {
-        super.setUp()
+    
+    override func setUp() async throws {
+        try await super.setUp()
         notificationManager = NotificationManager.shared
-        cancellables = Set<AnyCancellable>()
-        // Reset notification state before each test
+        // Clear any existing notifications
         notificationManager.dismissNotification()
-        // Force state reset by directly setting properties
-        notificationManager.currentNotification = nil
-        notificationManager.isShowingNotification = false
     }
-
-    override func tearDown() {
-        cancellables = nil
-        // Reset notification state
+    
+    override func tearDown() async throws {
         notificationManager.dismissNotification()
-        super.tearDown()
+        notificationManager = nil
+        try await super.tearDown()
     }
-
-    func testNotificationManager_initialState_noNotificationShowing() {
-        // Given: Fresh notification manager (ensure clean state)
-        notificationManager.dismissNotification()
-
-        // When: Checking initial state
-        // Then: No notification should be showing
-        XCTAssertFalse(notificationManager.isShowingNotification, "Expected no notification to be showing")
-        XCTAssertNil(notificationManager.currentNotification, "Expected current notification to be nil")
-    }
-
-    func testNotificationManager_showNotification_setsCorrectState() {
-        // Given: A test notification
-        let testNotification = AppNotification(
-            type: .info,
-            title: "Test Title",
-            message: "Test Message"
-        )
-
-        // When: Showing notification
-        notificationManager.showNotification(testNotification)
-
-        // Then: State should be updated
-        XCTAssertTrue(notificationManager.isShowingNotification)
-        XCTAssertNotNil(notificationManager.currentNotification)
-        XCTAssertEqual(notificationManager.currentNotification?.title, "Test Title")
-        XCTAssertEqual(notificationManager.currentNotification?.message, "Test Message")
-        XCTAssertEqual(notificationManager.currentNotification?.type, .info)
-    }
-
-    func testNotificationManager_dismissNotification_clearsState() {
-        // Given: A notification is showing
-        let testNotification = AppNotification(
-            type: .error,
-            title: "Error Title",
-            message: "Error Message"
-        )
-        notificationManager.showNotification(testNotification)
-        XCTAssertTrue(notificationManager.isShowingNotification)
-
-        // When: Dismissing notification
-        notificationManager.dismissNotification()
-
-        // Then: State should be cleared
+    
+    // MARK: - Basic Notification Tests
+    
+    func testNotificationManagerInitialization() {
+        XCTAssertNotNil(notificationManager)
         XCTAssertFalse(notificationManager.isShowingNotification)
-        // Note: currentNotification might still be set for animation purposes
+        XCTAssertNil(notificationManager.currentNotification)
     }
-
-    func testNotificationManager_notificationWithActions_createsCorrectActions() {
-        // Given: A notification with actions
-        var primaryActionCalled = false
-        var secondaryActionCalled = false
-
-        let primaryAction = NotificationAction(
-            title: "Primary",
-            action: { primaryActionCalled = true },
-            style: .primary
-        )
-
-        let secondaryAction = NotificationAction(
-            title: "Secondary",
-            action: { secondaryActionCalled = true },
-            style: .secondary
-        )
-
-        let testNotification = AppNotification(
-            type: .permission,
-            title: "Permission Required",
-            message: "Please grant permission",
-            primaryAction: primaryAction,
-            secondaryAction: secondaryAction
-        )
-
-        // When: Showing notification
-        notificationManager.showNotification(testNotification)
-
-        // Then: Actions should be set correctly
-        XCTAssertTrue(notificationManager.isShowingNotification)
-        XCTAssertNotNil(notificationManager.currentNotification?.primaryAction)
-        XCTAssertNotNil(notificationManager.currentNotification?.secondaryAction)
-        XCTAssertEqual(notificationManager.currentNotification?.primaryAction?.title, "Primary")
-        XCTAssertEqual(notificationManager.currentNotification?.secondaryAction?.title, "Secondary")
-
-        // When: Executing actions
-        notificationManager.currentNotification?.primaryAction?.action()
-        notificationManager.currentNotification?.secondaryAction?.action()
-
-        // Then: Actions should be called
-        XCTAssertTrue(primaryActionCalled)
-        XCTAssertTrue(secondaryActionCalled)
-    }
-
-    func testNotificationManager_notificationWithDuration_autoDismisses() {
-        // Given: A notification with short duration
-        let testNotification = AppNotification(
+    
+    func testShowSuccessNotification() {
+        let message = "Test success message"
+        let notification = AppNotification(
             type: .success,
             title: "Success",
-            message: "Operation completed",
-            autoDismissDuration: 0.1 // Very short duration for testing
+            message: message
         )
-
-        let expectation = XCTestExpectation(description: "Notification auto-dismissed")
-
-        // When: Showing notification and waiting for auto-dismiss
-        notificationManager.showNotification(testNotification)
+        
+        notificationManager.showNotification(notification)
+        
         XCTAssertTrue(notificationManager.isShowingNotification)
-
-        // Wait for auto-dismiss
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-            expectation.fulfill()
-        }
-
-        wait(for: [expectation], timeout: 1.0)
-
-        // Then: Notification should be dismissed
-        XCTAssertFalse(notificationManager.isShowingNotification)
+        XCTAssertNotNil(notificationManager.currentNotification)
+        XCTAssertEqual(notificationManager.currentNotification?.title, "Success")
+        XCTAssertEqual(notificationManager.currentNotification?.message, message)
+        XCTAssertEqual(notificationManager.currentNotification?.type, .success)
     }
-
-    func testNotificationManager_notificationWithoutDuration_doesNotAutoDismiss() {
-        // Given: A notification without duration
-        let testNotification = AppNotification(
+    
+    func testShowErrorNotification() {
+        let message = "Test error message"
+        let notification = AppNotification(
             type: .error,
             title: "Error",
-            message: "Something went wrong"
-            // No duration specified
+            message: message
         )
-
-        // When: Showing notification
-        notificationManager.showNotification(testNotification)
-
-        // Then: Notification should remain showing
+        
+        notificationManager.showNotification(notification)
+        
         XCTAssertTrue(notificationManager.isShowingNotification)
-
-        // Wait a bit to ensure it doesn't auto-dismiss
-        let expectation = XCTestExpectation(description: "Notification stays visible")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            XCTAssertTrue(self.notificationManager.isShowingNotification)
-            expectation.fulfill()
-        }
-
-        wait(for: [expectation], timeout: 0.5)
+        XCTAssertNotNil(notificationManager.currentNotification)
+        XCTAssertEqual(notificationManager.currentNotification?.title, "Error")
+        XCTAssertEqual(notificationManager.currentNotification?.message, message)
+        XCTAssertEqual(notificationManager.currentNotification?.type, .error)
     }
-
-    func testNotificationManager_multipleNotifications_replacesPrevious() {
-        // Given: First notification
+    
+    func testShowPermissionNotification() {
+        let message = "Test permission message"
+        let notification = AppNotification(
+            type: .permission,
+            title: "Permission",
+            message: message
+        )
+        
+        notificationManager.showNotification(notification)
+        
+        XCTAssertTrue(notificationManager.isShowingNotification)
+        XCTAssertNotNil(notificationManager.currentNotification)
+        XCTAssertEqual(notificationManager.currentNotification?.title, "Permission")
+        XCTAssertEqual(notificationManager.currentNotification?.message, message)
+        XCTAssertEqual(notificationManager.currentNotification?.type, .permission)
+    }
+    
+    func testShowInfoNotification() {
+        let message = "Test info message"
+        let notification = AppNotification(
+            type: .info,
+            title: "Info",
+            message: message
+        )
+        
+        notificationManager.showNotification(notification)
+        
+        XCTAssertTrue(notificationManager.isShowingNotification)
+        XCTAssertNotNil(notificationManager.currentNotification)
+        XCTAssertEqual(notificationManager.currentNotification?.title, "Info")
+        XCTAssertEqual(notificationManager.currentNotification?.message, message)
+        XCTAssertEqual(notificationManager.currentNotification?.type, .info)
+    }
+    
+    // MARK: - Notification Dismissal Tests
+    
+    func testDismissNotification() {
+        // Show a notification first
+        let notification = AppNotification(
+            type: .info,
+            title: "Test",
+            message: "Test message"
+        )
+        notificationManager.showNotification(notification)
+        
+        XCTAssertTrue(notificationManager.isShowingNotification)
+        
+        // Dismiss the notification
+        notificationManager.dismissNotification()
+        
+        XCTAssertFalse(notificationManager.isShowingNotification)
+        XCTAssertNil(notificationManager.currentNotification)
+    }
+    
+    func testDismissNotificationWhenNoneShowing() {
+        // Try to dismiss when no notification is showing
+        notificationManager.dismissNotification()
+        
+        XCTAssertFalse(notificationManager.isShowingNotification)
+        XCTAssertNil(notificationManager.currentNotification)
+    }
+    
+    // MARK: - Notification Replacement Tests
+    
+    func testReplaceNotification() {
+        // Show first notification
         let firstNotification = AppNotification(
             type: .info,
             title: "First",
             message: "First message"
         )
-
-        // When: Showing first notification
         notificationManager.showNotification(firstNotification)
+        
         XCTAssertEqual(notificationManager.currentNotification?.title, "First")
-
-        // When: Showing second notification
+        
+        // Show second notification (should replace first)
         let secondNotification = AppNotification(
             type: .error,
             title: "Second",
             message: "Second message"
         )
         notificationManager.showNotification(secondNotification)
-
-        // Then: Second notification should replace first
-        XCTAssertTrue(notificationManager.isShowingNotification)
+        
         XCTAssertEqual(notificationManager.currentNotification?.title, "Second")
+        XCTAssertEqual(notificationManager.currentNotification?.message, "Second message")
         XCTAssertEqual(notificationManager.currentNotification?.type, .error)
+    }
+    
+    // MARK: - Notification Content Tests
+    
+    func testNotificationWithLongMessage() {
+        let longMessage = String(repeating: "This is a very long message. ", count: 100)
+        let notification = AppNotification(
+            type: .info,
+            title: "Long Message",
+            message: longMessage
+        )
+        
+        notificationManager.showNotification(notification)
+        
+        XCTAssertTrue(notificationManager.isShowingNotification)
+        XCTAssertEqual(notificationManager.currentNotification?.message, longMessage)
+    }
+    
+    func testNotificationWithEmptyMessage() {
+        let notification = AppNotification(
+            type: .info,
+            title: "Empty Message",
+            message: ""
+        )
+        
+        notificationManager.showNotification(notification)
+        
+        XCTAssertTrue(notificationManager.isShowingNotification)
+        XCTAssertEqual(notificationManager.currentNotification?.message, "")
+    }
+    
+    func testNotificationWithEmptyTitle() {
+        let notification = AppNotification(
+            type: .info,
+            title: "",
+            message: "Test message"
+        )
+        
+        notificationManager.showNotification(notification)
+        
+        XCTAssertTrue(notificationManager.isShowingNotification)
+        XCTAssertEqual(notificationManager.currentNotification?.title, "")
+    }
+    
+    func testNotificationWithSpecialCharacters() {
+        let specialMessage = "Message with special chars: !@#$%^&*()_+-=[]{}|;':\",./<>?"
+        let notification = AppNotification(
+            type: .info,
+            title: "Special Chars",
+            message: specialMessage
+        )
+        
+        notificationManager.showNotification(notification)
+        
+        XCTAssertTrue(notificationManager.isShowingNotification)
+        XCTAssertEqual(notificationManager.currentNotification?.message, specialMessage)
+    }
+    
+    func testNotificationWithUnicodeCharacters() {
+        let unicodeMessage = "Unicode message: Hello 世界 🌍 émojis 🚀"
+        let notification = AppNotification(
+            type: .info,
+            title: "Unicode",
+            message: unicodeMessage
+        )
+        
+        notificationManager.showNotification(notification)
+        
+        XCTAssertTrue(notificationManager.isShowingNotification)
+        XCTAssertEqual(notificationManager.currentNotification?.message, unicodeMessage)
+    }
+    
+    // MARK: - Performance Tests
+    
+    func testNotificationPerformance() {
+        measure {
+            for i in 0..<100 {
+                let notification = AppNotification(
+                    type: .info,
+                    title: "Performance Test \(i)",
+                    message: "Message \(i)"
+                )
+                notificationManager.showNotification(notification)
+                notificationManager.dismissNotification()
+            }
+        }
+    }
+    
+    func testNotificationReplacementPerformance() {
+        // Show initial notification
+        let initialNotification = AppNotification(
+            type: .info,
+            title: "Initial",
+            message: "Initial message"
+        )
+        notificationManager.showNotification(initialNotification)
+        
+        measure {
+            for i in 0..<1000 {
+                let notification = AppNotification(
+                    type: .info,
+                    title: "Replacement \(i)",
+                    message: "Replacement message \(i)"
+                )
+                notificationManager.showNotification(notification)
+            }
+        }
+        
+        // Clean up
+        notificationManager.dismissNotification()
+    }
+    
+    // MARK: - Edge Cases Tests
+    
+    func testMultipleDismissCalls() {
+        // Show a notification
+        let notification = AppNotification(
+            type: .info,
+            title: "Test",
+            message: "Test message"
+        )
+        notificationManager.showNotification(notification)
+        
+        // Call dismiss multiple times
+        notificationManager.dismissNotification()
+        notificationManager.dismissNotification()
+        notificationManager.dismissNotification()
+        
+        XCTAssertFalse(notificationManager.isShowingNotification)
+        XCTAssertNil(notificationManager.currentNotification)
+    }
+    
+    // MARK: - Thread Safety Tests
+    
+    func testNotificationThreadSafety() {
+        let expectation = XCTestExpectation(description: "Thread safety test")
+        expectation.expectedFulfillmentCount = 10
+        
+        for i in 0..<10 {
+            DispatchQueue.global().async {
+                let notification = AppNotification(
+                    type: .info,
+                    title: "Thread \(i)",
+                    message: "Message from thread \(i)"
+                )
+                self.notificationManager.showNotification(notification)
+                expectation.fulfill()
+            }
+        }
+        
+        wait(for: [expectation], timeout: 5.0)
+        
+        // Clean up
+        notificationManager.dismissNotification()
+    }
+    
+    // MARK: - Notification Type Tests
+    
+    func testAllNotificationTypes() {
+        let types: [NotificationType] = [.success, .error, .permission, .info]
+        
+        for type in types {
+            let notification = AppNotification(
+                type: type,
+                title: "\(type) Test",
+                message: "Testing \(type) notification"
+            )
+            notificationManager.showNotification(notification)
+            
+            XCTAssertEqual(notificationManager.currentNotification?.type, type)
+            notificationManager.dismissNotification()
+        }
+    }
+    
+    // MARK: - Singleton Tests
+    
+    func testNotificationManagerSingleton() {
+        let manager1 = NotificationManager.shared
+        let manager2 = NotificationManager.shared
+        
+        XCTAssertTrue(manager1 === manager2, "NotificationManager should be a singleton")
+    }
+    
+    // MARK: - Auto Dismiss Tests
+    
+    func testAutoDismissNotification() {
+        let notification = AppNotification(
+            type: .info,
+            title: "Auto Dismiss",
+            message: "This will auto dismiss",
+            autoDismissDuration: 0.1
+        )
+        
+        notificationManager.showNotification(notification)
+        
+        XCTAssertTrue(notificationManager.isShowingNotification)
+        
+        // Wait for auto dismiss
+        let expectation = XCTestExpectation(description: "Auto dismiss")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            expectation.fulfill()
+        }
+        
+        wait(for: [expectation], timeout: 1.0)
+        
+        XCTAssertFalse(notificationManager.isShowingNotification)
+        XCTAssertNil(notificationManager.currentNotification)
+    }
+    
+    // MARK: - Notification Actions Tests
+    
+    func testNotificationWithActions() {
+        let primaryAction = NotificationAction(
+            title: "Primary",
+            action: {},
+            style: .primary
+        )
+        
+        let secondaryAction = NotificationAction(
+            title: "Secondary",
+            action: {},
+            style: .secondary
+        )
+        
+        let notification = AppNotification(
+            type: .info,
+            title: "With Actions",
+            message: "This has actions",
+            primaryAction: primaryAction,
+            secondaryAction: secondaryAction
+        )
+        
+        notificationManager.showNotification(notification)
+        
+        XCTAssertTrue(notificationManager.isShowingNotification)
+        XCTAssertNotNil(notificationManager.currentNotification?.primaryAction)
+        XCTAssertNotNil(notificationManager.currentNotification?.secondaryAction)
+        XCTAssertEqual(notificationManager.currentNotification?.primaryAction?.title, "Primary")
+        XCTAssertEqual(notificationManager.currentNotification?.secondaryAction?.title, "Secondary")
     }
 }

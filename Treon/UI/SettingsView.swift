@@ -201,8 +201,8 @@ struct SettingsView: View {
                                     Toggle("Auto-format on open", isOn: $settings.autoFormatOnOpen)
                                         .help("Automatically format JSON when opening files")
 
-                        Toggle("Show line numbers", isOn: $settings.showLineNumbers)
-                            .help("Display line numbers in the JSON editor")
+                        // Toggle("Show line numbers", isOn: $settings.showLineNumbers)
+                        //     .help("Display line numbers in the JSON editor")
                         
                         Toggle("Wrap text", isOn: $settings.wrapText)
                             .help("Wrap long lines in the JSON editor")
