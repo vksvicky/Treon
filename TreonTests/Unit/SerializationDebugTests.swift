@@ -212,11 +212,21 @@ final class SerializationDebugTests: XCTestCase {
             do {
                 let result = try RustBackend.processData(testData, maxDepth: 0)
                 let finalMemory = getMemoryUsage()
-                let memoryIncrease = finalMemory - initialMemory
+                
+                // Defensive memory calculation to prevent arithmetic overflow
+                let memoryChange = calculateMemoryChange(initial: initialMemory, final: finalMemory)
                 
                 print("  ✅ Processing successful")
-                print("  📊 Memory increase: \(String(format: "%.2f", Double(memoryIncrease) / 1024 / 1024)) MB")
-                print("  📊 Memory efficiency: \(String(format: "%.2f", Double(memoryIncrease) / Double(size) * 100))% of file size")
+                print("  📊 Initial memory: \(initialMemory)")
+                print("  📊 Final memory: \(finalMemory)")
+                print("  📊 Memory change: \(String(format: "%.2f", Double(memoryChange) / 1024 / 1024)) MB")
+                
+                // Safe efficiency calculation
+                if let efficiency = calculateMemoryEfficiency(memoryChange: memoryChange, fileSize: size) {
+                    print("  📊 Memory efficiency: \(String(format: "%.2f", efficiency))% of file size")
+                } else {
+                    print("  📊 Memory efficiency: N/A (memory freed)")
+                }
                 print("  📊 Total nodes: \(result.totalNodes)")
                 
             } catch {
@@ -225,7 +235,124 @@ final class SerializationDebugTests: XCTestCase {
         }
     }
     
+    // MARK: - Edge Case Tests
+    
+    func testMemoryCalculationEdgeCases() {
+        print("\n🧪 TESTING MEMORY CALCULATION EDGE CASES")
+        print(String(repeating: "=", count: 60))
+        
+        // Test case 1: Normal memory increase
+        let normalIncrease = calculateMemoryChange(initial: 1000, final: 1500)
+        XCTAssertEqual(normalIncrease, 500, "Normal memory increase should work")
+        
+        // Test case 2: Memory decrease (unsigned underflow scenario)
+        let memoryDecrease = calculateMemoryChange(initial: 1500, final: 1000)
+        XCTAssertEqual(memoryDecrease, -500, "Memory decrease should be negative")
+        
+        // Test case 3: No memory change
+        let noChange = calculateMemoryChange(initial: 1000, final: 1000)
+        XCTAssertEqual(noChange, 0, "No memory change should be zero")
+        
+        // Test case 4: Large memory increase
+        let largeIncrease = calculateMemoryChange(initial: 1000, final: 2000)
+        XCTAssertEqual(largeIncrease, 1000, "Large memory increase should work")
+        
+        // Test case 5: Large memory decrease (potential underflow)
+        let largeDecrease = calculateMemoryChange(initial: 2000, final: 1000)
+        XCTAssertEqual(largeDecrease, -1000, "Large memory decrease should be negative")
+        
+        print("✅ All memory calculation edge cases passed")
+    }
+    
+    func testMemoryEfficiencyEdgeCases() {
+        print("\n🧪 TESTING MEMORY EFFICIENCY EDGE CASES")
+        print(String(repeating: "=", count: 60))
+        
+        // Test case 1: Normal efficiency calculation
+        let normalEfficiency = calculateMemoryEfficiency(memoryChange: 1000, fileSize: 10000)
+        XCTAssertNotNil(normalEfficiency, "Normal efficiency should not be nil")
+        XCTAssertEqual(normalEfficiency!, 10.0, accuracy: 0.01, "Normal efficiency should be 10%")
+        
+        // Test case 2: Memory decrease (should return nil)
+        let decreaseEfficiency = calculateMemoryEfficiency(memoryChange: -1000, fileSize: 10000)
+        XCTAssertNil(decreaseEfficiency, "Memory decrease should return nil")
+        
+        // Test case 3: Zero memory change (should return nil)
+        let zeroEfficiency = calculateMemoryEfficiency(memoryChange: 0, fileSize: 10000)
+        XCTAssertNil(zeroEfficiency, "Zero memory change should return nil")
+        
+        // Test case 4: Zero file size (should return nil)
+        let zeroFileEfficiency = calculateMemoryEfficiency(memoryChange: 1000, fileSize: 0)
+        XCTAssertNil(zeroFileEfficiency, "Zero file size should return nil")
+        
+        // Test case 5: Very large memory change (should return nil to prevent overflow)
+        let hugeMemoryChange = Int64.max / 50 // This will cause overflow in calculation
+        let hugeEfficiency = calculateMemoryEfficiency(memoryChange: hugeMemoryChange, fileSize: 10000)
+        XCTAssertNil(hugeEfficiency, "Very large memory change should return nil")
+        
+        // Test case 6: Edge case - exactly at the safe limit
+        let safeLimit = Int64.max / 100
+        let safeEfficiency = calculateMemoryEfficiency(memoryChange: safeLimit, fileSize: 10000)
+        XCTAssertNotNil(safeEfficiency, "Safe limit should work")
+        
+        print("✅ All memory efficiency edge cases passed")
+    }
+    
+    func testArithmeticOverflowPrevention() {
+        print("\n🧪 TESTING ARITHMETIC OVERFLOW PREVENTION")
+        print(String(repeating: "=", count: 60))
+        
+        // Test the original problematic scenario that caused overflow
+        let initialMemory: UInt64 = 1000
+        let finalMemory: UInt64 = 500  // This would cause underflow in original code
+        
+        // This should not crash or overflow
+        let memoryChange = calculateMemoryChange(initial: initialMemory, final: finalMemory)
+        XCTAssertEqual(memoryChange, -500, "Should handle underflow correctly")
+        
+        // Test efficiency calculation with the problematic values
+        let efficiency = calculateMemoryEfficiency(memoryChange: memoryChange, fileSize: 1000)
+        XCTAssertNil(efficiency, "Negative memory change should return nil for efficiency")
+        
+        // Test with large but safe values
+        let largeInitial: UInt64 = 1000000
+        let largeFinal: UInt64 = 2000000
+        let largeChange = calculateMemoryChange(initial: largeInitial, final: largeFinal)
+        XCTAssertEqual(largeChange, 1000000, "Should handle large values safely")
+        
+        print("✅ Arithmetic overflow prevention tests passed")
+    }
+    
     // MARK: - Helper Functions
+    
+    /// Safely calculates memory change, handling unsigned integer underflow
+    private func calculateMemoryChange(initial: UInt64, final: UInt64) -> Int64 {
+        if final >= initial {
+            // Memory increased or stayed the same
+            return Int64(final - initial)
+        } else {
+            // Memory decreased - handle unsigned underflow
+            return -Int64(initial - final)
+        }
+    }
+    
+    /// Safely calculates memory efficiency percentage, handling edge cases
+    private func calculateMemoryEfficiency(memoryChange: Int64, fileSize: Int) -> Double? {
+        // Only calculate efficiency for memory increases
+        guard memoryChange > 0 else { return nil }
+        
+        // Prevent division by zero
+        guard fileSize > 0 else { return nil }
+        
+        // Check for potential overflow before calculation
+        let maxSafeMemoryChange = Int64.max / 100
+        guard memoryChange <= maxSafeMemoryChange else {
+            print("  ⚠️ Memory change too large for safe efficiency calculation")
+            return nil
+        }
+        
+        return Double(memoryChange) / Double(fileSize) * 100
+    }
     
     private func createValidJSONData(size: Int) -> Data {
         var json = "{\n"
