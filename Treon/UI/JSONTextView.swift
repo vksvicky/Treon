@@ -1,21 +1,24 @@
 import SwiftUI
 import AppKit
 
-// Custom scroll view that doesn't interfere with window resize cursors
-class ResizeFriendlyScrollView: NSScrollView {
+// Custom scroll view that allows proper cursor handling for window resizing
+class CursorAwareScrollView: NSScrollView {
+    override func resetCursorRects() {
+        super.resetCursorRects()
+        // Allow the window to handle cursor changes for resizing
+        discardCursorRects()
+    }
+    
     override func mouseEntered(with event: NSEvent) {
-        // Let the window handle cursor changes for resizing
         super.mouseEntered(with: event)
+        // Let the window handle cursor changes
+        window?.invalidateCursorRects(for: self)
     }
     
     override func mouseExited(with event: NSEvent) {
-        // Let the window handle cursor changes for resizing
         super.mouseExited(with: event)
-    }
-    
-    override func mouseMoved(with event: NSEvent) {
-        // Let the window handle cursor changes for resizing
-        super.mouseMoved(with: event)
+        // Let the window handle cursor changes
+        window?.invalidateCursorRects(for: self)
     }
 }
 
@@ -24,18 +27,14 @@ struct JSONTextView: NSViewRepresentable {
     var isWordWrapEnabled: Bool
     
     func makeNSView(context: Context) -> NSScrollView {
-        let scrollView = ResizeFriendlyScrollView()
+        let scrollView = CursorAwareScrollView()
         let textView = NSTextView()
         
-        // Configure the scroll view
+        // Configure scroll view
         scrollView.documentView = textView
         scrollView.hasVerticalScroller = true
         scrollView.hasHorizontalScroller = !isWordWrapEnabled
         scrollView.autohidesScrollers = true
-        
-        // Configure scroll view to not interfere with window resizing
-        scrollView.wantsLayer = true
-        scrollView.layer?.backgroundColor = NSColor.clear.cgColor
         
         // Configure text view
         textView.font = .monospacedSystemFont(ofSize: NSFont.systemFontSize, weight: .regular)
@@ -46,9 +45,9 @@ struct JSONTextView: NSViewRepresentable {
         textView.isAutomaticLinkDetectionEnabled = false
         textView.delegate = context.coordinator
         
-        // Ensure text view doesn't interfere with window cursor management
-        textView.wantsLayer = true
-        textView.layer?.backgroundColor = NSColor.clear.cgColor
+        // Ensure proper cursor handling for window resizing
+        scrollView.wantsLayer = true
+        scrollView.layer?.backgroundColor = NSColor.clear.cgColor
         
         // Set initial text
         textView.string = text
