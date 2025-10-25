@@ -121,6 +121,14 @@ final class NotificationManagerTests: XCTestCase {
         notificationManager.dismissNotification()
         
         XCTAssertFalse(notificationManager.isShowingNotification)
+        
+        // Wait for the async cleanup (NotificationManager clears currentNotification after 0.3 seconds)
+        let expectation = XCTestExpectation(description: "Notification dismissed")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+            expectation.fulfill()
+        }
+        
+        wait(for: [expectation], timeout: 1.0)
         XCTAssertNil(notificationManager.currentNotification)
     }
     
@@ -285,6 +293,14 @@ final class NotificationManagerTests: XCTestCase {
         notificationManager.dismissNotification()
         
         XCTAssertFalse(notificationManager.isShowingNotification)
+        
+        // Wait for the async cleanup
+        let expectation = XCTestExpectation(description: "Notification dismissed")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+            expectation.fulfill()
+        }
+        
+        wait(for: [expectation], timeout: 1.0)
         XCTAssertNil(notificationManager.currentNotification)
     }
     
@@ -353,9 +369,9 @@ final class NotificationManagerTests: XCTestCase {
         
         XCTAssertTrue(notificationManager.isShowingNotification)
         
-        // Wait for auto dismiss
+        // Wait for auto dismiss (0.1s) + animation cleanup (0.3s) + buffer
         let expectation = XCTestExpectation(description: "Auto dismiss")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             expectation.fulfill()
         }
         
