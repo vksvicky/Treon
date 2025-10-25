@@ -257,14 +257,8 @@ struct JSONViewerView: View {
             Divider()
 
             // Text editor
-            ScrollView {
-                TextEditor(text: $jsonText)
-                    .font(.system(.body, design: .monospaced))
-                    .padding(8)
-                    .background(Color(NSColor.textBackgroundColor))
-                    .scrollContentBackground(.hidden)
-            }
-            .background(Color(NSColor.textBackgroundColor))
+            JSONTextView(text: $jsonText, isWordWrapEnabled: settings.wrapText)
+                .background(Color(NSColor.textBackgroundColor))
         }
         .background(Color(NSColor.controlBackgroundColor))
     }
@@ -478,6 +472,8 @@ struct JSONViewerView: View {
 
 // MARK: - Tree View Components
 // Using existing ListTreeView and NodeRow from TwoPaneRootView.swift
+
+
 
 #Preview {
     JSONViewerView()
